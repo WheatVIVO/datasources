@@ -27,18 +27,38 @@ CONSTRUCT {
     ?b a bibo:Thesis .
     ?c a bibo:AudioVisualDocument .
     ?d a vivo:ConferencePaper .
-    ?e a bibo:AcademicArticle .  # See also h.
+    ?e a bibo:AcademicArticle . 
     ?f a bibo:Report .
     ?g a bibo:Thesis .  # May want local extension to preserve distinction from master's theses.
-    ?h a bibo:Article . # Maybe not a perfect match; see also e.
+    ?h a bibo:Document . # TODO: review for better option
+    ?j a vivo:Review .
+    ?k a vivo:EditorialArticle .
 } WHERE {
   GRAPH <http://vitro.mannlib.cornell.edu/a/graph/Prodinra-named> {
     { ?a prodinra:itemType "RESEARCH_REPORT" } UNION 
     { ?b prodinra:itemType "THESIS" } UNION 
     { ?c prodinra:itemType "AUDIOVISUAL_DOCUMENT" } UNION 
     { ?d prodinra:itemType "PROCEEDING_PAPER" } UNION 
-    { ?e prodinra:itemType "ARTICLE" } UNION  
+    { ?e prodinra:itemType "ARTICLE" 
+      FILTER NOT EXISTS {
+          ?e prodinra:articleInfos ?infos .
+	  ?infos prodinra:articleType "Review article" .
+      }
+      FILTER NOT EXISTS {
+          ?e prodinra:articleInfos ?infos .
+	  ?infos prodinra:articleType "Editorial" .
+      }
+    } UNION  
     { ?f prodinra:itemType "REPORT" } UNION
-    { ?g prodinra:itemType "DISSERTATION" }
+    { ?g prodinra:itemType "DISSERTATION" } UNION
+    { ?h prodinra:itemtype "PAPER" } UNION
+    { ?j prodinra:itemType "ARTICLE" .
+      ?j prodinra:articleInfos ?infosj .
+      ?infosj prodinra:articleType "Review article" .
+    } UNION 
+    { ?k prodinra:itemType "ARTICLE" .
+      ?k prodinra:articleInfos ?infosk .
+      ?infosk prodinra:articleType "Editorial" .
+    }
   }
 }
