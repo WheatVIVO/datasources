@@ -17,7 +17,7 @@ public class LaunchIngest {
             try {
                 rcuk.run();
             } finally {
-                System.out.println(rcuk.getResults());
+                rcuk.getResult().write(System.out, "N3");
             }
         }
     }

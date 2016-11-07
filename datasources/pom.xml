@@ -45,6 +45,17 @@
                   <mainClass>org.wheatinitiative.vivo.datasource.LaunchIngest</mainClass>
                 </transformer>
               </transformers>
+	      <filters>
+	        <!-- filter manifest signature files when creating uber-jar -->
+	        <filter>
+                  <artifact>*:*</artifact>
+		  <excludes>
+		    <exclude>META-INF/*.SF</exclude>
+		    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+		  </excludes>
+                </filter>
+              </filters>
             </configuration>
           </execution>
         </executions>
@@ -66,6 +77,19 @@
       <artifactId>httpclient</artifactId>
       <version>4.2.5</version>
       <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.jena</groupId>
+      <artifactId>apache-jena-libs</artifactId>
+      <type>pom</type>
+      <version>2.10.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>net.sf.saxon</groupId>
+      <artifactId>Saxon-HE</artifactId>
+      <version>9.6.0-7</version>
     </dependency>
 
   </dependencies>
