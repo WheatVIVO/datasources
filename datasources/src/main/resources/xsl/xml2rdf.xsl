@@ -47,7 +47,7 @@
           <xsl:attribute name="rdf:resource" 
                          select="concat((if(namespace-uri())then (concat(namespace-uri(),'/')) else $defaultNS),local-name())"/>
         </xsl:element>
-        <xsl:apply-templates select="*"/>
+        <xsl:apply-templates select="*|@*"/>
       </rdf:Description>
     </xsl:template>   
     
