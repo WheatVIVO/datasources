@@ -25,6 +25,7 @@ import org.wheatinitiative.vivo.datasource.util.xml.rdf.RdfUtils;
 
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryExecutionFactory;
+import com.hp.hpl.jena.query.QueryParseException;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Literal;
@@ -113,7 +114,20 @@ public class Rcuk implements Runnable {
      */
     private Model constructForVIVO(Model m) {
         // TODO dynamically get/sort list from classpath resource directory
-        List<String> queries = Arrays.asList("002-linkRelates.sparql");
+        List<String> queries = Arrays.asList("002-linkRelates.sparql", 
+                "100-person-vcard-name.sparql", 
+                "105-person-label.sparql",
+                "200-organization-name.sparql",
+                "210-organization-address.sparql",
+                "400-publication-title.sparql",
+                "410-publication-JournalArticle.sparql",
+                "411-publication-ConferenceProceedingAbstract.sparql",
+                "412-publication-WorkingPaper.sparql",
+                "413-publication-BookChapter.sparql",
+                "414-publication-Thesis.sparql",
+                "415-publication-Book.sparql",
+                "430-publication-properties.sparql",
+                "455-position.sparql");
         for(String query : queries) {
             construct(query, m);
         }
@@ -172,15 +186,19 @@ public class Rcuk implements Runnable {
      */
     private Model construct(String queryName, Model m) {
         String queryStr = loadQuery(queryName);
-        QueryExecution qe = QueryExecutionFactory.create(queryStr, m);
         try {
-            Model tmp = ModelFactory.createDefaultModel();
-            qe.execConstruct(tmp);
-            m.add(tmp);
-        } finally {
-            if(qe != null) {
-                qe.close();
+            QueryExecution qe = QueryExecutionFactory.create(queryStr, m);
+            try {
+                Model tmp = ModelFactory.createDefaultModel();
+                qe.execConstruct(tmp);
+                m.add(renameBlankNodes(tmp, NAMESPACE_ETC, tmp));
+            } finally {
+                if(qe != null) {
+                    qe.close();
+                }
             }
+        } catch (QueryParseException qpe) {
+            throw new RuntimeException("Error parsing query " + queryName, qpe);
         }
         return m;
     }
@@ -193,6 +211,19 @@ public class Rcuk implements Runnable {
      * @return model with named nodes
      */
     private Model renameBlankNodes(Model m, String namespaceEtc) {
+        return rdfUtils.renameBNodes(m, namespaceEtc, m);
+    }
+    
+    /**
+     * Renames all blank nodes with URIs based on a namespaceEtc part 
+     * concatenated with a random integer.
+     * @param m model in which blank nodes are to be renamed
+     * @param namespaceEtc the first (non-random) part of the generated URIs
+     * @param dedupModel containing named resources whose URIs should not be reused
+     * @return model with named nodes
+     */
+    private Model renameBlankNodes(Model m, String namespaceEtc, 
+            Model dedupModel) {
         return rdfUtils.renameBNodes(m, namespaceEtc, m);
     }
     
