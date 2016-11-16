@@ -3,6 +3,7 @@ package org.wheatinitiative.vivo.datasource.util.xml;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 
 import javax.xml.transform.stream.StreamSource;
 
@@ -25,10 +26,10 @@ public class XmlToRdf {
     
     /**
      * Reads XML from an InputStream and "lifts" it to RDF
-     * @param inputStream
+     * @param xmlInputStream
      * @return model containing RDF reflecting the XML structure of the document 
      */
-    public Model toRDF(InputStream inputStream) {
+    public Model toRDF(InputStream xmlInputStream) {
         Processor processor = new Processor(false);
         XsltCompiler compiler  = processor.newXsltCompiler();
         XsltExecutable xsltExec = null;
@@ -45,7 +46,7 @@ public class XmlToRdf {
             out.setOutputProperty(Serializer.Property.INDENT, "yes");
             ByteArrayOutputStream xmlOutputStream = new ByteArrayOutputStream();
             out.setOutputStream(xmlOutputStream);
-            t.setSource(new StreamSource(inputStream));
+            t.setSource(new StreamSource(xmlInputStream));
             t.setDestination(out);
             t.transform();
             ByteArrayInputStream rdfXmlInputStream = new ByteArrayInputStream(
@@ -55,6 +56,21 @@ public class XmlToRdf {
             return model;
         } catch (SaxonApiException e) {
             throw new RuntimeException("could not convert to RDF/XML", e);        
+        }
+    }
+    
+    /**
+     * Reads XML from a String and "lifts" it to RDF
+     * @param xmlString
+     * @return model containing RDF reflecting the XML structure of the document 
+     */
+    public Model toRDF(String xmlString) {
+        try {
+            InputStream xmlInputStream = new ByteArrayInputStream(
+                    xmlString.getBytes("UTF-8"));
+            return toRDF(xmlInputStream);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
         }
     }
     

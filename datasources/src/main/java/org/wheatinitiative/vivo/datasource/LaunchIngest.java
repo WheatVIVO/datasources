@@ -1,20 +1,41 @@
 package org.wheatinitiative.vivo.datasource;
 
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
+import org.wheatinitiative.vivo.datasource.connector.Prodinra;
 import org.wheatinitiative.vivo.datasource.connector.Rcuk;
+import org.wheatinitiative.vivo.datasource.connector.Usda;
+import org.wheatinitiative.vivo.datasource.connector.WheatInitiative;
 
 public class LaunchIngest {
 
     public static void main(String[] args) {
-        if(args.length < 1) {
-            System.out.println("Usage: LaunchIngest <queryTerm> ... <queryTermN>");
+        if(args.length < 2) {
+            System.out.println("Usage: LaunchIngest " 
+                    + "rcuk|prodinra|usda|wheatinitiative " 
+                    + "queryTerm ... [queryTermN]");
         } else {
-            List<String> queryTerms = Arrays.asList(args);
-            Rcuk rcuk = new Rcuk(queryTerms);
-            rcuk.run();
-            rcuk.getResult().write(System.out, "N3");
+            List<String> queryTerms = new LinkedList<String>(
+                    Arrays.asList(args));
+            queryTerms.remove(0);
+            String connectorName = args[0];
+            DataSource connector = null;
+            if("rcuk".equals(connectorName)) {
+                connector = new Rcuk(queryTerms);
+            } else if ("prodinra".equals(connectorName)) {
+                connector = new Prodinra(queryTerms);
+            } else if ("usda".equals(connectorName)) {
+                connector = new Usda(queryTerms);
+            } else if ("wheatinitiative".equals(connectorName)) {
+                connector = new WheatInitiative();
+            } else {
+                throw new RuntimeException("Connector not found: " 
+                        + connectorName);
+            }
+            connector.run();
+            connector.getResult().write(System.out, "N3");
         }
     }
     

@@ -15,11 +15,8 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
+import org.wheatinitiative.vivo.datasource.DataSource;
+import org.wheatinitiative.vivo.datasource.util.http.HttpUtils;
 import org.wheatinitiative.vivo.datasource.util.xml.XmlToRdf;
 import org.wheatinitiative.vivo.datasource.util.xml.rdf.RdfUtils;
 
@@ -38,7 +35,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.util.ResourceUtils;
 
-public class Rcuk implements Runnable {
+public class Rcuk extends DataSourceBase implements DataSource {
 
     private static final Log log = LogFactory.getLog(Rcuk.class);
     private static final String API_URL = "http://gtr.rcuk.ac.uk/gtr/api/";
@@ -53,14 +50,12 @@ public class Rcuk implements Runnable {
     private static final int MIN_REST_MILLIS = 700; // ms to wait between
                                                     // subsequent API calls
     
-    private HttpClient httpClient;
-    private RdfUtils rdfUtils;
+    private HttpUtils httpUtils = new HttpUtils();
+    private XmlToRdf xmlToRdf = new XmlToRdf();
     private List<String> queryTerms;
     private Model result;
     
     public Rcuk(List<String> queryTerms) {
-        this.httpClient = new DefaultHttpClient();
-        this.rdfUtils = new RdfUtils();
         this.queryTerms = queryTerms;
     }
     
@@ -98,7 +93,7 @@ public class Rcuk implements Runnable {
         for (String queryTerm : queryTerms) {
             String url = API_URL + "projects?q=" + queryTerm;
             try {
-                String response = getApiResponse(url);
+                String response = httpUtils.getHttpResponse(url);
                 projects.add(response);
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -129,7 +124,7 @@ public class Rcuk implements Runnable {
                 "430-publication-properties.sparql",
                 "455-position.sparql");
         for(String query : queries) {
-            construct(query, m);
+            construct(SPARQL_RESOURCE_DIR + query, m, NAMESPACE_ETC);
         }
         return m;
     }
@@ -142,7 +137,8 @@ public class Rcuk implements Runnable {
      */
     private Model addLinkedEntities(Model m) throws IOException, 
             InterruptedException{
-        String queryStr = loadQuery("getLinkedEntityURIs.sparql");
+        String queryStr = loadQuery(SPARQL_RESOURCE_DIR 
+                + "getLinkedEntityURIs.sparql");
         QueryExecution qe = QueryExecutionFactory.create(queryStr, m);
         Set<String> linkedURIs = new HashSet<String>();
         try {
@@ -158,7 +154,7 @@ public class Rcuk implements Runnable {
             qe.close();
         }
         for (String uri : linkedURIs) {
-            String doc = getApiResponse(uri);
+            String doc = httpUtils.getHttpResponse(uri);
             m.add(transformToRdf(doc));
             Thread.currentThread();
             Thread.sleep(MIN_REST_MILLIS);
@@ -167,42 +163,16 @@ public class Rcuk implements Runnable {
     }
     
     private Model transformToRdf(String doc) {
-        InputStream inputStream = new ByteArrayInputStream(doc.getBytes());
-        XmlToRdf xmlToRdf = new XmlToRdf();
-        Model m = xmlToRdf.toRDF(inputStream);
+        //InputStream inputStream = new ByteArrayInputStream(doc.getBytes());
+        Model m = xmlToRdf.toRDF(doc);
         m = renameByHref(m);
         m = renameBlankNodes(m, NAMESPACE_ETC);
         // do a generic construct that will type each resource as an owl:Thing.
-        m = construct("001-things.sparql", m);
+        m = construct(
+                SPARQL_RESOURCE_DIR + "001-things.sparql", m, NAMESPACE_ETC);
         return m;
     }
-    
-    /**
-     * Load a named CONSTRUCT query from a file in the SPARQL resources 
-     * directory, run it against a model and add the results back to the model.
-     * @param queryName name of SPARQL CONSTRUCT query to load
-     * @param m model against which query should be executed
-     * @return model with new data added by CONSTRUCT query
-     */
-    private Model construct(String queryName, Model m) {
-        String queryStr = loadQuery(queryName);
-        try {
-            QueryExecution qe = QueryExecutionFactory.create(queryStr, m);
-            try {
-                Model tmp = ModelFactory.createDefaultModel();
-                qe.execConstruct(tmp);
-                m.add(renameBlankNodes(tmp, NAMESPACE_ETC, tmp));
-            } finally {
-                if(qe != null) {
-                    qe.close();
-                }
-            }
-        } catch (QueryParseException qpe) {
-            throw new RuntimeException("Error parsing query " + queryName, qpe);
-        }
-        return m;
-    }
-    
+       
     /**
      * Renames all blank nodes with URIs based on a namespaceEtc part 
      * concatenated with a random integer.
@@ -254,52 +224,6 @@ public class Rcuk implements Runnable {
             ResourceUtils.renameResource(bnode, bnodeToURI.get(bnode));
         }
         return m;
-    }
+    }  
     
-    private String loadQuery(String resourceName) {
-        resourceName = SPARQL_RESOURCE_DIR + resourceName;
-        InputStream inputStream = this.getClass().getResourceAsStream(
-                resourceName);
-        StringBuffer fileContents = new StringBuffer();
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(new InputStreamReader(inputStream));
-            String ln;
-            while ( (ln = reader.readLine()) != null) {
-                fileContents.append(ln).append('\n');
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to load " + resourceName, e);
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-        return fileContents.toString();
-    }
-    
-    private String getApiResponse(String url) throws IOException {
-        HttpGet get = new HttpGet(url);
-        HttpResponse response = httpClient.execute(get);
-        BufferedReader br = null;
-        StringBuilder sb = new StringBuilder();
-        String line;
-        try {
-            br = new BufferedReader(new InputStreamReader(
-                    response.getEntity().getContent()));
-            while ((line = br.readLine()) != null) {
-                sb.append(line).append("\n");
-            }
-        } finally {
-            EntityUtils.consume(response.getEntity());
-            if (br != null) {
-                br.close();
-            }
-        }   
-        return sb.toString();
-    }
 }
