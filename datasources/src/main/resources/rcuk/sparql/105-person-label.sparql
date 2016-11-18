@@ -35,7 +35,7 @@ CONSTRUCT {
     ?x a foaf:Person .
     ?x rcukp:surname ?lastName .
     ?x rcukp:firstName ?firstName .
-    FILTER NOT EXISTS { ?x rcukp:otherNames ?middleName }
+    FILTER ( (NOT EXISTS { ?x rcukp:otherNames ?middleName }) || isURI(?middleName) )
     BIND(concat(?lastName, ", ", ?firstName) AS ?label)
   }
 }

@@ -16,30 +16,21 @@ PREFIX obo:      <http://purl.obolibrary.org/obo/>
 PREFIX ocrer:    <http://purl.org/net/OCRe/research.owl#>
 PREFIX ocresd:   <http://purl.org/net/OCRe/study_design.owl#>
 PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
-PREFIX nih:      <http://vivo.scripps.edu/ontology/nih#>
-PREFIX tsri:     <http://vivo.scripps.edu/ontology/tsri#>
 PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>
 PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX rcuk:     <http://gtr.rcuk.ac.uk/gtr/api/>
 PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
+PREFIX rcuko:    <http://gtr.rcuk.ac.uk/gtr/api/organisation/>
+PREFIX rcukpj:   <http://gtr.rcuk.ac.uk/gtr/api/project/>
 
 CONSTRUCT {
-    ?x a foaf:Person .
-    ?x obo:ARG_2000028 _:vcard .
-    _:vcard a vcard:Individual .
-    _:vcard vcard:hasName _:name .
-    _:name a vcard:Name .
-    _:name vcard:familyName ?lastName .
-    _:name vcard:givenName ?firstName .
-    _:name vivo:middleName ?middleName .
+    ?y a vivo:Grant .
+    ?y rdfs:label ?title .
+    ?y vivo:description ?abstractText .
 } WHERE {
-    ?x a rcukp:person .
-    ?x rcukp:surname ?lastName .
-    OPTIONAL { ?x rcukp:firstName ?firstName }
-    OPTIONAL { 
-        ?x rcukp:otherNames ?middleName 
-        FILTER(isLiteral(?middleName))
-    }
+    ?x rcukpj:project ?y .
+    ?y rcukpj:title ?title .
+    OPTIONAL { ?y rcukpj:abstractText ?abstractText }
 }

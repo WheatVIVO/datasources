@@ -21,7 +21,8 @@ public class XmlToRdf {
 
     Processor saxonProcessor = new Processor(!LICENSED_EDITION);
     
-    private static final String XSLT_FILE = "/xsl/xml2rdf.xsl";
+    private static final String XML2RDF_XSL = "/xsl/xml2rdf.xsl";
+    private static final String DROP_EMPTY_NODES_XSL = "/xsl/dropEmptyNodes.xsl";
     private static boolean LICENSED_EDITION = true;
     
     /**
@@ -30,33 +31,11 @@ public class XmlToRdf {
      * @return model containing RDF reflecting the XML structure of the document 
      */
     public Model toRDF(InputStream xmlInputStream) {
-        Processor processor = new Processor(false);
-        XsltCompiler compiler  = processor.newXsltCompiler();
-        XsltExecutable xsltExec = null;
-        try {
-            InputStream xsltIn = this.getClass().getResourceAsStream(XSLT_FILE);
-            xsltExec = compiler.compile(new StreamSource(xsltIn));
-        } catch (SaxonApiException e) {
-            throw new RuntimeException("Unable to compile " + XSLT_FILE, e);
-        }       
-        try {
-            XsltTransformer t = xsltExec.load();
-            Serializer out = processor.newSerializer();
-            out.setOutputProperty(Serializer.Property.METHOD, "xml");
-            out.setOutputProperty(Serializer.Property.INDENT, "yes");
-            ByteArrayOutputStream xmlOutputStream = new ByteArrayOutputStream();
-            out.setOutputStream(xmlOutputStream);
-            t.setSource(new StreamSource(xmlInputStream));
-            t.setDestination(out);
-            t.transform();
-            ByteArrayInputStream rdfXmlInputStream = new ByteArrayInputStream(
-                    xmlOutputStream.toByteArray());
-            Model model = ModelFactory.createDefaultModel();
-            model.read(rdfXmlInputStream, null, "RDF/XML");
-            return model;
-        } catch (SaxonApiException e) {
-            throw new RuntimeException("could not convert to RDF/XML", e);        
-        }
+       xmlInputStream = applyXsl(xmlInputStream, DROP_EMPTY_NODES_XSL);
+       xmlInputStream = applyXsl(xmlInputStream, XML2RDF_XSL);
+       Model model = ModelFactory.createDefaultModel();
+       model.read(xmlInputStream, null, "RDF/XML");
+       return model;
     }
     
     /**
@@ -71,6 +50,42 @@ public class XmlToRdf {
             return toRDF(xmlInputStream);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
+        }
+    }
+    
+    /**
+     * Reads an input stream containing an XML document, applies the
+     * specified XSL transformation, and returns another InputStream
+     * @param xmlInputStream 
+     * @param xslResourcePath
+     * @return
+     */
+    private InputStream applyXsl(InputStream xmlInputStream, 
+            String xslResourcePath) {
+        Processor processor = new Processor(false);
+        XsltCompiler compiler  = processor.newXsltCompiler();
+        XsltExecutable xsltExec = null;
+        try {
+            InputStream xsltIn = this.getClass().getResourceAsStream(
+                    xslResourcePath);
+            xsltExec = compiler.compile(new StreamSource(xsltIn));
+        } catch (SaxonApiException e) {
+            throw new RuntimeException("Unable to compile " 
+                    + xslResourcePath, e);
+        }       
+        try {
+            XsltTransformer t = xsltExec.load();
+            Serializer out = processor.newSerializer();
+            out.setOutputProperty(Serializer.Property.METHOD, "xml");
+            out.setOutputProperty(Serializer.Property.INDENT, "yes");
+            ByteArrayOutputStream xmlOutputStream = new ByteArrayOutputStream();
+            out.setOutputStream(xmlOutputStream);
+            t.setSource(new StreamSource(xmlInputStream));
+            t.setDestination(out);
+            t.transform();
+            return new ByteArrayInputStream(xmlOutputStream.toByteArray());
+        } catch (SaxonApiException e) {
+            throw new RuntimeException("could not convert to RDF/XML", e);        
         }
     }
     

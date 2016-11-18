@@ -1,10 +1,7 @@
 package org.wheatinitiative.vivo.datasource.connector;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -15,14 +12,13 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.client.utils.URIBuilder;
 import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.util.http.HttpUtils;
 import org.wheatinitiative.vivo.datasource.util.xml.XmlToRdf;
-import org.wheatinitiative.vivo.datasource.util.xml.rdf.RdfUtils;
 
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryExecutionFactory;
-import com.hp.hpl.jena.query.QueryParseException;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Literal;
@@ -47,7 +43,9 @@ public class Rcuk extends DataSourceBase implements DataSource {
             RCUK_TBOX_NS + "link");
     private static final String NAMESPACE_ETC = RCUK_ABOX_NS + "n";
     private static final String SPARQL_RESOURCE_DIR = "/rcuk/sparql/";
-    private static final int MIN_REST_MILLIS = 700; // ms to wait between
+    private static final int MAX_SIZE = 100; // number of search results that can
+                                             // be retrieved in a single request
+    private static final int MIN_REST_MILLIS = 350; // ms to wait between
                                                     // subsequent API calls
     
     private HttpUtils httpUtils = new HttpUtils();
@@ -75,6 +73,8 @@ public class Rcuk extends DataSourceBase implements DataSource {
             result = m;
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
         } catch (InterruptedException e) {
             throw new RuntimeException(e); // for now
         }
@@ -88,10 +88,14 @@ public class Rcuk extends DataSourceBase implements DataSource {
         return this.result;
     }
     
-    private List<String> getProjects(List<String> queryTerms) {
+    private List<String> getProjects(List<String> queryTerms) 
+            throws URISyntaxException {
         List<String> projects = new ArrayList<String>();
         for (String queryTerm : queryTerms) {
-            String url = API_URL + "projects?q=" + queryTerm;
+            URIBuilder builder = new URIBuilder(API_URL + "projects");
+            builder.addParameter("q", queryTerm);
+            builder.addParameter("s", Integer.toString(MAX_SIZE, 10));
+            String url = builder.build().toString();
             try {
                 String response = httpUtils.getHttpResponse(url);
                 projects.add(response);
@@ -114,6 +118,9 @@ public class Rcuk extends DataSourceBase implements DataSource {
                 "105-person-label.sparql",
                 "200-organization-name.sparql",
                 "210-organization-address.sparql",
+                "300-grant.sparql",
+                "310-grant-pi.sparql",
+                "311-grant-copi.sparql",
                 "400-publication-title.sparql",
                 "410-publication-JournalArticle.sparql",
                 "411-publication-ConferenceProceedingAbstract.sparql",
