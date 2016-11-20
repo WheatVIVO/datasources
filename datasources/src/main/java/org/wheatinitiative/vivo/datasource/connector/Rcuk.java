@@ -121,6 +121,7 @@ public class Rcuk extends DataSourceBase implements DataSource {
                 "300-grant.sparql",
                 "310-grant-pi.sparql",
                 "311-grant-copi.sparql",
+                "320-grant-fund.sparql",
                 "400-publication-title.sparql",
                 "410-publication-JournalArticle.sparql",
                 "411-publication-ConferenceProceedingAbstract.sparql",
@@ -129,6 +130,7 @@ public class Rcuk extends DataSourceBase implements DataSource {
                 "414-publication-Thesis.sparql",
                 "415-publication-Book.sparql",
                 "430-publication-properties.sparql",
+                "440-publication-supportedInformationResource.sparql",
                 "455-position.sparql");
         for(String query : queries) {
             construct(SPARQL_RESOURCE_DIR + query, m, NAMESPACE_ETC);

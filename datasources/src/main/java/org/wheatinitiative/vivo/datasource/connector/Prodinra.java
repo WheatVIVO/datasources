@@ -71,7 +71,7 @@ public class Prodinra extends DataSourceBase implements DataSource {
     }
     
     public String listRecords() throws IOException {
-        String url = ENDPOINT + "?verb=listRecords&metadataPrefix=" 
+        String url = ENDPOINT + "?verb=ListRecords&metadataPrefix=" 
                 + METADATA_PREFIX;
         return httpUtils.getHttpResponse(url);
     }

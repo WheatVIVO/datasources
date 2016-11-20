@@ -21,9 +21,28 @@ PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX rcuk:     <http://gtr.rcuk.ac.uk/gtr/api/>
+PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
+PREFIX rcuko:    <http://gtr.rcuk.ac.uk/gtr/api/organisation/>
+PREFIX rcukpj:   <http://gtr.rcuk.ac.uk/gtr/api/project/>
 
-SELECT DISTINCT ?x WHERE {
+CONSTRUCT {
+    ?grant vivo:dateTimeInterval _:dti .
+    _:dti a vivo:DateTimeInterval .
+    _:dti vivo:start _:start .
+    _:start a vivo:DateTimeValue .
+    _:start vivo:dateTime ?start .
+    _:start vivo:dateTimePrecision vivo:yearMonthDayPrecision .
+     _:dti vivo:end _:end .
+    _:end a vivo:DateTimeValue .
+    _:end vivo:dateTime ?end .
+    _:end vivo:dateTimePrecision vivo:yearMonthDayPrecision .
+} WHERE {
+    ?grant a vivo:Grant .
+    ?grant rcuk:links ?links .
     ?links rcuk:link ?link .
-    ?link  rcuk:href ?x 
-    FILTER NOT EXISTS { ?x rcuk:href ?href }
-} 
+    ?link rcuk:rel "FUND" .
+    ?link rcuk:start ?rcukStart .
+    BIND(xsd:dateTime(?rcukStart) AS ?start)
+    ?link rcuk:end ?rcukEnd .
+    BIND(xsd:dateTime(?rcukEnd) AS ?end)
+}
