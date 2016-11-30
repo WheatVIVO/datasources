@@ -2,7 +2,6 @@ package org.wheatinitiative.vivo.datasource.connector;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,7 +23,9 @@ import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.NodeIterator;
 import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
@@ -41,10 +42,14 @@ public class Rcuk extends DataSourceBase implements DataSource {
             RCUK_TBOX_NS + "href");
     private static final Property LINK = ResourceFactory.createProperty(
             RCUK_TBOX_NS + "link");
+    private static final Property TOTAL_PAGES = ResourceFactory.createProperty(
+            RCUK_TBOX_NS + "totalPages");
     private static final String NAMESPACE_ETC = RCUK_ABOX_NS + "n";
     private static final String SPARQL_RESOURCE_DIR = "/rcuk/sparql/";
     private static final int MAX_SIZE = 100; // number of search results that can
                                              // be retrieved in a single request
+    private static final int MAX_PAGES = 3;  // maximum number of pages to retrieve
+                                             // for any search term
     private static final int MIN_REST_MILLIS = 350; // ms to wait between
                                                     // subsequent API calls
     
@@ -62,13 +67,26 @@ public class Rcuk extends DataSourceBase implements DataSource {
         // TODO retrieving subsequent pages from API
         // TODO construct search terms with projects so we can take intersections?
         try {
-            List<String> projects = getProjects(queryTerms);
             Model m = ModelFactory.createDefaultModel();
-            for (String project : projects) {
-                m.add(transformToRdf(project));
+            int totalRecords = 0;
+            for(String queryTerm : queryTerms) {
+                String projects = getProjects(queryTerm, 1);
+                Model projectsRdf = transformToRdf(projects);
+                m.add(projectsRdf);
+                int totalPages = getTotalPages(projectsRdf);
+                if (totalPages > MAX_PAGES) {
+                    totalPages = MAX_PAGES;
+                }
+                if (totalPages > 1) {
+                    for (int page = 2; page <= totalPages ; page++) {
+                        m.add(transformToRdf(getProjects(queryTerm, page)));
+                    }
+                }
             }
             // TODO get total number of linked entities and use to update status
             m = addLinkedEntities(m);
+            // get a certain subset of further entities related to these new entities
+            m = addSecondLevelLinkedEntities(m);
             m = constructForVIVO(m);
             result = m;
         } catch (IOException e) {
@@ -80,6 +98,24 @@ public class Rcuk extends DataSourceBase implements DataSource {
         }
     }
     
+    private int getTotalPages(Model projectsRdf) {
+        int totalPages = 1;
+        NodeIterator nodeIt = projectsRdf.listObjectsOfProperty(TOTAL_PAGES);
+        while(nodeIt.hasNext()) { 
+            // should be only once, but if not we'll just take the last value
+            RDFNode node = nodeIt.next();
+            if(node.isLiteral()) {
+                try {
+                    totalPages = node.asLiteral().getInt();
+                } catch (Exception e) {
+                    log.error("Invalid totalPages value " 
+                            + node.asLiteral().getLexicalForm());
+                }
+            }
+        }
+        return totalPages;
+    }
+    
     public List<String> getQueryTerms() {
         return this.queryTerms;
     }
@@ -88,22 +124,18 @@ public class Rcuk extends DataSourceBase implements DataSource {
         return this.result;
     }
     
-    private List<String> getProjects(List<String> queryTerms) 
+    private String getProjects(String queryTerm, int pageNum) 
             throws URISyntaxException {
-        List<String> projects = new ArrayList<String>();
-        for (String queryTerm : queryTerms) {
-            URIBuilder builder = new URIBuilder(API_URL + "projects");
-            builder.addParameter("q", queryTerm);
-            builder.addParameter("s", Integer.toString(MAX_SIZE, 10));
-            String url = builder.build().toString();
-            try {
-                String response = httpUtils.getHttpResponse(url);
-                projects.add(response);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+        URIBuilder builder = new URIBuilder(API_URL + "projects");
+        builder.addParameter("q", queryTerm);
+        builder.addParameter("s", Integer.toString(MAX_SIZE, 10));
+        builder.addParameter("p", Integer.toString(pageNum, 10));
+        String url = builder.build().toString();
+        try {
+            return httpUtils.getHttpResponse(url);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        return projects;
     }
     
     /**
@@ -145,9 +177,34 @@ public class Rcuk extends DataSourceBase implements DataSource {
      * @return m model with statements added describing linked entities
      */
     private Model addLinkedEntities(Model m) throws IOException, 
-            InterruptedException{
-        String queryStr = loadQuery(SPARQL_RESOURCE_DIR 
+            InterruptedException {
+        return addLinkedEntities(m, SPARQL_RESOURCE_DIR 
                 + "getLinkedEntityURIs.sparql");
+    }
+    
+    /**
+     * Traverse <link> nodes in the RCUK data and add RDF for the related 
+     * entities, using a more restricted SPARQL query to avoid pulling in
+     * excessive unrelated nodes
+     * @param m model containing link nodes
+     * @return m model with statements added describing linked entities
+     */
+    private Model addSecondLevelLinkedEntities(Model m) throws IOException, 
+            InterruptedException {
+        return addLinkedEntities(m, SPARQL_RESOURCE_DIR 
+                + "getLinkedEntityURIsLevel2.sparql");
+    }
+    
+    /**
+     * Traverse <link> nodes in the RCUK data and add RDF for the related 
+     * entities
+     * @param m model containing link nodes
+     * @param queryName the name of the SPARQL query to load
+     * @return m model with statements added describing linked entities
+     */
+    private Model addLinkedEntities(Model m, String queryName) throws IOException, 
+            InterruptedException{
+        String queryStr = loadQuery(queryName);
         QueryExecution qe = QueryExecutionFactory.create(queryStr, m);
         Set<String> linkedURIs = new HashSet<String>();
         try {
