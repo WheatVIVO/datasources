@@ -31,4 +31,5 @@ SELECT DISTINCT ?x WHERE {
     }
     # some employment links in the data are dirty and link to all organizations
     FILTER (?xuri != <http://gtr.rcuk.ac.uk:80/gtr/api/organisations/>)
-} ORDER BY ?x 
+    FILTER (!REGEX(STR(?x), "/persons/"))
+} ORDER BY ?x LIMIT 200
