@@ -9,6 +9,8 @@ import org.wheatinitiative.vivo.datasource.connector.Rcuk;
 import org.wheatinitiative.vivo.datasource.connector.Usda;
 import org.wheatinitiative.vivo.datasource.connector.WheatInitiative;
 
+import com.hp.hpl.jena.rdf.model.Model;
+
 public class LaunchIngest {
 
     public static void main(String[] args) {
@@ -35,7 +37,10 @@ public class LaunchIngest {
                         + connectorName);
             }
             connector.run();
-            connector.getResult().write(System.out, "N3");
+            Model result = connector.getResult();
+            if(result != null) {
+                result.write(System.out, "N3");    
+            }
         }
     }
     

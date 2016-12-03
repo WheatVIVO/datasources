@@ -25,6 +25,11 @@ public class XmlToRdf {
     private static final String DROP_EMPTY_NODES_XSL = "/xsl/dropEmptyNodes.xsl";
     private static boolean LICENSED_EDITION = true;
     
+    public static final String GENERIC_NS = 
+            "http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/";
+    public static final String VITRO_NS = 
+            "http://vitro.mannlib.cornell.edu/ns/vitro/0.7#";
+    
     /**
      * Reads XML from an InputStream and "lifts" it to RDF
      * @param xmlInputStream
