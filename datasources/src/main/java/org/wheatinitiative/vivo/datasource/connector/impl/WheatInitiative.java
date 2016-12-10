@@ -1,6 +1,7 @@
-package org.wheatinitiative.vivo.datasource.connector;
+package org.wheatinitiative.vivo.datasource.connector.impl;
 
 import org.wheatinitiative.vivo.datasource.DataSource;
+import org.wheatinitiative.vivo.datasource.connector.DataSourceBase;
 
 import com.hp.hpl.jena.rdf.model.Model;
 

@@ -4,10 +4,10 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.wheatinitiative.vivo.datasource.connector.Prodinra;
-import org.wheatinitiative.vivo.datasource.connector.Rcuk;
-import org.wheatinitiative.vivo.datasource.connector.Usda;
-import org.wheatinitiative.vivo.datasource.connector.WheatInitiative;
+import org.wheatinitiative.vivo.datasource.connector.impl.Prodinra;
+import org.wheatinitiative.vivo.datasource.connector.impl.Rcuk;
+import org.wheatinitiative.vivo.datasource.connector.impl.Usda;
+import org.wheatinitiative.vivo.datasource.connector.impl.WheatInitiative;
 
 import com.hp.hpl.jena.rdf.model.Model;
 

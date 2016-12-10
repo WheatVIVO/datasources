@@ -3,6 +3,8 @@ package org.wheatinitiative.vivo.datasource.connector;
 import java.util.Arrays;
 import java.util.List;
 
+import org.wheatinitiative.vivo.datasource.connector.impl.Rcuk;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;

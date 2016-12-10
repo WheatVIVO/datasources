@@ -9,6 +9,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.client.utils.URIBuilder;
+import org.wheatinitiative.vivo.datasource.connector.impl.Usda;
 import org.wheatinitiative.vivo.datasource.util.http.HttpUtils;
 import org.wheatinitiative.vivo.datasource.util.xml.XmlToRdf;
 
@@ -20,7 +21,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 
-public class VivoDataSource {
+public class VivoDataSource extends DataSourceBase {
 
     private static final String SEARCH_CONTROLLER = "/search";
     private static final String QUERYTEXT_PARAM = "querytext";

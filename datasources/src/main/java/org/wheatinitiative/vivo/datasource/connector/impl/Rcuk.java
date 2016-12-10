@@ -1,4 +1,4 @@
-package org.wheatinitiative.vivo.datasource.connector;
+package org.wheatinitiative.vivo.datasource.connector.impl;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -13,6 +13,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.client.utils.URIBuilder;
 import org.wheatinitiative.vivo.datasource.DataSource;
+import org.wheatinitiative.vivo.datasource.connector.DataSourceBase;
 import org.wheatinitiative.vivo.datasource.util.http.HttpUtils;
 import org.wheatinitiative.vivo.datasource.util.xml.XmlToRdf;
 
@@ -48,7 +49,7 @@ public class Rcuk extends DataSourceBase implements DataSource {
     private static final String SPARQL_RESOURCE_DIR = "/rcuk/sparql/";
     private static final int MAX_SIZE = 100; // number of search results that can
                                              // be retrieved in a single request
-    private static final int MAX_PAGES = 3;  // maximum number of pages to retrieve
+    private static final int MAX_PAGES = 2;  // maximum number of pages to retrieve
                                              // for any search term
     private static final int MIN_REST_MILLIS = 350; // ms to wait between
                                                     // subsequent API calls
