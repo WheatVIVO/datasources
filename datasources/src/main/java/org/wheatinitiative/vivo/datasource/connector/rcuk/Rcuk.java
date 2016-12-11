@@ -1,7 +1,8 @@
-package org.wheatinitiative.vivo.datasource.connector.impl;
+package org.wheatinitiative.vivo.datasource.connector.rcuk;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,17 +57,14 @@ public class Rcuk extends DataSourceBase implements DataSource {
     
     private HttpUtils httpUtils = new HttpUtils();
     private XmlToRdf xmlToRdf = new XmlToRdf();
-    private List<String> queryTerms;
+    //private List<String> queryTerms;
     private Model result;
-    
-    public Rcuk(List<String> queryTerms) {
-        this.queryTerms = queryTerms;
-    }
     
     public void run() {
         // TODO progress percentage calculation from totals
         // TODO retrieving subsequent pages from API
         // TODO construct search terms with projects so we can take intersections?
+        List<String> queryTerms = getQueryTerms();
         try {
             Model m = ModelFactory.createDefaultModel();
             int totalRecords = 0;
@@ -95,7 +93,8 @@ public class Rcuk extends DataSourceBase implements DataSource {
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e); // for now
+            this.getStatus().setRunning(false);
+            // throw new RuntimeException(e); // for now
         }
     }
     
@@ -117,8 +116,17 @@ public class Rcuk extends DataSourceBase implements DataSource {
         return totalPages;
     }
     
-    public List<String> getQueryTerms() {
-        return this.queryTerms;
+    @SuppressWarnings("unchecked")
+    private List<String> getQueryTerms() {
+        Object param = getConfiguration().getParameterMap().get("queryTerms");
+        if(param instanceof List<?>) {
+            @SuppressWarnings("rawtypes")
+            List queryTerms = (List) param;
+            if(queryTerms.isEmpty() || queryTerms.get(0) instanceof String) {
+                return (List<String>) queryTerms;    
+            }
+        }
+        return new ArrayList<String>();
     }
     
     public Model getResult() {
@@ -133,6 +141,7 @@ public class Rcuk extends DataSourceBase implements DataSource {
         builder.addParameter("p", Integer.toString(pageNum, 10));
         String url = builder.build().toString();
         try {
+            log.info(url); // TODO level debug
             return httpUtils.getHttpResponse(url);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -221,6 +230,7 @@ public class Rcuk extends DataSourceBase implements DataSource {
             qe.close();
         }
         for (String uri : linkedURIs) {
+            log.info(uri); // TODO level debug
             String doc = httpUtils.getHttpResponse(uri);
             m.add(transformToRdf(doc));
             Thread.currentThread();

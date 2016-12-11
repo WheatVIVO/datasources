@@ -1,4 +1,4 @@
-package org.wheatinitiative.vivo.datasource.connector.impl;
+package org.wheatinitiative.vivo.datasource.connector.wheatinitiative;
 
 import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.connector.DataSourceBase;

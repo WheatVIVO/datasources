@@ -9,7 +9,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.client.utils.URIBuilder;
-import org.wheatinitiative.vivo.datasource.connector.impl.Usda;
+import org.wheatinitiative.vivo.datasource.connector.usda.Usda;
 import org.wheatinitiative.vivo.datasource.util.http.HttpUtils;
 import org.wheatinitiative.vivo.datasource.util.xml.XmlToRdf;
 

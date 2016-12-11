@@ -1,4 +1,4 @@
-package org.wheatinitiative.vivo.datasource.connector.impl;
+package org.wheatinitiative.vivo.datasource.connector.usda;
 
 import java.util.HashSet;
 import java.util.List;

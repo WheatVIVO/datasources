@@ -3,7 +3,7 @@ package org.wheatinitiative.vivo.datasource.connector;
 import java.util.Arrays;
 import java.util.List;
 
-import org.wheatinitiative.vivo.datasource.connector.impl.Rcuk;
+import org.wheatinitiative.vivo.datasource.connector.rcuk.Rcuk;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -28,13 +28,14 @@ public class RcukTest extends TestCase {
     }
 
     /**
-     * Test that the object is constructed properly
+     * Test that the configuration getter/setters work properly
      */
-    public void testConstructor()
+    public void testConfiguration()
     {
         List<String> queryTerms = Arrays.asList("wheat", "cheese", "grâu", "brânzã");
-        Rcuk rcuk = new Rcuk(queryTerms);
-        assertEquals(queryTerms, rcuk.getQueryTerms());
+        Rcuk rcuk = new Rcuk();
+        rcuk.getConfiguration().getParameterMap().put("queryTerms", queryTerms);
+        assertEquals(queryTerms, rcuk.getConfiguration().getParameterMap().get("queryTerms"));
     }
     
 }

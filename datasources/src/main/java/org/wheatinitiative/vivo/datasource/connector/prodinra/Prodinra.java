@@ -1,4 +1,4 @@
-package org.wheatinitiative.vivo.datasource.connector.impl;
+package org.wheatinitiative.vivo.datasource.connector.prodinra;
 
 import java.io.IOException;
 import java.util.Arrays;

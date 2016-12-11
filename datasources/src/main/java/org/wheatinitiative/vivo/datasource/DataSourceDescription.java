@@ -4,6 +4,15 @@ public class DataSourceDescription {
 
     private DataSourceConfiguration configuration = null;
     private DataSourceStatus status = null;
+
+    // Simple constructor for Jackson
+    public DataSourceDescription() {}
+    
+    public DataSourceDescription(DataSourceConfiguration configuration, 
+            DataSourceStatus status) {
+        this.configuration = configuration;
+        this.status = status;
+    }
     
     public DataSourceConfiguration getConfiguration() {
         return this.configuration;

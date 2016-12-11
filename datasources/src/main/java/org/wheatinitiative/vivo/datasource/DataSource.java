@@ -8,6 +8,8 @@ public interface DataSource extends Runnable {
     
     public abstract DataSourceConfiguration getConfiguration();
     
+    public void setConfiguration(DataSourceConfiguration configuration);
+    
     public abstract DataSourceStatus getStatus();
     
 }

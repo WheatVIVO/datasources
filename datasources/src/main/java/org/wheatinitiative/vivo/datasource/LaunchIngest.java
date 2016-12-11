@@ -4,10 +4,10 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.wheatinitiative.vivo.datasource.connector.impl.Prodinra;
-import org.wheatinitiative.vivo.datasource.connector.impl.Rcuk;
-import org.wheatinitiative.vivo.datasource.connector.impl.Usda;
-import org.wheatinitiative.vivo.datasource.connector.impl.WheatInitiative;
+import org.wheatinitiative.vivo.datasource.connector.prodinra.Prodinra;
+import org.wheatinitiative.vivo.datasource.connector.rcuk.Rcuk;
+import org.wheatinitiative.vivo.datasource.connector.usda.Usda;
+import org.wheatinitiative.vivo.datasource.connector.wheatinitiative.WheatInitiative;
 
 import com.hp.hpl.jena.rdf.model.Model;
 
@@ -25,7 +25,9 @@ public class LaunchIngest {
             String connectorName = args[0];
             DataSource connector = null;
             if("rcuk".equals(connectorName)) {
-                connector = new Rcuk(queryTerms);
+                connector = new Rcuk();
+                connector.getConfiguration().getParameterMap().put(
+                        "queryTerms", queryTerms);
             } else if ("prodinra".equals(connectorName)) {
                 connector = new Prodinra(queryTerms);
             } else if ("usda".equals(connectorName)) {

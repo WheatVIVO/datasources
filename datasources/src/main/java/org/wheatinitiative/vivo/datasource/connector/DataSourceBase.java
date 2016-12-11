@@ -7,8 +7,6 @@ import java.io.InputStreamReader;
 
 import org.wheatinitiative.vivo.datasource.DataSourceConfiguration;
 import org.wheatinitiative.vivo.datasource.DataSourceStatus;
-import org.wheatinitiative.vivo.datasource.impl.DataSourceConfigurationImpl;
-import org.wheatinitiative.vivo.datasource.impl.DataSourceStatusImpl;
 import org.wheatinitiative.vivo.datasource.util.xml.rdf.RdfUtils;
 
 import com.hp.hpl.jena.query.QueryExecution;
@@ -19,10 +17,11 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 
 public class DataSourceBase {
 
+    protected boolean stopRequested = false;
     protected RdfUtils rdfUtils;
-    protected DataSourceStatus status = new DataSourceStatusImpl();
+    protected DataSourceStatus status = new DataSourceStatus();
     protected DataSourceConfiguration configuration = 
-            new DataSourceConfigurationImpl();
+            new DataSourceConfiguration();
     
     public DataSourceBase() {
         this.rdfUtils = new RdfUtils();
@@ -32,8 +31,16 @@ public class DataSourceBase {
         return this.configuration;
     }
     
+    public void setConfiguration(DataSourceConfiguration configuration) {
+        this.configuration = configuration;
+    }
+    
     public DataSourceStatus getStatus() {
         return this.status;
+    }
+    
+    public void terminate() {
+        this.stopRequested = true;
     }
     
     /**
