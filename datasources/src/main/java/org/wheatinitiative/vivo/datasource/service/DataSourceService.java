@@ -55,6 +55,7 @@ public abstract class DataSourceService extends HttpServlet {
         if(isStartRequested(description, dataSource)) {
             log.info("start requested");
             startWork(dataSource);
+            waitABitForWorkToStart(dataSource);
         } else if (isStopRequested(description, dataSource)) {
             log.info("stop requested");
             stopWork(dataSource); 
@@ -62,6 +63,24 @@ public abstract class DataSourceService extends HttpServlet {
             log.info("neither start nor stop requested");
         }
         doGet(request, response);
+    }
+    
+    
+    /**
+     * Wait a bit to see if the work starts before sending the current
+     * status back to the client 
+     * @param dataSource
+     */
+    private void waitABitForWorkToStart(DataSource dataSource) {
+        int remainingSleeps = 5; // * 100 ms
+        while (remainingSleeps > 0 && !dataSource.getStatus().isRunning()) {
+            remainingSleeps--;
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                return;
+            }
+        }
     }
     
     protected boolean isStartRequested(DataSourceDescription description, 
@@ -93,9 +112,13 @@ public abstract class DataSourceService extends HttpServlet {
     }
     
     protected void startWork(DataSource dataSource) {
-        if(workerThread != null) {
+        if(workerThread != null && workerThread.get() != null  
+                && workerThread.get().isAlive()) {
+            log.info("Thread already running");
+            log.info("Thread interrupted? " + workerThread.get().isInterrupted());
             // already running
         } else {
+            log.info("starting thread");
             Thread t = new Thread(dataSource);
             workerThread = new WeakReference<Thread>(t);
             t.start();
@@ -103,7 +126,8 @@ public abstract class DataSourceService extends HttpServlet {
     }
     
     protected void stopWork(DataSource dataSource) {
-        if(workerThread == null) {
+        if(workerThread == null || workerThread.get() == null 
+                && workerThread.get().isAlive()) {
             // already stopped
         } else {
             try {

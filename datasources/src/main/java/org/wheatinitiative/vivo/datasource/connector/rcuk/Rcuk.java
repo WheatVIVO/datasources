@@ -64,8 +64,9 @@ public class Rcuk extends DataSourceBase implements DataSource {
         // TODO progress percentage calculation from totals
         // TODO retrieving subsequent pages from API
         // TODO construct search terms with projects so we can take intersections?
-        List<String> queryTerms = getQueryTerms();
+        this.getStatus().setRunning(true);
         try {
+            List<String> queryTerms = getQueryTerms();
             Model m = ModelFactory.createDefaultModel();
             int totalRecords = 0;
             for(String queryTerm : queryTerms) {
@@ -88,14 +89,19 @@ public class Rcuk extends DataSourceBase implements DataSource {
             m = addSecondLevelLinkedEntities(m);
             m = constructForVIVO(m);
             result = m;
+            writeResultsToEndpoint(result);
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
+            log.info("interrupted");
+            // TODO any cleanup; running flag reset in finally block
+        } finally {
+            log.info("terminating");
             this.getStatus().setRunning(false);
-            // throw new RuntimeException(e); // for now
         }
+        log.info("done");
     }
     
     private int getTotalPages(Model projectsRdf) {

@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 
 import org.wheatinitiative.vivo.datasource.DataSourceConfiguration;
 import org.wheatinitiative.vivo.datasource.DataSourceStatus;
+import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
 import org.wheatinitiative.vivo.datasource.util.xml.rdf.RdfUtils;
 
 import com.hp.hpl.jena.query.QueryExecution;
@@ -22,6 +23,7 @@ public class DataSourceBase {
     protected DataSourceStatus status = new DataSourceStatus();
     protected DataSourceConfiguration configuration = 
             new DataSourceConfiguration();
+    protected SparqlEndpoint sparqlEndpoint;
     
     public DataSourceBase() {
         this.rdfUtils = new RdfUtils();
@@ -33,6 +35,7 @@ public class DataSourceBase {
     
     public void setConfiguration(DataSourceConfiguration configuration) {
         this.configuration = configuration;
+        this.sparqlEndpoint = getEndpointFromConfiguration(configuration);
     }
     
     public DataSourceStatus getStatus() {
@@ -93,6 +96,33 @@ public class DataSourceBase {
             }
         }
         return fileContents.toString();
+    }
+    
+    protected SparqlEndpoint getSparqlEndpoint() {
+        return this.sparqlEndpoint;
+    }
+    
+    protected void writeResultsToEndpoint(Model results) {
+        String graphURI = getConfiguration().getResultsGraphURI();
+        if(graphURI == null) {
+            throw new RuntimeException("Results graph URI cannot be null");
+        }
+        getSparqlEndpoint().update("CLEAR GRAPH <" + graphURI + ">");
+        getSparqlEndpoint().writeModel(results, graphURI);
+    }
+    
+    protected SparqlEndpoint getEndpointFromConfiguration(
+            DataSourceConfiguration config) {
+        if(config == null) {
+            throw new RuntimeException(
+                    "DataSourceConfiguration cannot be null");
+        } else if (config.getEndpointParameters() == null) {
+            throw new RuntimeException("Endpoint parameters cannot be null");
+        } else if (config.getEndpointParameters()
+                .getEndpointURI() == null) {
+            throw new RuntimeException("Endpoint URI cannot be null");
+        }
+        return new SparqlEndpoint(config.getEndpointParameters());
     }
     
 }
