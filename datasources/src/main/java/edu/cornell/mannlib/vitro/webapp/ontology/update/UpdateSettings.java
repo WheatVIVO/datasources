@@ -2,24 +2,26 @@
 
 package edu.cornell.mannlib.vitro.webapp.ontology.update;
 
+import java.net.URI;
+
 import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.rdf.model.Model;
 
 public class UpdateSettings {
 
-    private String dataDir;
-    private String sparqlConstructAdditionsDir;
-    private String sparqlConstructAdditionsPass2Dir;
-    private String sparqlConstructDeletionsDir;
-    private String askUpdatedQueryFile;
-    private String successAssertionsFile;
+    private URI dataDir;
+    private URI sparqlConstructAdditionsDir;
+    private URI sparqlConstructAdditionsPass2Dir;
+    private URI sparqlConstructDeletionsDir;
+    private URI askUpdatedQueryFile;
+    private URI successAssertionsFile;
     private String successRDFFormat = "N3";
-    private String diffFile;
-    private String logFile;
-    private String errorLogFile;
-    private String addedDataFile;
-    private String removedDataFile;
-    private String qualifiedPropertyConfigFile;
+    private URI diffFile;
+    private URI logFile;
+    private URI errorLogFile;
+    private URI addedDataFile;
+    private URI removedDataFile;
+    private URI qualifiedPropertyConfigFile;
     private String defaultNamespace;
     private OntModel oldTBoxModel;
     private OntModel newTBoxModel;
@@ -36,40 +38,40 @@ public class UpdateSettings {
     private OntModel loadedAtStartupDisplayModel;
     private OntModel oldDisplayModelVivoListViewConfig;
     
-    public String getDataDir() {
+    public URI getDataDir() {
         return dataDir;
     }
-    public void setDataDir(String dataDir) {
+    public void setDataDir(URI dataDir) {
         this.dataDir = dataDir;
     }
-    public String getSparqlConstructAdditionsDir() {
+    public URI getSparqlConstructAdditionsDir() {
         return sparqlConstructAdditionsDir;
     }
-    public void setSparqlConstructAdditionsPass2Dir(String sparqlConstructAdditionsDir) {
+    public void setSparqlConstructAdditionsPass2Dir(URI sparqlConstructAdditionsDir) {
         this.sparqlConstructAdditionsPass2Dir = sparqlConstructAdditionsDir;
     }
-    public String getSparqlConstructAdditionsPass2Dir() {
+    public URI getSparqlConstructAdditionsPass2Dir() {
         return sparqlConstructAdditionsPass2Dir;
     }
-    public void setSparqlConstructAdditionsDir(String sparqlConstructAdditionsDir) {
+    public void setSparqlConstructAdditionsDir(URI sparqlConstructAdditionsDir) {
         this.sparqlConstructAdditionsDir = sparqlConstructAdditionsDir;
     }
-    public String getSparqlConstructDeletionsDir() {
+    public URI getSparqlConstructDeletionsDir() {
         return sparqlConstructDeletionsDir;
     }
-    public void setSparqlConstructDeletionsDir(String sparqlConstructDeletionsDir) {
+    public void setSparqlConstructDeletionsDir(URI sparqlConstructDeletionsDir) {
         this.sparqlConstructDeletionsDir = sparqlConstructDeletionsDir;
     }
-    public String getAskUpdatedQueryFile() {
+    public URI getAskUpdatedQueryFile() {
         return askUpdatedQueryFile;
     }
-    public void setAskUpdatedQueryFile(String askQueryFile) {
+    public void setAskUpdatedQueryFile(URI askQueryFile) {
         this.askUpdatedQueryFile = askQueryFile;
     }
-    public String getSuccessAssertionsFile() {
+    public URI getSuccessAssertionsFile() {
         return successAssertionsFile;
     }
-    public void setSuccessAssertionsFile(String successAssertionsFile) {
+    public void setSuccessAssertionsFile(URI successAssertionsFile) {
         this.successAssertionsFile = successAssertionsFile;
     }
     public String getSuccessRDFFormat() {
@@ -78,40 +80,40 @@ public class UpdateSettings {
     public void setSuccessRDFFormat(String successRDFFormat) {
         this.successRDFFormat = successRDFFormat;
     }
-    public String getDiffFile() {
+    public URI getDiffFile() {
         return diffFile;
     }
-    public void setDiffFile(String diffFile) {
+    public void setDiffFile(URI diffFile) {
         this.diffFile = diffFile;
     }
-    public String getLogFile() {
+    public URI getLogFile() {
         return logFile;
     }
-    public void setLogFile(String logFile) {
+    public void setLogFile(URI logFile) {
         this.logFile = logFile;
     }
-    public String getErrorLogFile() {
+    public URI getErrorLogFile() {
         return errorLogFile;
     }
-    public void setErrorLogFile(String errorLogFile) {
+    public void setErrorLogFile(URI errorLogFile) {
         this.errorLogFile = errorLogFile;
     }
-    public String getAddedDataFile() {
+    public URI getAddedDataFile() {
         return addedDataFile;
     }
-    public void setAddedDataFile(String addedDataFile) {
+    public void setAddedDataFile(URI addedDataFile) {
         this.addedDataFile = addedDataFile;
     }
-    public String getRemovedDataFile() {
+    public URI getRemovedDataFile() {
         return removedDataFile;
     }
-    public void setRemovedDataFile(String removedDataFile) {
+    public void setRemovedDataFile(URI removedDataFile) {
         this.removedDataFile = removedDataFile;
     }
-    public String getQualifiedPropertyConfigFile() {
+    public URI getQualifiedPropertyConfigFile() {
         return qualifiedPropertyConfigFile;
     }
-    public void setQualifiedPropertyConfigFile(String qualifiedPropertyConfigFile) {
+    public void setQualifiedPropertyConfigFile(URI qualifiedPropertyConfigFile) {
         this.qualifiedPropertyConfigFile = qualifiedPropertyConfigFile;
     }
     public String getDefaultNamespace() {

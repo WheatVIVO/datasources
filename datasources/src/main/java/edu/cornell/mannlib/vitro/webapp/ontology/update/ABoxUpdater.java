@@ -41,7 +41,6 @@ public class ABoxUpdater {
     private OntModel oldTboxModel;
     private OntModel newTboxModel;
     private Dataset dataset;
-    private OntModel newTBoxAnnotationsModel;
     //private TBoxUpdater tboxUpdater;
     private OntClass OWL_THING = (ModelFactory.createOntologyModel(
             OntModelSpec.OWL_MEM)).createClass(OWL.Thing.getURI());
@@ -60,10 +59,12 @@ public class ABoxUpdater {
      *                    
      */
     public ABoxUpdater(UpdateSettings settings) {      
-        this.dataset = DatasetFactory.assemble(settings.getABoxModel());
+        this.dataset = DatasetFactory.createMem();
+        this.dataset.addNamedModel("http://vivo.example.org/graph/abox", 
+                settings.getABoxModel());
         this.oldTboxModel = settings.getOldTBoxModel();
         this.newTboxModel = settings.getNewTBoxModel();
-        this.newTBoxAnnotationsModel = settings.getNewTBoxAnnotationsModel();
+        //this.newTBoxAnnotationsModel = settings.getNewTBoxAnnotationsModel();
         //this.tboxUpdater = new TBoxUpdater(settings, logger, record);
     }
     
@@ -215,12 +216,7 @@ public class ABoxUpdater {
        
         //logger.log("Processing a class addition of class " + change.getDestinationURI());
         
-        OntClass addedClass = newTboxModel.getOntClass(change.getDestinationURI());
-        
-        if (addedClass == null) {
-            log.error("didn't find the added class " + change.getDestinationURI() + " in the new model.");
-            return;
-        }
+        OntClass addedClass = newTboxModel.createClass(change.getDestinationURI());
         
         List<OntClass> classList = addedClass.listSuperClasses(true).toList();
         List<OntClass> namedClassList = new ArrayList<OntClass>();
@@ -401,7 +397,6 @@ public class ABoxUpdater {
     }
     
     public void processPropertyChanges(List<AtomicOntologyChange> changes) throws IOException {
-                
         Iterator<AtomicOntologyChange> propItr = changes.iterator();
         while(propItr.hasNext()){
             AtomicOntologyChange propChangeObj = propItr.next();
@@ -558,18 +553,13 @@ public class ABoxUpdater {
     
     private void renameProperty(AtomicOntologyChange propObj) throws IOException {
         
-        log.error("Processing a property rename from: " + propObj.getSourceURI() + " to " + propObj.getDestinationURI());
+        log.debug("Processing a property rename from: " + propObj.getSourceURI() + " to " + propObj.getDestinationURI());
         
         OntProperty oldProperty = oldTboxModel.getOntProperty(propObj.getSourceURI());
-        OntProperty newProperty = newTboxModel.getOntProperty(propObj.getDestinationURI());
+        Property newProperty = ResourceFactory.createProperty(propObj.getDestinationURI());
         
         if (oldProperty == null) {
             log.error("didn't find the " + propObj.getSourceURI() + " property in the old TBox");
-            return;
-        }
-        
-        if (newProperty == null) {
-            log.error("didn't find the " + propObj.getDestinationURI() + " property in the new TBox");
             return;
         }
         

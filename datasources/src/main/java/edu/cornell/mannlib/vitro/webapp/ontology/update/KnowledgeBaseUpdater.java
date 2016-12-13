@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,6 +25,7 @@ import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
@@ -44,7 +46,7 @@ public class KnowledgeBaseUpdater {
     }
     
     public boolean update() throws IOException {   
-                    
+                
 //        if (this.logger == null) {
 //            this.logger = new SimpleChangeLogger(settings.getLogFile(), settings.getErrorLogFile());
 //        }
@@ -84,13 +86,11 @@ public class KnowledgeBaseUpdater {
     private boolean performUpdate() throws Exception {
         
         List<AtomicOntologyChange> rawChanges = getAtomicOntologyChanges();
-        
-        AtomicOntologyChangeLists changes = new AtomicOntologyChangeLists(rawChanges,settings.getNewTBoxModel(),settings.getOldTBoxModel());
-                
+        AtomicOntologyChangeLists changes = null;
+        changes = new AtomicOntologyChangeLists(rawChanges,settings.getNewTBoxModel(),settings.getOldTBoxModel());
         // update ABox data any time
         log.debug("performing SPARQL CONSTRUCT additions");
         performSparqlConstructs(settings.getSparqlConstructAdditionsDir(), settings.getABoxModel(), ADD);
-        
         log.debug("performing SPARQL CONSTRUCT retractions");
         performSparqlConstructs(settings.getSparqlConstructDeletionsDir(), settings.getABoxModel(), RETRACT);
         
@@ -98,11 +98,11 @@ public class KnowledgeBaseUpdater {
         updateABox(changes);
         
         log.debug("performing post-processing SPARQL CONSTRUCT additions");
-        performSparqlConstructs(settings.getSparqlConstructAdditionsDir() + "/post/", 
+        performSparqlConstructs(settings.getSparqlConstructAdditionsDir().resolve("/post/"), 
                 settings.getABoxModel(), ADD);
         
         log.debug("performing post-processing SPARQL CONSTRUCT retractions");
-        performSparqlConstructs(settings.getSparqlConstructDeletionsDir() + "/post/", 
+        performSparqlConstructs(settings.getSparqlConstructDeletionsDir().resolve("/post/"), 
                 settings.getABoxModel(), RETRACT);
         
         return !rawChanges.isEmpty();
@@ -122,7 +122,7 @@ public class KnowledgeBaseUpdater {
      * @param writeModel
      * @param add (add = true; retract = false)
      */
-    private void performSparqlConstructs(String sparqlConstructDir, Model aboxModel,
+    private void performSparqlConstructs(URI sparqlConstructDir, Model aboxModel,
             boolean add)   throws IOException {
         File sparqlConstructDirectory = new File(sparqlConstructDir);
         log.debug("Using SPARQL CONSTRUCT directory " + sparqlConstructDirectory);
@@ -266,9 +266,13 @@ public class KnowledgeBaseUpdater {
     
     private void updateABox(AtomicOntologyChangeLists changes) 
             throws IOException {    
-        ABoxUpdater aboxUpdater = new ABoxUpdater(settings);
+        try {
+            ABoxUpdater aboxUpdater = new ABoxUpdater(settings);
         aboxUpdater.processPropertyChanges(changes.getAtomicPropertyChanges());
         aboxUpdater.processClassChanges(changes.getAtomicClassChanges());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
     
     /**
@@ -327,6 +331,10 @@ public class KnowledgeBaseUpdater {
                     } else if ("Class".equals(changeObj.getNotes())) {
                          atomicClassChanges.add(changeObj);
                     } else{
+                        Model wtf = ModelFactory.createDefaultModel();
+                        wtf.add(
+                         oldTboxModel.listStatements(oldTboxModel.getResource(changeObj.getSourceURI()), null, (RDFNode) null)
+                         );
                          log.warn("WARNING: Source URI is neither a Property" +
                                     " nor a Class. " + "Change Object skipped for sourceURI: " + changeObj.getSourceURI());
                     }
