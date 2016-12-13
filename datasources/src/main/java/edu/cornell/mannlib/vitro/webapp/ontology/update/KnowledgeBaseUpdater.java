@@ -2,14 +2,8 @@
 
 package edu.cornell.mannlib.vitro.webapp.ontology.update;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -18,11 +12,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.jena.iri.IRI;
 import org.apache.jena.iri.IRIFactory;
+import org.wheatinitiative.vivo.datasource.util.classpath.ClasspathUtils;
 import org.wheatinitiative.vivo.datasource.util.xml.rdf.RdfUtils;
 
 import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryExecutionFactory;
+import com.hp.hpl.jena.query.QueryParseException;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.RDFNode;
@@ -98,16 +94,18 @@ public class KnowledgeBaseUpdater {
         updateABox(changes);
         
         log.debug("performing post-processing SPARQL CONSTRUCT additions");
-        performSparqlConstructs(settings.getSparqlConstructAdditionsDir().resolve("/post/"), 
+        performSparqlConstructs(settings.getSparqlConstructAdditionsDir() + "/post/", 
                 settings.getABoxModel(), ADD);
         
         log.debug("performing post-processing SPARQL CONSTRUCT retractions");
-        performSparqlConstructs(settings.getSparqlConstructDeletionsDir().resolve("/post/"), 
+        performSparqlConstructs(settings.getSparqlConstructDeletionsDir() + "/post/", 
                 settings.getABoxModel(), RETRACT);
         
         return !rawChanges.isEmpty();
 
     }
+    
+    
     
     private static final boolean ADD = true;
     private static final boolean RETRACT = !ADD;
@@ -122,11 +120,14 @@ public class KnowledgeBaseUpdater {
      * @param writeModel
      * @param add (add = true; retract = false)
      */
-    private void performSparqlConstructs(URI sparqlConstructDir, Model aboxModel,
+    private void performSparqlConstructs(String sparqlConstructDir, Model aboxModel,
             boolean add)   throws IOException {
-        File sparqlConstructDirectory = new File(sparqlConstructDir);
-        log.debug("Using SPARQL CONSTRUCT directory " + sparqlConstructDirectory);
-        if (!sparqlConstructDirectory.isDirectory()) {
+        ClasspathUtils utils = new ClasspathUtils();
+        List<String> sparqlFiles = new ArrayList<String>();
+        try {
+            sparqlFiles = utils.listFilesInDirectory(sparqlConstructDir);
+            log.debug("Using SPARQL CONSTRUCT directory " + sparqlConstructDir);
+        } catch (Exception e) {
             String logMsg = this.getClass().getName() + 
                     "performSparqlConstructs() expected to find a directory " +
                     " at " + sparqlConstructDir + ". Unable to execute " +
@@ -135,38 +136,25 @@ public class KnowledgeBaseUpdater {
             log.error(logMsg);
             return;
         }
-        List<File> sparqlFiles = Arrays.asList(sparqlConstructDirectory.listFiles());
         Collections.sort(sparqlFiles); // queries may depend on being run in a certain order
-        
-        for (File sparqlFile : sparqlFiles) {   
-            if(sparqlFile.isDirectory()) {
-                continue;
-            }
-            StringBuffer fileContents = new StringBuffer();
-            try {
-                BufferedReader reader = new BufferedReader(new FileReader(sparqlFile));
-                String ln;
-                while ( (ln = reader.readLine()) != null) {
-                    fileContents.append(ln).append('\n');
-                }
-            } catch (FileNotFoundException fnfe) {
-                String logMsg = "WARNING: performSparqlConstructs() could not find " +
-                        " SPARQL CONSTRUCT file " + sparqlFile + ". Skipping.";
-                //logger.log(logMsg);
-                log.info(logMsg);
-                continue;
-            }   
+        for (String sparqlFile : sparqlFiles) {      
             Model anonModel = ModelFactory.createDefaultModel();
             try {
-                log.debug("\t\tprocessing SPARQL construct query from file " + sparqlFile.getName());
+                log.debug("\t\tprocessing SPARQL construct query from file " + sparqlFile);
                 
                 anonModel = ModelFactory.createDefaultModel();
-                String queryStr = fileContents.toString();
-                QueryExecution qe = QueryExecutionFactory.create(queryStr, aboxModel);
+                String queryStr = utils.loadQuery(sparqlFile);
                 try {
-                    qe.execConstruct(anonModel);
-                } finally {
-                    qe.close();
+                    QueryExecution qe = QueryExecutionFactory.create(queryStr, aboxModel);
+                    try {
+                        qe.execConstruct(anonModel);
+                    } finally {
+                        qe.close();
+                    }
+                } catch (QueryParseException e) {
+                    // we don't really know anymore what might be a directory
+                    log.info("Skipping SPARQL file " + sparqlFile);
+                    log.debug(e, e);
                 }
                 
                 long num = anonModel.size();
@@ -174,8 +162,7 @@ public class KnowledgeBaseUpdater {
                     String logMsg = (add ? "Added " : "Removed ") + num + 
                             " statement"  + ((num > 1) ? "s" : "") + 
                             " using the SPARQL construct query from file " + 
-                            sparqlFile.getParentFile().getName() +
-                            "/" + sparqlFile.getName();
+                            sparqlFile;
                     log.info(logMsg);
                     log.info(logMsg);
                 }
@@ -274,26 +261,6 @@ public class KnowledgeBaseUpdater {
             e.printStackTrace();
         }
     }
-    
-    /**
-     * loads a SPARQL ASK query from a text file
-     * @param filePath
-     * @return the query string or null if file not found
-     */
-    public static String loadSparqlQuery(String filePath) throws IOException {
-        
-        File file = new File(filePath); 
-        if (!file.exists()) {
-            throw new RuntimeException("SPARQL file not found at " + filePath);
-        }
-        BufferedReader reader = new BufferedReader(new FileReader(file));
-        StringBuffer fileContents = new StringBuffer();
-        String ln;      
-        while ((ln = reader.readLine()) != null) {
-            fileContents.append(ln).append('\n');
-        }
-        return fileContents.toString();             
-    }
 
     /**
      * A class that allows to access two different ontology change lists,
@@ -366,4 +333,7 @@ public class KnowledgeBaseUpdater {
         }       
         
     }   
+    
+   
+    
 }

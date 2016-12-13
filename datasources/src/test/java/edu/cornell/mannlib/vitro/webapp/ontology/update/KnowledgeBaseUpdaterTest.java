@@ -1,13 +1,11 @@
 package edu.cornell.mannlib.vitro.webapp.ontology.update;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.io.InputStream;
+
+import org.wheatinitiative.vivo.datasource.util.classpath.ClasspathUtils;
 
 import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.ontology.OntModelSpec;
@@ -20,18 +18,8 @@ public class KnowledgeBaseUpdaterTest extends TestCase {
 
     private static final String RESOURCE_PATH = "/vivo/update15to16/"; 
     
-    private URI getResourceURI(String relativePath) {
-        try {
-            URL url = this.getClass().getResource(
-                RESOURCE_PATH + relativePath);
-            if (url == null) {
-                return null;
-            } else {
-                return url.toURI();
-            }
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
+    private String resolveResource(String relativePath) {
+        return RESOURCE_PATH + relativePath;
     }
     
     public void testOneFiveToOneSix() {
@@ -48,23 +36,18 @@ public class KnowledgeBaseUpdaterTest extends TestCase {
         abox.read(new ByteArrayInputStream(onefive.getBytes()), null, "N3");
         settings.setABoxModel(abox);
         settings.setDefaultNamespace("http://vivo.example.org/individual/");
-        settings.setDiffFile(getResourceURI("diff.tab.txt"));
-        settings.setSparqlConstructAdditionsDir(getResourceURI(
+        settings.setDiffFile(resolveResource("diff.tab.txt"));
+        settings.setSparqlConstructAdditionsDir(resolveResource(
                 "sparqlConstructs/additions"));
-        settings.setSparqlConstructDeletionsDir(getResourceURI(
+        settings.setSparqlConstructDeletionsDir(resolveResource(
                 "sparqlConstructs/deletions"));
         OntModel oldTBoxModel = ModelFactory.createOntologyModel(
                 OntModelSpec.OWL_MEM);
-        URI oldTBoxDirURI = getResourceURI("oldVersion");
-        File oldTBoxDir = new File(oldTBoxDirURI);
-        File[] files = oldTBoxDir.listFiles();
-        for(int i = 0; i < files.length; i++) {
-            try {
-                FileInputStream fis = new FileInputStream(files[i]);
-                oldTBoxModel.read(fis, null, "RDF/XML");
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
+        String oldTBoxDir = resolveResource("oldVersion");
+        ClasspathUtils cpu = new ClasspathUtils();
+        for(String tboxFile : cpu.listFilesInDirectory(oldTBoxDir)) {
+            InputStream is = this.getClass().getResourceAsStream(tboxFile);
+            oldTBoxModel.read(is, null, "RDF/XML");
         }
         settings.setOldTBoxModel(oldTBoxModel);
         settings.setNewTBoxModel(oldTBoxModel); // TODO doesn't matter

@@ -2,10 +2,8 @@
 
 package edu.cornell.mannlib.vitro.webapp.ontology.update;
 
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.net.URI;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.StringTokenizer;
@@ -34,8 +32,7 @@ public class OntologyChangeParser {
      */
     
     @SuppressWarnings({ "unchecked", "null", "static-access" })
-    public ArrayList<AtomicOntologyChange> parseFile(URI diffPath) throws IOException{
-        
+    public ArrayList<AtomicOntologyChange> parseFile(String diffPath) throws IOException{
         AtomicOntologyChange changeObj;
         ArrayList<AtomicOntologyChange> changeObjects = new ArrayList<AtomicOntologyChange>();
         int countColumns = 0;
@@ -44,7 +41,8 @@ public class OntologyChangeParser {
         String sourceURI = null;
         String destinationURI = null;
         StringTokenizer stArr = null; 
-        FileReader in = new FileReader(new File(diffPath));
+        InputStreamReader in = new InputStreamReader(
+                this.getClass().getResourceAsStream(diffPath));
         
         Iterable<CSVRecord> records = CSVFormat.TDF.parse(in);
         Iterator<CSVRecord> rows = records.iterator();
