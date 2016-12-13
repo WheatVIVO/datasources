@@ -33,7 +33,7 @@ public class Usda extends VivoDataSource implements DataSource {
     private static final String RESOURCE_PATH = "/vivo/update15to16/"; 
     private Log log = LogFactory.getLog(Usda.class);
     
-    private static final int LIMIT = 9; // max search results to retrieve
+    private static final int LIMIT = 99999; // max search results to retrieve
     
     public Usda(List<String> filterTerms) {
         super(filterTerms);
