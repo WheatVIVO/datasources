@@ -1,6 +1,6 @@
 /* $This file is distributed under the terms of the license in /doc/license.txt$ */
 
-package edu.cornell.mannlib.vitro.webapp.ontology.update;
+package org.wheatinitiative.vitro.webapp.ontology.update;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -12,8 +12,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import edu.cornell.mannlib.vitro.webapp.ontology.update.AtomicOntologyChange.AtomicChangeType;
+import org.wheatinitiative.vitro.webapp.ontology.update.AtomicOntologyChange.AtomicChangeType;
 
 /**
  * Performs parsing on Prompt output and provides change object list.

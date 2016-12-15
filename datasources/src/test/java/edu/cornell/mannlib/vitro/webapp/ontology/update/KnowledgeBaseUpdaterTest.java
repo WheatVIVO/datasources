@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.wheatinitiative.vitro.webapp.ontology.update.KnowledgeBaseUpdater;
+import org.wheatinitiative.vitro.webapp.ontology.update.UpdateSettings;
 import org.wheatinitiative.vivo.datasource.util.classpath.ClasspathUtils;
 
 import com.hp.hpl.jena.ontology.OntModel;

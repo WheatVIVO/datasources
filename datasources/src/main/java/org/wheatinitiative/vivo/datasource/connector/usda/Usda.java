@@ -8,6 +8,8 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wheatinitiative.vitro.webapp.ontology.update.KnowledgeBaseUpdater;
+import org.wheatinitiative.vitro.webapp.ontology.update.UpdateSettings;
 import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.connector.VivoDataSource;
 import org.wheatinitiative.vivo.datasource.util.classpath.ClasspathUtils;
@@ -20,9 +22,6 @@ import com.hp.hpl.jena.rdf.model.NodeIterator;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.vocabulary.RDF;
-
-import edu.cornell.mannlib.vitro.webapp.ontology.update.KnowledgeBaseUpdater;
-import edu.cornell.mannlib.vitro.webapp.ontology.update.UpdateSettings;
 
 public class Usda extends VivoDataSource implements DataSource {
 
