@@ -40,6 +40,7 @@ public class Prodinra extends DataSourceBase implements DataSource {
             String records = listRecords();
             Model model = transformToRDF(records);
             model = filter(model);
+            result = model;
         } catch (IOException e) {
             log.error(e, e);
         }
