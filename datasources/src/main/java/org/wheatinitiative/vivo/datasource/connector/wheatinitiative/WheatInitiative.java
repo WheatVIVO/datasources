@@ -1,11 +1,14 @@
 package org.wheatinitiative.vivo.datasource.connector.wheatinitiative;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.connector.DataSourceBase;
 import org.wheatinitiative.vivo.datasource.util.csv.CsvToRdf;
 import org.wheatinitiative.vivo.datasource.util.http.HttpUtils;
+import org.wheatinitiative.vivo.datasource.util.xml.rdf.RdfUtils;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.vocabulary.XSD;
@@ -16,17 +19,24 @@ public class WheatInitiative extends DataSourceBase implements DataSource {
             "http://www.wheatinitiative.org/administration/users/csv";
     private static final String TBOX = 
             "http://www.wheatinitiative.org/administration/users/ontology/";
+    private static final String ABOX = 
+            "http://www.wheatinitiative.org/administration/users/";
+    private static final String ABOX_ETC = ABOX + "n";
     private static final String VIVO_NS = "http://vivoweb.org/ontology/core#";
+    private static final String SPARQL_RESOURCE_DIR = "/wheatinitiative/sparql/";
     private Model resultModel;
     
     public void run() {
         CsvToRdf csvParser = getWheatInitiativeCsvParser();
         HttpUtils httpUtils = new HttpUtils();
         try {
+            RdfUtils rdfUtils = new RdfUtils();
             String csvString = httpUtils.getHttpResponse(SERVICE_URI);
-            this.resultModel = csvParser.toRDF(csvString);
+            Model model = csvParser.toRDF(csvString);
+            model = rdfUtils.renameBNodes(model, ABOX_ETC, model);
+            model = constructForVIVO(model);
+            this.resultModel = model;
             // TODO any filter stage needed?
-            // TODO map
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -57,6 +67,25 @@ public class WheatInitiative extends DataSourceBase implements DataSource {
         csvParser.addLiteralColumn(TBOX + "mail");
         csvParser.addLiteralColumn(TBOX + "phoneNumber");
         return csvParser;
+    }
+    
+    /**
+     * Run a series of SPARQL CONSTRUCTS to generate VIVO-compatible RDF
+     * @param m containing RDF lifted directly from RCUK XML
+     * @return model with VIVO RDF added
+     */
+    private Model constructForVIVO(Model m) {
+        // TODO dynamically get/sort list from classpath resource directory
+        // TODO add remaining rules
+        List<String> queries = Arrays.asList( 
+                "100-person-vcard-name.sparql", 
+                "105-person-label.sparql",
+                "200-organization-name.sparql"
+                );
+        for(String query : queries) {
+            construct(SPARQL_RESOURCE_DIR + query, m, ABOX);
+        }
+        return m;
     }
     
     public Model getResult() {
