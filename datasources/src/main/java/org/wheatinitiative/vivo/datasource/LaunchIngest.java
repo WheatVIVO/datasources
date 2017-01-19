@@ -19,7 +19,7 @@ public class LaunchIngest {
     public static void main(String[] args) {
         if(args.length < 3) {
             System.out.println("Usage: LaunchIngest " 
-                    + "rcuk|prodinra|usda|wheatinitiative outputfile" 
+                    + "rcuk|prodinra|usda|wheatinitiative outputfile " 
                     + "queryTerm ... [queryTermN]");
         } else {
             List<String> queryTerms = new LinkedList<String>(

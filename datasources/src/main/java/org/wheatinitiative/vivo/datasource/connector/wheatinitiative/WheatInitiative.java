@@ -80,6 +80,10 @@ public class WheatInitiative extends DataSourceBase implements DataSource {
         List<String> queries = Arrays.asList( 
                 "100-person-vcard-name.sparql", 
                 "105-person-label.sparql",
+                "150-person-address.sparql",
+                "153-person-phone.sparql",
+                "156-person-mail.sparql",
+                "159-person-webpage.sparql",
                 "200-organization-name.sparql"
                 );
         for(String query : queries) {
