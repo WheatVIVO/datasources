@@ -158,14 +158,18 @@ public class SparqlEndpoint {
                     nameValuePairs);
             post.setEntity(entity);
             HttpResponse response = httpClient.execute(post);
+            try {
             int result = response.getStatusLine().getStatusCode();
-            if (result == 403) {
-                throw new RuntimeException(
-                        "VIVO forbid update with the supplied " +
-                        "username and password.  Update unsuccessful.");
-            } else if (result > 200) {
-                throw new RuntimeException("VIVO responded with error code " + 
-                        result + ". Update unsuccessful. ");
+                if (result == 403) {
+                    throw new RuntimeException(
+                            "VIVO forbid update with the supplied " +
+                            "username and password.  Update unsuccessful.");
+                } else if (result > 200) {
+                    throw new RuntimeException("VIVO responded with error code " + 
+                            result + ". Update unsuccessful. ");
+                }
+            } finally {
+                EntityUtils.consume(response.getEntity());
             }
         } catch (ClientProtocolException e) {
             throw new RuntimeException("Unable to connect to VIVO via HTTP " +

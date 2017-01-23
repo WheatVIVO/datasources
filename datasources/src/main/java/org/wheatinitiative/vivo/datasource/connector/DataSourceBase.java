@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wheatinitiative.vivo.datasource.DataSourceConfiguration;
 import org.wheatinitiative.vivo.datasource.DataSourceStatus;
 import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
@@ -16,7 +18,7 @@ import com.hp.hpl.jena.query.QueryParseException;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 
-public class DataSourceBase {
+public abstract class DataSourceBase {
 
     protected boolean stopRequested = false;
     protected RdfUtils rdfUtils;
@@ -24,6 +26,8 @@ public class DataSourceBase {
     protected DataSourceConfiguration configuration = 
             new DataSourceConfiguration();
     protected SparqlEndpoint sparqlEndpoint;
+    
+    private static final Log log = LogFactory.getLog(DataSourceBase.class);
     
     public DataSourceBase() {
         this.rdfUtils = new RdfUtils();
@@ -45,6 +49,23 @@ public class DataSourceBase {
     public void terminate() {
         this.stopRequested = true;
     }
+    
+    public void run() {
+        this.getStatus().setRunning(true);
+        try {
+            runIngest();    
+        } catch (Exception e) {
+            log.info(e, e);
+            throw new RuntimeException(e);
+        } finally {
+            this.getStatus().setRunning(false);
+        }
+    }
+    
+    /**
+     * Top level that can be overridden by subclasses
+     */
+    protected abstract void runIngest();
     
     /**
      * Load a named CONSTRUCT query from a file in the SPARQL resources 
@@ -99,15 +120,28 @@ public class DataSourceBase {
     }
     
     protected SparqlEndpoint getSparqlEndpoint() {
-        return this.sparqlEndpoint;
+        if(this.sparqlEndpoint != null) {
+            return this.sparqlEndpoint;
+        } else {
+            if(this.getConfiguration() == null 
+                    || this.getConfiguration().getEndpointParameters() == null) {
+                throw new RuntimeException("Endpoint parameters not specified");
+            }
+            this.sparqlEndpoint = new SparqlEndpoint(
+                    getConfiguration().getEndpointParameters());
+            return this.sparqlEndpoint;
+        }
     }
     
     protected void writeResultsToEndpoint(Model results) {
+        log.info("Writing results to endpoint");
         String graphURI = getConfiguration().getResultsGraphURI();
         if(graphURI == null) {
             throw new RuntimeException("Results graph URI cannot be null");
         }
+        log.info("Clearing graph " + graphURI);
         getSparqlEndpoint().update("CLEAR GRAPH <" + graphURI + ">");
+        log.info("Updating graph " + graphURI);
         getSparqlEndpoint().writeModel(results, graphURI);
     }
     

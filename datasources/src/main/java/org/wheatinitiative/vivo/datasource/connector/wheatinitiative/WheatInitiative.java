@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.connector.DataSourceBase;
 import org.wheatinitiative.vivo.datasource.util.csv.CsvToRdf;
@@ -26,9 +28,13 @@ public class WheatInitiative extends DataSourceBase implements DataSource {
     private static final String SPARQL_RESOURCE_DIR = "/wheatinitiative/sparql/";
     private Model resultModel;
     
-    public void run() {
+    private static final Log log = LogFactory.getLog(WheatInitiative.class);
+    
+    @Override
+    public void runIngest() {
         CsvToRdf csvParser = getWheatInitiativeCsvParser();
         HttpUtils httpUtils = new HttpUtils();
+        this.getStatus().setRunning(true);
         try {
             RdfUtils rdfUtils = new RdfUtils();
             String csvString = httpUtils.getHttpResponse(SERVICE_URI);
@@ -36,9 +42,14 @@ public class WheatInitiative extends DataSourceBase implements DataSource {
             model = rdfUtils.renameBNodes(model, ABOX_ETC, model);
             model = constructForVIVO(model);
             this.resultModel = model;
+            log.info(model.size() + " triples in result model");
+            writeResultsToEndpoint(model);
             // TODO any filter stage needed?
-        } catch (IOException e) {
+        } catch (Exception e) {
+            log.info(e, e);
             throw new RuntimeException(e);
+        } finally {
+            this.getStatus().setRunning(false);
         }
     }
 

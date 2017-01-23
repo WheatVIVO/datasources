@@ -25,17 +25,13 @@ public class Prodinra extends DataSourceBase implements DataSource {
     private static final String NAMESPACE_ETC = PRODINRA_ABOX_NS + "n";
     private static final String SPARQL_RESOURCE_DIR = "/prodinra/sparql/";
     
-    private List<String> filterTerms; 
     private Model result;
     
     private HttpUtils httpUtils = new HttpUtils();
     private XmlToRdf xmlToRdf = new XmlToRdf();
     
-    public Prodinra(List<String> filterTerms) {
-        this.filterTerms = filterTerms;
-    }
-    
-    public void run() {
+    @Override
+    public void runIngest() {
         try { 
             String records = listRecords();
             Model model = transformToRDF(records);
@@ -47,6 +43,7 @@ public class Prodinra extends DataSourceBase implements DataSource {
     }
     
     protected Model filter(Model model) {
+        // TODO getConfiguration().getQueryTerms() and filter
         return model;
     }
     

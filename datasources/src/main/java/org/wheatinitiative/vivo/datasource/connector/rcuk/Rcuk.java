@@ -60,13 +60,13 @@ public class Rcuk extends DataSourceBase implements DataSource {
     //private List<String> queryTerms;
     private Model result;
     
-    public void run() {
+    @Override
+    public void runIngest() {
         // TODO progress percentage calculation from totals
         // TODO retrieving subsequent pages from API
         // TODO construct search terms with projects so we can take intersections?
-        this.getStatus().setRunning(true);
         try {
-            List<String> queryTerms = getQueryTerms();
+            List<String> queryTerms = this.getConfiguration().getQueryTerms();
             Model m = ModelFactory.createDefaultModel();
             int totalRecords = 0;
             for(String queryTerm : queryTerms) {
@@ -97,9 +97,6 @@ public class Rcuk extends DataSourceBase implements DataSource {
         } catch (InterruptedException e) {
             log.info("interrupted");
             // TODO any cleanup; running flag reset in finally block
-        } finally {
-            log.info("terminating");
-            this.getStatus().setRunning(false);
         }
         log.info("done");
     }

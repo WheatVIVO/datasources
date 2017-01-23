@@ -31,18 +31,17 @@ public class LaunchIngest {
             DataSource connector = null;
             if("rcuk".equals(connectorName)) {
                 connector = new Rcuk();
-                connector.getConfiguration().getParameterMap().put(
-                        "queryTerms", queryTerms);
             } else if ("prodinra".equals(connectorName)) {
-                connector = new Prodinra(queryTerms);
+                connector = new Prodinra();
             } else if ("usda".equals(connectorName)) {
-                connector = new Usda(queryTerms);
+                connector = new Usda();
             } else if ("wheatinitiative".equals(connectorName)) {
                 connector = new WheatInitiative();
             } else {
                 throw new RuntimeException("Connector not found: " 
                         + connectorName);
             }
+            connector.getConfiguration().setQueryTerms(queryTerms);
             connector.run();
             Model result = connector.getResult();
             if(result != null) {

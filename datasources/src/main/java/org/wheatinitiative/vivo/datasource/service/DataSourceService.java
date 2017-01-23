@@ -59,12 +59,14 @@ public abstract class DataSourceService extends HttpServlet {
         } else if (isStopRequested(description, dataSource)) {
             log.info("stop requested");
             stopWork(dataSource); 
+            waitABitForWorkToTerminate(dataSource);
         } else {
             log.info("neither start nor stop requested");
         }
         doGet(request, response);
     }
     
+    private static final boolean RUNNING = true;
     
     /**
      * Wait a bit to see if the work starts before sending the current
@@ -72,8 +74,21 @@ public abstract class DataSourceService extends HttpServlet {
      * @param dataSource
      */
     private void waitABitForWorkToStart(DataSource dataSource) {
+        waitForStatus(dataSource, RUNNING);
+    }
+    
+    /**
+     * Wait a bit to see if the work terminates before sending the current
+     * status back to the client 
+     * @param dataSource
+     */
+    private void waitABitForWorkToTerminate(DataSource dataSource) {
+        waitForStatus(dataSource, !RUNNING);
+    }
+    
+    private void waitForStatus(DataSource dataSource, boolean start) {
         int remainingSleeps = 5; // * 100 ms
-        while (remainingSleeps > 0 && !dataSource.getStatus().isRunning()) {
+        while (remainingSleeps > 0 && (dataSource.getStatus().isRunning() ^ start)) {
             remainingSleeps--;
             try {
                 Thread.sleep(100);

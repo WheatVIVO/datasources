@@ -21,7 +21,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 
-public class VivoDataSource extends DataSourceBase {
+public abstract class VivoDataSource extends DataSourceBase {
 
     private static final String SEARCH_CONTROLLER = "/search";
     private static final String QUERYTEXT_PARAM = "querytext";
@@ -32,18 +32,9 @@ public class VivoDataSource extends DataSourceBase {
     private static final String CLASSGROUP_PARAM = "classgroup";
     
     private Log log = LogFactory.getLog(Usda.class);
-    protected List<String> filterTerms;
     protected Model result;
     protected HttpUtils httpUtils = new HttpUtils();
     protected XmlToRdf xmlToRdf = new XmlToRdf();
-    
-    public VivoDataSource(List<String> filterTerms) {
-        this.filterTerms = filterTerms;
-    }
-    
-    protected void run() {
-        // override
-    }
 
     protected List<String> getUrisFromSearchResults(String vivoUrl, 
             String querytext) throws URISyntaxException, 

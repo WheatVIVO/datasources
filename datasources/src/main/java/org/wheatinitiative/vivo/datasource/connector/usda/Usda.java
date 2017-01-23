@@ -34,16 +34,12 @@ public class Usda extends VivoDataSource implements DataSource {
     
     private static final int LIMIT = 99999; // max search results to retrieve
     
-    public Usda(List<String> filterTerms) {
-        super(filterTerms);
-    }
-    
     @Override
-    public void run() {
+    public void runIngest() {
         Model resultModel = ModelFactory.createDefaultModel();
         try {
             Set<String> uris = new HashSet<String>();
-            for (String filterTerm : filterTerms) {
+            for (String filterTerm : this.getConfiguration().getQueryTerms()) {
                 uris.addAll(getUrisFromSearchResults(ENDPOINT_URL, filterTerm, 
                         PEOPLE));
                 int limit = LIMIT;
