@@ -53,11 +53,15 @@ public abstract class DataSourceBase {
     public void run() {
         this.getStatus().setRunning(true);
         try {
-            runIngest();    
+            log.info("Running ingest");
+            runIngest();  
+            log.info("Writing results to endpoint");
+            writeResultsToEndpoint(getResult());
         } catch (Exception e) {
             log.info(e, e);
             throw new RuntimeException(e);
         } finally {
+            log.info("Finishing ingest");
             this.getStatus().setRunning(false);
         }
     }
@@ -66,6 +70,12 @@ public abstract class DataSourceBase {
      * Top level that can be overridden by subclasses
      */
     protected abstract void runIngest();
+    
+    /**
+     * To be overriden by subclasses
+     * @return model containing results of ingest
+     */
+    public abstract Model getResult();
     
     /**
      * Load a named CONSTRUCT query from a file in the SPARQL resources 

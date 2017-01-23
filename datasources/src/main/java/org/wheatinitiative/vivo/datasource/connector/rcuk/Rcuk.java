@@ -89,7 +89,6 @@ public class Rcuk extends DataSourceBase implements DataSource {
             m = addSecondLevelLinkedEntities(m);
             m = constructForVIVO(m);
             result = m;
-            writeResultsToEndpoint(result);
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (URISyntaxException e) {

@@ -43,7 +43,6 @@ public class WheatInitiative extends DataSourceBase implements DataSource {
             model = constructForVIVO(model);
             this.resultModel = model;
             log.info(model.size() + " triples in result model");
-            writeResultsToEndpoint(model);
             // TODO any filter stage needed?
         } catch (Exception e) {
             log.info(e, e);
