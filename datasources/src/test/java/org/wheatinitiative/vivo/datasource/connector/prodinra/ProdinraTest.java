@@ -28,26 +28,75 @@ public class ProdinraTest extends ConnectorTestCase {
         return new TestSuite( ProdinraTest.class );
     }
 
+    protected Model testConstruct(String startResource, String resultResource) {
+        return testConstruct(startResource, resultResource, false);
+    }
+    
     /**
-     * Test creation of publication type statements
+     * Test that a mapping rules run against the RDF statements in startResource
+     * include all statements in endResource.  
+     * @param startResource
+     * @param endResource
+     * @param checkIsomorphism - if true, check that the result of the mapping
+     * is isomorphic with the union of startResource and endResource
+     * @return constructed model for possible further analysis
      */
-    public void testPublicationTypes()
-    {
-        Model in = this.loadModelFromResource("/prodinra/publicationTypesIn.n3");
-        Model out = this.loadModelFromResource("/prodinra/publicationTypesOut.n3");
+    protected Model testConstruct(String startResource, String endResource, 
+            boolean checkIsomorphism) {
+        Model in = this.loadModelFromResource(startResource);
+        Model out = this.loadModelFromResource(endResource);
         TestProdinra prodinra = new TestProdinra();
         Model m = ModelFactory.createDefaultModel();
         m.add(in);
         long originalSize = m.size();
         m = prodinra.constructForVIVO(m);
-        assertFalse("post-construct model is same size as original model", originalSize == m.size());
+        assertFalse("post-construct model is same size as original model",
+                originalSize == m.size());
         StmtIterator sit = out.listStatements();
         while(sit.hasNext()) {
             Statement stmt = sit.next();
             assertTrue("model does not contain " + stmt, m.contains(stmt));
         }
-        Model union = ModelFactory.createUnion(in, out);
-        assertTrue("expected " + union + " but was " + m, union.isIsomorphicWith(m));
+        if(checkIsomorphism) {
+            Model union = ModelFactory.createUnion(in, out);
+            assertTrue("Graph not isomporphic. Expected " + union + " but was " + m, 
+                    union.isIsomorphicWith(m));
+        }
+        return m;
+    }
+    
+    /**
+     * Test creation of publication type statements
+     */
+    public void testPublicationTypes()
+    {
+        testConstruct("/prodinra/publicationTypesIn.n3",
+                "/prodinra/publicationTypesOut.n3",
+                true);
+    }
+    
+    public void testAuthorships() {
+        testConstruct("/prodinra/authorshipIn.n3", "/prodinra/authorshipOut.n3");
+    }
+    
+    public void testAuthorLabel() {
+        testConstruct("/prodinra/authorLabelIn.n3", "/prodinra/authorLabelOut.n3");
+    }
+    
+    public void testAbstract() {
+        testConstruct("/prodinra/abstractIn.n3", "/prodinra/abstractOut.n3");
+    }
+    
+    public void testExternalAffiliation() {
+        Model m = testConstruct("/prodinra/externalAffiliationIn.n3", 
+                "/prodinra/externalAffiliationOut.n3");
+        // test the blank nodes by issuing a query
+    }
+    
+    public void testInraAffiliation() {
+        Model m = testConstruct("/prodinra/inraAffiliationUnitIn.n3", 
+                "/prodinra/inraAffiliationUnitOut.n3");
+        // test the blank nodes by issuing a query
     }
     
     // a subclass for testing protected methods

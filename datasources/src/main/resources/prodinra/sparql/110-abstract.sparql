@@ -20,12 +20,24 @@ PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>
 PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
-PREFIX prodinra: <http://record.prodinra.inra.fr>
+PREFIX prodinra: <http://record.prodinra.inra.fr/>
 
 CONSTRUCT {
    ?x bibo:abstract ?value 
 } WHERE {
-   ?x prodinra:abstract ?y .
-   ?x a bibo:Document .
-   ?y vitro:value ?value 
+   {
+       ?x prodinra:abstract ?y .
+       # not supported without reasoning: ?x a bibo:Document .
+       ?y vitro:value ?plainValue .
+       ?y <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/language> ?lang
+       BIND(SUBSTR(?lang, 1, 2) AS ?language) # get first two characters of language for language tag
+       BIND(STRLANG(?plainValue, ?language) AS ?value)
+   }
+   UNION 
+   {
+       ?x prodinra:abstract ?y .
+       ?y vitro:value ?value .
+       FILTER NOT EXISTS { ?y <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/language> ?lang }
+   }
+
 }

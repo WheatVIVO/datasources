@@ -1,0 +1,122 @@
+@prefix ocrer: <http://purl.org/net/OCRe/research.owl#> .
+@prefix scires: <http://vivoweb.org/ontology/scientific-research#> .
+@prefix fabio: <http://purl.org/spar/fabio/> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix ocresd: <http://purl.org/net/OCRe/study_design.owl#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix vitro: <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#> .
+@prefix cito:  <http://purl.org/spar/cito/> .
+@prefix geo:   <http://aims.fao.org/aos/geopolitical.owl#> .
+@prefix vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#> .
+@prefix bibo:  <http://purl.org/ontology/bibo/> .
+@prefix vivo:  <http://vivoweb.org/ontology/core#> .
+@prefix event: <http://purl.org/NET/c4dm/event.owl#> .
+@prefix obo:   <http://purl.obolibrary.org/obo/> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix c4o:   <http://purl.org/spar/c4o/> .
+
+<http://record.prodinra.inra.fr/individual/n995812>
+        <http://record.prodinra.inra.fr/abstract>
+                <http://record.prodinra.inra.fr/individual/n1425290> ;
+        <http://record.prodinra.inra.fr/alternateTitle>
+                <http://record.prodinra.inra.fr/individual/n854627> ;
+        <http://record.prodinra.inra.fr/collection>
+                <http://record.prodinra.inra.fr/individual/n7271904> ;
+        <http://record.prodinra.inra.fr/complements>
+                "Reprise ProdINRA 1 :  Classement : Inconnu \nChangement de type de notice : \nCote de localisation : S BR 301\nUnité de localisation : UR 0387 Unité d'économie et sociologie rurales de Montpellier\nCentre de localisation : Centre de recherche de Montpellier, France\n" ;
+        <http://record.prodinra.inra.fr/creationDate>
+                "2008-07-30T16:25:26" ;
+        <http://record.prodinra.inra.fr/creator>
+                <http://record.prodinra.inra.fr/individual/n1948767> , <http://record.prodinra.inra.fr/individual/n2748871> ;
+        <http://record.prodinra.inra.fr/depositor>
+                <http://record.prodinra.inra.fr/individual/n2892227> ;
+        <http://record.prodinra.inra.fr/firstReviewer>
+                <http://record.prodinra.inra.fr/individual/n1927389> ;
+        <http://record.prodinra.inra.fr/firstValidationDate>
+                "2008-07-30T16:25:26" ;
+        <http://record.prodinra.inra.fr/halSending>
+                "false" ;
+        <http://record.prodinra.inra.fr/identifier>
+                "149485" ;
+        <http://record.prodinra.inra.fr/itemType>
+                "RESEARCH_REPORT" ;
+        <http://record.prodinra.inra.fr/keywords>
+                <http://record.prodinra.inra.fr/individual/n4759086> ;
+        <http://record.prodinra.inra.fr/language>
+                "fra" ;
+        <http://record.prodinra.inra.fr/link>
+                "http://www.iddri.org/Publications/Collections/Analyses/an_0402_lecotty&voituriez_coord.pdf" ;
+        <http://record.prodinra.inra.fr/notes>
+                "Document de Travail IDDRI  ; 6 Diffusion du document : IDdRI Institut du Développement durable et des Relations internationales 6 rue Général Clergerie 75116 Paris (FRA)" ;
+        <http://record.prodinra.inra.fr/order>
+                <http://record.prodinra.inra.fr/individual/n5252423> ;
+        <http://record.prodinra.inra.fr/origin>
+                "CREATED" ;
+        <http://record.prodinra.inra.fr/p1Id>
+                "SAE2000000000000628" ;
+        <http://record.prodinra.inra.fr/pages>
+                "14 p." ;
+        <http://record.prodinra.inra.fr/recordAccessCondition>
+                "Publique" ;
+        <http://record.prodinra.inra.fr/researchReportType>
+                "Working paper" ;
+        <http://record.prodinra.inra.fr/reviewer>
+                <http://record.prodinra.inra.fr/individual/n5929025> ;
+        <http://record.prodinra.inra.fr/source>
+                "SAE2" ;
+        <http://record.prodinra.inra.fr/targetAudience>
+                "Scientifique" ;
+        <http://record.prodinra.inra.fr/thematic>
+                <http://record.prodinra.inra.fr/individual/n7073329> ;
+        <http://record.prodinra.inra.fr/title>
+                <http://record.prodinra.inra.fr/individual/n343213> ;
+        <http://record.prodinra.inra.fr/transmissionDate>
+                "2008-07-30T16:25:26" ;
+        <http://record.prodinra.inra.fr/updateDate>
+                "2017-01-24T11:04:13" ;
+        <http://record.prodinra.inra.fr/validationDate>
+                "2017-01-24T11:04:12" ;
+        <http://record.prodinra.inra.fr/workflowStatus>
+                "validé" ;
+        <http://record.prodinra.inra.fr/year>
+                "2004" ;
+        vitro:position  "2" ;
+        <http://www.w3.org/2001/XMLSchema-instance/type>
+                "ns2:researchReport" .
+
+<http://record.prodinra.inra.fr/individual/n1948767>
+        <http://record.prodinra.inra.fr/author>
+                <http://record.prodinra.inra.fr/individual/n8596062> ;
+        vitro:position  "3" .
+
+<http://record.prodinra.inra.fr/individual/n2748871>
+        <http://record.prodinra.inra.fr/author>
+                <http://record.prodinra.inra.fr/individual/n6916527> ;
+        vitro:position  "4" .
+
+<http://record.prodinra.inra.fr/individual/n8596062>
+        <http://record.prodinra.inra.fr/initial>
+	        "T." ;
+	<http://record.prodinra.inra.fr/inraAffiliation>
+		<http://record.prodinra.inra.fr/individual/n4510351> ;
+	<http://record.prodinra.inra.fr/lastName>
+		"Le Cotty" ;
+	<http://record.prodinra.inra.fr/publicationName>
+		"Le Cotty" ;
+	vitro:position  "1" ;
+	<http://www.w3.org/2001/XMLSchema-instance/type>
+		"ns2:inraAuthor" .
+
+<http://record.prodinra.inra.fr/individual/n6916527>
+        <http://record.prodinra.inra.fr/externalAffiliation>
+	        <http://record.prodinra.inra.fr/individual/n4220466> ;
+	<http://record.prodinra.inra.fr/firstName>
+	        "Tancrede" ;
+	<http://record.prodinra.inra.fr/lastName>
+		"Voituriez" ;
+	<http://record.prodinra.inra.fr/publicationName>
+		"Voituriez" ;
+	vitro:position  "1" ;
+	<http://www.w3.org/2001/XMLSchema-instance/type>
+		"ns2:externalAuthor" .
+

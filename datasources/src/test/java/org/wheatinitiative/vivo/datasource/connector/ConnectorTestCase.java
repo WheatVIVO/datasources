@@ -19,7 +19,7 @@ public abstract class ConnectorTestCase extends TestCase {
     }
     
     /**
-     * Load a model from an N3 serializtion at the specified resource path
+     * Load a model from an N3 serialization at the specified resource path
      * @param resourcePath
      * @return model containing statements read
      */
