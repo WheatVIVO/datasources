@@ -1,0 +1,81 @@
+@prefix ocrer: <http://purl.org/net/OCRe/research.owl#> .
+@prefix scires: <http://vivoweb.org/ontology/scientific-research#> .
+@prefix fabio: <http://purl.org/spar/fabio/> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix ocresd: <http://purl.org/net/OCRe/study_design.owl#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix vitro: <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#> .
+@prefix cito:  <http://purl.org/spar/cito/> .
+@prefix geo:   <http://aims.fao.org/aos/geopolitical.owl#> .
+@prefix vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#> .
+@prefix bibo:  <http://purl.org/ontology/bibo/> .
+@prefix vivo:  <http://vivoweb.org/ontology/core#> .
+@prefix event: <http://purl.org/NET/c4dm/event.owl#> .
+@prefix obo:   <http://purl.obolibrary.org/obo/> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix c4o:   <http://purl.org/spar/c4o/> .
+
+<http://record.prodinra.inra.fr/individual/n8894963>
+        <http://record.prodinra.inra.fr/itemType>
+                "CHAPTER" .
+
+<http://record.prodinra.inra.fr/individual/n3673810>
+        <http://record.prodinra.inra.fr/itemType>
+                "REPORT" .
+
+<http://record.prodinra.inra.fr/individual/n6693711>
+        <http://record.prodinra.inra.fr/itemType>
+                "PAPER" .
+
+<http://record.prodinra.inra.fr/individual/n9656631>
+        <http://record.prodinra.inra.fr/itemType>
+                "PROCEEDING_PAPER" .
+
+<http://record.prodinra.inra.fr/individual/n4970790>
+        <http://record.prodinra.inra.fr/itemType>
+                "RESEARCH_REPORT" .
+
+<http://record.prodinra.inra.fr/individual/n2359207>
+        <http://record.prodinra.inra.fr/itemType>
+                "ARTICLE" .
+
+<http://record.prodinra.inra.fr/individual/n2359208>
+        <http://record.prodinra.inra.fr/itemType>
+                "ARTICLE" ;
+        <http://record.prodinra.inra.fr/articleInfos>
+                <http://record.prodinra.inra.fr/individual/n2359208-ai> .
+
+<http://record.prodinra.inra.fr/individual/n2359208-ai> 
+        <http://record.prodinra.inra.fr/articleType>
+	        "Review article" .
+
+<http://record.prodinra.inra.fr/individual/n2359209>
+        <http://record.prodinra.inra.fr/itemType>
+                "ARTICLE" ;
+        <http://record.prodinra.inra.fr/articleInfos>
+                <http://record.prodinra.inra.fr/individual/n2359209-ai> .
+
+<http://record.prodinra.inra.fr/individual/n2359209-ai> 
+        <http://record.prodinra.inra.fr/articleType>
+	        "Editorial" .
+
+<http://record.prodinra.inra.fr/individual/n5934565>
+        <http://record.prodinra.inra.fr/itemType>
+                "THESIS" .
+
+<http://record.prodinra.inra.fr/individual/n2992723>
+        <http://record.prodinra.inra.fr/itemType>
+                "DISSERTATION" .
+
+<http://record.prodinra.inra.fr/individual/n1508612>
+        <http://record.prodinra.inra.fr/itemType>
+                "PROCEEDINGS" .
+
+<http://record.prodinra.inra.fr/individual/n4281314>
+        <http://record.prodinra.inra.fr/itemType>
+                "PEDAGOGICAL_DOCUMENT" .
+
+<http://record.prodinra.inra.fr/individual/n6018029>
+        <http://record.prodinra.inra.fr/itemType>
+                "BOOK" .
+

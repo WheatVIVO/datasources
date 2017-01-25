@@ -6,10 +6,9 @@ import java.util.List;
 import org.wheatinitiative.vivo.datasource.connector.rcuk.Rcuk;
 
 import junit.framework.Test;
-import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
-public class RcukTest extends TestCase {
+public class RcukTest extends ConnectorTestCase {
 
     /**
      * Create the test case

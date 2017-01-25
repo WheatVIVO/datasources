@@ -54,7 +54,7 @@ public class Prodinra extends DataSourceBase implements DataSource {
         return m;
     }
     
-    private Model constructForVIVO(Model m) {
+    protected Model constructForVIVO(Model m) {
         // TODO dynamically get/sort list from classpath resource directory
         List<String> queries = Arrays.asList("100-documentTypes.sparql",
                 "105-title.sparql",
@@ -64,7 +64,10 @@ public class Prodinra extends DataSourceBase implements DataSource {
                 "120-externalAffiliation.sparql",
                 "122-inraAffiliationUnit.sparql");
         for(String query : queries) {
+            log.info("Executing query " + query);
+            log.info("Pre-query model size: " + m.size());
             construct(SPARQL_RESOURCE_DIR + query, m, NAMESPACE_ETC);
+            log.info("Post-query model size: " + m.size());
         }
         return m;
     }
