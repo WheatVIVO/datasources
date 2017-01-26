@@ -23,20 +23,30 @@ PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
 
 CONSTRUCT {
-   ?x rdfs:label ?label
-} WHERE { 
-    {
-        ?x prodinra:lastName ?lastName .
-        ?x prodinra:firstName ?firstName .
-        ?x a foaf:Person 
-        BIND(concat(?lastName, ", ", ?firstName) AS ?label)
-    }
-    UNION
-    {
-        ?x prodinra:lastName ?lastName .
-        ?x prodinra:initial ?initial .
-	FILTER NOT EXISTS { ?x prodinra:firstName ?firstName }
-        ?x a foaf:Person 
-        BIND(concat(?lastName, ", ", ?initial) AS ?label)
+    ?person vivo:relatedBy ?authorship .
+    ?authorship a vivo:Authorship .
+    ?authorship vivo:relates ?doc .
+    ?doc vivo:relatedBy ?authorship2 .
+    ?authorship2 vivo:relates ?otherAuthor .
+    ?otherAuthor a foaf:Person .
+    ?otherAuthor ?otherAuthorP ?otherAuthorO .
+    ?otherAuthorPosition vivo:relates ?otherAuthorOrg .
+    ?otherAuthorOrg ?otherAuthorOrgP ?otherAuthorOrgO .
+}
+WHERE {
+    ?person vivo:relatedBy ?authorship .
+    ?authorship a vivo:Authorship .
+    ?authorship vivo:relates ?doc .
+    FILTER(?doc != ?person)
+    ?doc vivo:relatedBy ?authorship2 .
+    FILTER(?authorship2 != ?authorship1)
+    ?authorship2 vivo:relates ?otherAuthor .
+    ?otherAuthor a foaf:Person .
+    ?otherAuthor ?otherAuthorP ?otherAuthorO .
+    OPTIONAL {
+        ?otherAuthor vivo:relatedBy ?otherAuthorPosition .
+        ?otherAuthorPosition a foaf:Position .
+        ?otherAuthorPosition vivo:relates ?otherAuthorOrg .
+        ?otherAuthorOrg ?otherAuthorOrgP ?otherAuthorOrgO .
     }
 }

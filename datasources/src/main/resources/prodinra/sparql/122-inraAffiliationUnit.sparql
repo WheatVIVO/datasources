@@ -25,7 +25,6 @@ PREFIX prodinra: <http://record.prodinra.inra.fr/>
 CONSTRUCT {
     ?lab a vivo:Laboratory .
     ?lab rdfs:label ?labLabel .
-    ?lab ?labP ?labO .
     _:position a vivo:Position .
     _:position vivo:relates ?x .
     _:position vivo:relates ?lab .
@@ -35,6 +34,5 @@ CONSTRUCT {
     ?inra prodinra:unit ?unit .
     ?unit prodinra:code ?unitCode .
     ?unit prodinra:name ?labLabel .
-    ?unit ?labP ?labO .
     BIND(IRI(CONCAT("http://vivo.wheatinitiative.org/individual/unit", ?unitCode)) AS ?lab)
 }

@@ -22,21 +22,16 @@ PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
 
-CONSTRUCT {
-   ?x rdfs:label ?label
-} WHERE { 
-    {
-        ?x prodinra:lastName ?lastName .
-        ?x prodinra:firstName ?firstName .
-        ?x a foaf:Person 
-        BIND(concat(?lastName, ", ", ?firstName) AS ?label)
-    }
-    UNION
-    {
-        ?x prodinra:lastName ?lastName .
-        ?x prodinra:initial ?initial .
-	FILTER NOT EXISTS { ?x prodinra:firstName ?firstName }
-        ?x a foaf:Person 
-        BIND(concat(?lastName, ", ", ?initial) AS ?label)
-    }
+SELECT ?person
+WHERE {
+    ?x vivo:relatedBy ?authorship .
+    ?authorship a vivo:Authorship .
+    { ?x rdfs:label ?value }
+    UNION 
+    { ?x bibo:abstract ?value }
+    UNION 
+    { ?x vivo:freetextKeyword ?value}
+    FILTER(regex(str(?value), "\\b$TERM\\b"))
+    ?authorship vivo:relates ?person .
+    ?person a foaf:Person
 }

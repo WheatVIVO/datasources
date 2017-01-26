@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -86,13 +87,32 @@ public abstract class DataSourceBase {
      * @return model with new data added by CONSTRUCT query
      */
     protected Model construct(String queryName, Model m, String namespaceEtc) {
+        m.add(constructQuery(queryName, m, namespaceEtc, null));
+        return m;
+    }
+    
+    /**
+     * Load a named CONSTRUCT query from a file in the SPARQL resources 
+     * directory, run it against a model and return a new model containing
+     * only the constructed triples.
+     * @param queryName name of SPARQL CONSTRUCT query to load
+     * @param m model against which query should be executed
+     * @param namespaceEtc base string from which URIs should be generated
+     * @return model with triples constructed by query
+     */
+    protected Model constructQuery(String queryName, Model m, 
+            String namespaceEtc, Map<String, String> substitutions) {
         String queryStr = loadQuery(queryName);
+        if(substitutions != null) {
+            queryStr = processSubstitutions(queryStr, substitutions);
+        }
+        log.debug(queryStr);
         try {
             QueryExecution qe = QueryExecutionFactory.create(queryStr, m);
             try {
                 Model tmp = ModelFactory.createDefaultModel();
                 qe.execConstruct(tmp);
-                m.add(rdfUtils.renameBNodes(tmp, namespaceEtc, m));
+                return rdfUtils.renameBNodes(tmp, namespaceEtc, m);
             } finally {
                 if(qe != null) {
                     qe.close();
@@ -101,7 +121,15 @@ public abstract class DataSourceBase {
         } catch (QueryParseException qpe) {
             throw new RuntimeException("Error parsing query " + queryName, qpe);
         }
-        return m;
+    }
+    
+    protected String processSubstitutions(String queryStr, 
+            Map<String, String> substitutions) {
+        for(String old : substitutions.keySet()) {
+            // TODO add more sophisticated substitution
+            queryStr = queryStr.replaceAll("\\b" + old + "\\b", substitutions.get(old));
+        }
+        return queryStr;
     }
     
     protected String loadQuery(String resourcePath) {
@@ -146,8 +174,8 @@ public abstract class DataSourceBase {
     protected void writeResultsToEndpoint(Model results) {
         log.info("Writing results to endpoint");
         String graphURI = getConfiguration().getResultsGraphURI();
-        if(graphURI == null) {
-            throw new RuntimeException("Results graph URI cannot be null");
+        if(graphURI == null || graphURI.isEmpty()) {
+            throw new RuntimeException("Results graph URI cannot be null or empty");
         }
         log.info("Clearing graph " + graphURI);
         getSparqlEndpoint().update("CLEAR GRAPH <" + graphURI + ">");

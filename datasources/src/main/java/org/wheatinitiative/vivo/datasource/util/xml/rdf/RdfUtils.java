@@ -139,4 +139,68 @@ public class RdfUtils {
         return nextURI;
     }
     
+    /**
+     * From edu.cornell.mannlib.vitro.webapp.utils.jena.JenaIngestUtils
+     * A simple resource smusher based on a supplied inverse-functional property.  
+     * A new model containing only resources about the smushed statements is returned.
+     * @param inModel
+     * @param prop
+     * @return
+     */
+    public Model smushResources(Model inModel, Property prop) { 
+        Model outModel = ModelFactory.createDefaultModel();
+        outModel.add(inModel);
+        inModel.enterCriticalSection(Lock.READ);
+        try {
+            ClosableIterator closeIt = inModel.listObjectsOfProperty(prop);
+            try {
+                for (Iterator objIt = closeIt; objIt.hasNext();) {
+                    RDFNode rdfn = (RDFNode) objIt.next();
+                    ClosableIterator closfIt = inModel.listSubjectsWithProperty(prop, rdfn);
+                    try {
+                        boolean first = true;
+                        Resource smushToThisResource = null;
+                        for (Iterator subjIt = closfIt; closfIt.hasNext();) {
+                            Resource subj = (Resource) subjIt.next();
+                            if (first) {
+                                smushToThisResource = subj;
+                                first = false;
+                                continue;
+                            }
+
+                            ClosableIterator closgIt = inModel.listStatements(subj,(Property)null,(RDFNode)null);
+                            try {
+                                for (Iterator stmtIt = closgIt; stmtIt.hasNext();) {
+                                    Statement stmt = (Statement) stmtIt.next();
+                                    outModel.remove(stmt.getSubject(), stmt.getPredicate(), stmt.getObject());
+                                    outModel.add(smushToThisResource, stmt.getPredicate(), stmt.getObject());
+                                }
+                            } finally {
+                                closgIt.close();
+                            }
+                            closgIt = inModel.listStatements((Resource) null, (Property)null, subj);
+                            try {
+                                for (Iterator stmtIt = closgIt; stmtIt.hasNext();) {
+                                    Statement stmt = (Statement) stmtIt.next();
+                                    outModel.remove(stmt.getSubject(), stmt.getPredicate(), stmt.getObject());
+                                    outModel.add(stmt.getSubject(), stmt.getPredicate(), smushToThisResource);
+                                }
+                            } finally {
+                                closgIt.close();
+                            }
+                        }
+                    } finally {
+                        closfIt.close();
+                    }
+                }
+            } finally {
+                closeIt.close();
+            }
+        } finally {
+            inModel.leaveCriticalSection();
+        }
+        return outModel;
+    }
+
+    
 }

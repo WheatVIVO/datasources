@@ -23,20 +23,13 @@ PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
 
 CONSTRUCT {
-   ?x rdfs:label ?label
-} WHERE { 
-    {
-        ?x prodinra:lastName ?lastName .
-        ?x prodinra:firstName ?firstName .
-        ?x a foaf:Person 
-        BIND(concat(?lastName, ", ", ?firstName) AS ?label)
-    }
-    UNION
-    {
-        ?x prodinra:lastName ?lastName .
-        ?x prodinra:initial ?initial .
-	FILTER NOT EXISTS { ?x prodinra:firstName ?firstName }
-        ?x a foaf:Person 
-        BIND(concat(?lastName, ", ", ?initial) AS ?label)
-    }
+    ?lab ?labP ?labO .
+} WHERE {
+    ?x a foaf:Person .
+    ?x prodinra:inraAffiliation ?inra .
+    ?inra prodinra:unit ?unit .
+    ?unit prodinra:code ?unitCode .
+    ?unit prodinra:name ?labLabel .
+    ?unit ?labP ?labO .
+    BIND(IRI(CONCAT("http://vivo.wheatinitiative.org/individual/unit", ?unitCode)) AS ?lab)
 }
