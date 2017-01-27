@@ -42,6 +42,7 @@ public class LaunchIngest {
                         + connectorName);
             }
             connector.getConfiguration().setQueryTerms(queryTerms);
+            connector.getConfiguration().setEndpointParameters(null);
             connector.run();
             Model result = connector.getResult();
             if(result != null) {

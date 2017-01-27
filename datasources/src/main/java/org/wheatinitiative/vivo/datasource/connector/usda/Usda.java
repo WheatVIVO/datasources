@@ -39,22 +39,27 @@ public class Usda extends VivoDataSource implements DataSource {
         Model resultModel = ModelFactory.createDefaultModel();
         try {
             Set<String> uris = new HashSet<String>();
-            for (String filterTerm : this.getConfiguration().getQueryTerms()) {
-                uris.addAll(getUrisFromSearchResults(ENDPOINT_URL, filterTerm, 
-                        PEOPLE));
-                int limit = LIMIT;
-                for(String uri : uris) {
-                    limit--;
-                    if (limit < 0) {
-                        break;
+            try {
+                for (String filterTerm : this.getConfiguration().getQueryTerms()) {
+                    uris.addAll(getUrisFromSearchResults(ENDPOINT_URL, filterTerm, 
+                            PEOPLE));
+                    int limit = LIMIT;
+                    for(String uri : uris) {
+                        limit--;
+                        if (limit < 0) {
+                            break;
+                        }
+                        //Model m = httpUtils.getRDFLinkedDataResponse(uri);
+                        Model m = ModelFactory.createDefaultModel();
+                        log.info("Fetching search result " + uri);
+                        m.read(uri);
+                        resultModel.add(m);
                     }
-                    //Model m = httpUtils.getRDFLinkedDataResponse(uri);
-                    Model m = ModelFactory.createDefaultModel();
-                    log.info("Fetching search result " + uri);
-                    m.read(uri);
-                    resultModel.add(m);
+                    Thread.sleep(MIN_REST);
                 }
-                Thread.sleep(MIN_REST);
+            } catch (Exception e) {
+                log.error(e, e);
+                // TODO record error for reporting via service
             }
             fetchRelatedURIs(resultModel);
             resultModel = updateToOneSix(resultModel);

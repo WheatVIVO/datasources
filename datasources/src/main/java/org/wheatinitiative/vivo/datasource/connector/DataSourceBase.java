@@ -57,7 +57,12 @@ public abstract class DataSourceBase {
             log.info("Running ingest");
             runIngest();  
             log.info("Writing results to endpoint");
-            writeResultsToEndpoint(getResult());
+            if(this.getConfiguration().getEndpointParameters() != null) {
+                writeResultsToEndpoint(getResult());    
+            } else {
+                log.warn("Not writing results to remote endpoint because " +
+                         "none is specified");
+            }
         } catch (Exception e) {
             log.info(e, e);
             throw new RuntimeException(e);
