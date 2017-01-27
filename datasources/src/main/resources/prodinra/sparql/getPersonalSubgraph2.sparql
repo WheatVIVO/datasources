@@ -23,9 +23,9 @@ PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
 
 CONSTRUCT {
-    ?person vivo:relatedBy ?authorship .
     ?authorship a vivo:Authorship .
     ?authorship vivo:relates ?doc .
+    ?authorship vivo:relates ?person .
     ?doc vivo:relatedBy ?authorship2 .
     ?authorship2 vivo:relates ?otherAuthor .
     ?otherAuthor a foaf:Person .
@@ -34,7 +34,7 @@ CONSTRUCT {
     ?otherAuthorOrg ?otherAuthorOrgP ?otherAuthorOrgO .
 }
 WHERE {
-    ?person vivo:relatedBy ?authorship .
+    ?authorship vivo:relates ?person .
     ?authorship a vivo:Authorship .
     ?authorship vivo:relates ?doc .
     FILTER(?doc != ?person)

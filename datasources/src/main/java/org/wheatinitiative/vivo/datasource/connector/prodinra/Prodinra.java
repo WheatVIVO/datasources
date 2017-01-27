@@ -46,7 +46,7 @@ public class Prodinra extends DataSourceBase implements DataSource {
             String records = listRecords();
             Model model = transformToRDF(records);
             log.info(model.size() + " statements before filtering");
-            //model = filter(model);
+            model = filter(model);
             log.info(model.size() + " statements after filtering");
             result = model;
         } catch (IOException e) {
@@ -67,15 +67,17 @@ public class Prodinra extends DataSourceBase implements DataSource {
     private Model constructPersonalSubgraph(Resource personRes, Model m) {
         Model subgraph = ModelFactory.createDefaultModel();
         Map<String, String> substitutions = new HashMap<String, String>();
-        substitutions.put("\\?person", personRes.getURI());
+        substitutions.put("\\?person", "<" + personRes.getURI() + ">");
         subgraph.add(constructQuery(
-                "getPersonalSubgraph1.sparql", m, NAMESPACE_ETC, substitutions));
+                SPARQL_RESOURCE_DIR + "getPersonalSubgraph1.sparql", m, 
+                NAMESPACE_ETC, substitutions));
         subgraph.add(constructQuery(
-                "getPersonalSubgraph2.sparql", m, NAMESPACE_ETC, substitutions));
+                SPARQL_RESOURCE_DIR + "getPersonalSubgraph2.sparql", m, 
+                NAMESPACE_ETC, substitutions));
         return subgraph;
     }
     
-    private List<Resource> getRelevantResources(Model model) {
+    protected List<Resource> getRelevantResources(Model model) {
         String queryStr = loadQuery(
                 SPARQL_RESOURCE_DIR + "getPersonsForSearchTerm.sparql");
         List<Resource> relevantResources = new ArrayList<Resource>();
@@ -87,7 +89,7 @@ public class Prodinra extends DataSourceBase implements DataSource {
                 ResultSet rs = qe.execSelect();
                 while(rs.hasNext()) {
                     QuerySolution soln = rs.next();
-                    Resource res = soln.getResource("Person");
+                    Resource res = soln.getResource("person");
                     if(res != null) {
                         relevantResources.add(res);
                     }

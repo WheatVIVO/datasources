@@ -127,7 +127,8 @@ public abstract class DataSourceBase {
             Map<String, String> substitutions) {
         for(String old : substitutions.keySet()) {
             // TODO add more sophisticated substitution
-            queryStr = queryStr.replaceAll("\\b" + old + "\\b", substitutions.get(old));
+            String pattern = old + "\\b";
+            queryStr = queryStr.replaceAll(pattern, substitutions.get(old));
         }
         return queryStr;
     }

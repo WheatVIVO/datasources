@@ -1,9 +1,13 @@
 package org.wheatinitiative.vivo.datasource.connector.prodinra;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.wheatinitiative.vivo.datasource.connector.ConnectorTestCase;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 
@@ -97,6 +101,20 @@ public class ProdinraTest extends ConnectorTestCase {
         Model m = testConstruct("/prodinra/inraAffiliationUnitIn.n3", 
                 "/prodinra/inraAffiliationUnitOut.n3");
         // test the blank nodes by issuing a query
+    }
+    
+    public void testFilter() {
+        Model m = this.loadModelFromResource("/prodinra/inraAffiliationUnitIn.n3");
+        TestProdinra prodinra = new TestProdinra();
+        prodinra.getConfiguration().setQueryTerms(Arrays.asList("agricole"));
+        m = prodinra.constructForVIVO(m);
+        List<Resource> relevantResources = prodinra.getRelevantResources(m);
+        assertEquals(2, relevantResources.size());
+        long preFilterSize = m.size();
+        m = prodinra.filter(m);
+        assertTrue("filtered model is larger than or equal to the prefiltered model", 
+                m.size() < preFilterSize);
+        assertTrue("filtered model is empty", m.size() > 0);
     }
     
     // a subclass for testing protected methods

@@ -24,13 +24,13 @@ PREFIX prodinra: <http://record.prodinra.inra.fr/>
 
 CONSTRUCT {
     ?person ?p ?o .
-    ?person vivo:relatedBy ?position .
+    ?position vivo:relates ?person .
     ?position ?positionP ?positionO .
     ?positionO ?positionOP ?positionOO .
 }
 WHERE {
     ?person ?p ?o .
-    ?person vivo:relatedBy ?position .
+    ?position vivo:relates ?person .
     ?position ?positionP ?positionO .
     ?positionO ?positionOP ?positionOO .
 } 

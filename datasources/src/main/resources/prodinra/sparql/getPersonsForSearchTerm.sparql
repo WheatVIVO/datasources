@@ -22,16 +22,16 @@ PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
 
-SELECT ?person
+SELECT DISTINCT ?person
 WHERE {
-    ?x vivo:relatedBy ?authorship .
     ?authorship a vivo:Authorship .
+    ?authorship vivo:relates ?x .
     { ?x rdfs:label ?value }
     UNION 
     { ?x bibo:abstract ?value }
     UNION 
     { ?x vivo:freetextKeyword ?value}
-    FILTER(regex(str(?value), "\\b$TERM\\b"))
+    FILTER(regex(str(?value), "\\b$TERM\\b", "i"))
     ?authorship vivo:relates ?person .
     ?person a foaf:Person
 }
