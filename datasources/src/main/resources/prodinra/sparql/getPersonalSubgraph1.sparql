@@ -32,5 +32,5 @@ WHERE {
     ?person ?p ?o .
     ?position vivo:relates ?person .
     ?position ?positionP ?positionO .
-    ?positionO ?positionOP ?positionOO .
+    OPTIONAL { ?positionO ?positionOP ?positionOO }
 } 

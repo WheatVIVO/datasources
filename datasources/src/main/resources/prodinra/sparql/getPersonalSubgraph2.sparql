@@ -28,6 +28,7 @@ CONSTRUCT {
     ?authorship vivo:relates ?person .
     ?doc vivo:relatedBy ?authorship2 .
     ?authorship2 vivo:relates ?otherAuthor .
+    ?authorship2 ?authorship2P ?authorship2O .
     ?otherAuthor a foaf:Person .
     ?otherAuthor ?otherAuthorP ?otherAuthorO .
     ?otherAuthorPosition vivo:relates ?otherAuthorOrg .
@@ -38,9 +39,10 @@ WHERE {
     ?authorship a vivo:Authorship .
     ?authorship vivo:relates ?doc .
     FILTER(?doc != ?person)
-    ?doc vivo:relatedBy ?authorship2 .
+    ?authorship2 vivo:relates ?doc .
     FILTER(?authorship2 != ?authorship1)
     ?authorship2 vivo:relates ?otherAuthor .
+    ?authorship2 ?authorship2P ?authorship2O .
     ?otherAuthor a foaf:Person .
     ?otherAuthor ?otherAuthorP ?otherAuthorO .
     OPTIONAL {
