@@ -68,6 +68,7 @@ public abstract class DataSourceBase {
             throw new RuntimeException(e);
         } finally {
             log.info("Finishing ingest");
+            log.info(this.getStatus().getErrorRecords() + " errors");
             this.getStatus().setRunning(false);
         }
     }

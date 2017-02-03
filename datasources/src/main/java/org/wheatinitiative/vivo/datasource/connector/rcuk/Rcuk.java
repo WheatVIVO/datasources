@@ -232,11 +232,17 @@ public class Rcuk extends DataSourceBase implements DataSource {
             qe.close();
         }
         for (String uri : linkedURIs) {
-            log.info(uri); // TODO level debug
-            String doc = httpUtils.getHttpResponse(uri);
-            m.add(transformToRdf(doc));
-            Thread.currentThread();
-            Thread.sleep(MIN_REST_MILLIS);
+            try {
+                log.info(uri); // TODO level debug
+                String doc = httpUtils.getHttpResponse(uri);
+                m.add(transformToRdf(doc));
+                Thread.currentThread();
+                Thread.sleep(MIN_REST_MILLIS);
+            } catch (Exception e) {
+                log.error("Error fetching " + uri, e);
+                // TODO add increment method
+                this.getStatus().setErrorRecords(this.getStatus().getErrorRecords() + 1);
+            }
         }
         return m;
     }

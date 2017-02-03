@@ -4,8 +4,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -20,6 +21,7 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 public class HttpUtils {
 
     private HttpClient httpClient;
+    private static final Log log = LogFactory.getLog(HttpUtils.class);
     
     public HttpUtils() {
         DefaultHttpClient defaultHttpClient = new DefaultHttpClient();
@@ -29,7 +31,24 @@ public class HttpUtils {
     
     public String getHttpResponse(String url) throws IOException {
         HttpGet get = new HttpGet(url);
-        HttpResponse response = httpClient.execute(get);
+        HttpResponse response;
+        try {
+            response = httpClient.execute(get);
+        } catch (Exception e) {
+            try {
+                Thread.sleep(2000);
+                response = httpClient.execute(get);
+            } catch (InterruptedException e1) {
+                throw new RuntimeException(e1);
+            } catch (Exception e2) {
+                try {
+                    Thread.sleep(4000);
+                    response = httpClient.execute(get);
+                } catch (InterruptedException e3) {
+                    throw new RuntimeException(e3);
+                }
+            }
+        }
         try {
             return EntityUtils.toString(response.getEntity());
         } finally {
