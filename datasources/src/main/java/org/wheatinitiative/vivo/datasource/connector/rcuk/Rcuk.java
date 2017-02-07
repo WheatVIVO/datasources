@@ -28,6 +28,7 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.NodeIterator;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.ResIterator;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
@@ -48,9 +49,9 @@ public class Rcuk extends DataSourceBase implements DataSource {
             RCUK_TBOX_NS + "totalPages");
     private static final String NAMESPACE_ETC = RCUK_ABOX_NS + "n";
     private static final String SPARQL_RESOURCE_DIR = "/rcuk/sparql/";
-    private static final int MAX_SIZE = 100; // number of search results that can
+    private static final int MAX_SIZE = 25; // number of search results that can
                                              // be retrieved in a single request
-    private static final int MAX_PAGES = 2;  // maximum number of pages to retrieve
+    private static final int MAX_PAGES = 9;  // maximum number of pages to retrieve
                                              // for any search term
     private static final int MIN_REST_MILLIS = 350; // ms to wait between
                                                     // subsequent API calls
@@ -60,35 +61,66 @@ public class Rcuk extends DataSourceBase implements DataSource {
     //private List<String> queryTerms;
     private Model result;
     
+    /**
+     *  Override top-level method to avoid single SPARQL update
+     */
+    public void run() {
+        this.getStatus().setRunning(true);
+        try {
+            log.info("Running ingest");
+            runIngest();  
+            log.info("Writing results to endpoint");
+            if(this.getConfiguration().getEndpointParameters() != null) {
+                // writeResultsToEndpoint(getResult());    
+            } else {
+                log.warn("Not writing results to remote endpoint because " +
+                         "none is specified");
+            }
+        } catch (Exception e) {
+            log.info(e, e);
+            throw new RuntimeException(e);
+        } finally {
+            log.info("Finishing ingest");
+            log.info(this.getStatus().getErrorRecords() + " errors");
+            this.getStatus().setRunning(false);
+        }
+    }
+    
     @Override
     public void runIngest() {
         // TODO progress percentage calculation from totals
-        // TODO retrieving subsequent pages from API
         // TODO construct search terms with projects so we can take intersections?
         try {
+            result = ModelFactory.createDefaultModel();
+            if(this.getConfiguration().getEndpointParameters() != null) {
+                String graphURI = getConfiguration().getResultsGraphURI();
+                log.info("Clearing graph " + graphURI);
+                getSparqlEndpoint().update("CLEAR GRAPH <" + graphURI + ">");
+            }
             List<String> queryTerms = this.getConfiguration().getQueryTerms();
             Model m = ModelFactory.createDefaultModel();
+            Set<String> retrievedURIs = new HashSet<String>();
             int totalRecords = 0;
             for(String queryTerm : queryTerms) {
+                m.removeAll();
                 String projects = getProjects(queryTerm, 1);
                 Model projectsRdf = transformToRdf(projects);
                 m.add(projectsRdf);
+                updateResults(m, retrievedURIs);
                 int totalPages = getTotalPages(projectsRdf);
                 if (totalPages > MAX_PAGES) {
                     totalPages = MAX_PAGES;
                 }
                 if (totalPages > 1) {
                     for (int page = 2; page <= totalPages ; page++) {
+                        m.removeAll();
                         m.add(transformToRdf(getProjects(queryTerm, page)));
+                        updateResults(m, retrievedURIs);
                     }
                 }
             }
-            // TODO get total number of linked entities and use to update status
-            m = addLinkedEntities(m);
-            // get a certain subset of further entities related to these new entities
-            m = addSecondLevelLinkedEntities(m);
-            m = constructForVIVO(m);
-            result = m;
+            log.info(retrievedURIs.size() + " retrieved resources from API");
+            // result = m;
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (URISyntaxException e) {
@@ -98,6 +130,67 @@ public class Rcuk extends DataSourceBase implements DataSource {
             // TODO any cleanup; running flag reset in finally block
         }
         log.info("done");
+    }
+    
+    private void updateResults(Model model, Set<String> retrievedURIs) 
+            throws IOException, InterruptedException {
+        model = pruneRedundantResources(model, retrievedURIs);
+        // TODO get total number of linked entities and use to update status
+        model = addLinkedEntities(model, retrievedURIs);
+        // get a certain subset of further entities related to these new entities
+        model = addSecondLevelLinkedEntities(model, retrievedURIs);
+        model = constructForVIVO(model);
+        model = pruneDeadendRelationships(model);
+        if(this.getConfiguration().getEndpointParameters() != null) {
+            log.info("Writing " + model.size() + " to endpoint");
+            String graphURI = getConfiguration().getResultsGraphURI();
+            log.info("Updating graph " + graphURI);
+            getSparqlEndpoint().writeModel(model, graphURI);
+        } else {
+            this.result.add(model);
+        }
+    }
+    
+    private Model pruneRedundantResources(Model m, Set<String> retrievedURIs) {
+         List<String> subjects = getSubjects(m);
+         for(String subject : subjects) {
+             if (retrievedURIs.contains(subject)) {
+                 log.info("Pruning redundant resource " + subject);
+                 removeResource(subject, m);
+             } else {
+                 retrievedURIs.add(subject);
+             }
+         }
+         return m;
+    }
+    
+    private List<String> getSubjects(Model m) {
+        List<String> subjects = new ArrayList<String>();
+        ResIterator sit = m.listSubjects();
+        while(sit.hasNext()) {
+            Resource res = sit.next();
+            if(res.isURIResource()) {
+                subjects.add(res.getURI());
+            }
+        }
+        return subjects;
+    }
+    
+    private void removeResource(String resourceURI, Model m) {
+         Resource resource = m.getResource(resourceURI);
+         Model difference = ModelFactory.createDefaultModel();
+         difference.add(m.listStatements(resource, null, (RDFNode) null));
+         m.remove(difference);
+    }
+    
+    private Model pruneDeadendRelationships(Model m) {
+        log.info("Triples before pruning: " + m.size());
+        Model subtract = this.constructQuery(
+                SPARQL_RESOURCE_DIR + "pruneDeadendRelationships.sparql",
+                m, "not:needed", null);
+        Model diff = m.difference(subtract);
+        log.info("Triples after pruning: " + diff.size());
+        return diff;
     }
     
     private int getTotalPages(Model projectsRdf) {
@@ -188,9 +281,10 @@ public class Rcuk extends DataSourceBase implements DataSource {
      * @param m model containing link nodes
      * @return m model with statements added describing linked entities
      */
-    private Model addLinkedEntities(Model m) throws IOException, 
+    private Model addLinkedEntities(Model m, Set<String> retrievedURIs) 
+            throws IOException, 
             InterruptedException {
-        return addLinkedEntities(m, SPARQL_RESOURCE_DIR 
+        return addLinkedEntities(m, retrievedURIs, SPARQL_RESOURCE_DIR  
                 + "getLinkedEntityURIs.sparql");
     }
     
@@ -201,9 +295,10 @@ public class Rcuk extends DataSourceBase implements DataSource {
      * @param m model containing link nodes
      * @return m model with statements added describing linked entities
      */
-    private Model addSecondLevelLinkedEntities(Model m) throws IOException, 
+    private Model addSecondLevelLinkedEntities(Model m, 
+            Set<String> retrievedEntities) throws IOException, 
             InterruptedException {
-        return addLinkedEntities(m, SPARQL_RESOURCE_DIR 
+        return addLinkedEntities(m, retrievedEntities, SPARQL_RESOURCE_DIR 
                 + "getLinkedEntityURIsLevel2.sparql");
     }
     
@@ -214,7 +309,8 @@ public class Rcuk extends DataSourceBase implements DataSource {
      * @param queryName the name of the SPARQL query to load
      * @return m model with statements added describing linked entities
      */
-    private Model addLinkedEntities(Model m, String queryName) throws IOException, 
+    private Model addLinkedEntities(Model m, Set<String> retrievedURIs, 
+            String queryName) throws IOException, 
             InterruptedException{
         String queryStr = loadQuery(queryName);
         QueryExecution qe = QueryExecutionFactory.create(queryStr, m);
@@ -233,7 +329,13 @@ public class Rcuk extends DataSourceBase implements DataSource {
         }
         for (String uri : linkedURIs) {
             try {
+                if(retrievedURIs.contains(uri)) {
+                // can't necessarily skip because the previous retrieval may have pruned relationships
+                //    log.info("Skipping already-retrieved resource " + uri);
+                //    continue;
+                }
                 log.info(uri); // TODO level debug
+                retrievedURIs.add(uri);
                 String doc = httpUtils.getHttpResponse(uri);
                 m.add(transformToRdf(doc));
                 Thread.currentThread();

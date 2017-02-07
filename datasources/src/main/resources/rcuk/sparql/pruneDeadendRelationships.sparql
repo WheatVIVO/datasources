@@ -22,15 +22,17 @@ PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX rcuk:     <http://gtr.rcuk.ac.uk/gtr/api/>
 
-SELECT DISTINCT ?x WHERE {
-    ?links rcuk:link ?link .
-    ?link  rcuk:href ?x 
-    BIND(IRI(?x) AS ?xuri) 
-    FILTER NOT EXISTS { 
-	 ?xuri rcuk:href ?href 
+CONSTRUCT {
+    ?link ?p ?o
+} WHERE {
+    ?link a vivo:Relationship .
+    ?link vivo:relates ?y
+    FILTER NOT EXISTS {
+        ?y a ?type
     }
-    # some employment links in the data are dirty and link to all organizations
-    FILTER (?xuri != <http://gtr.rcuk.ac.uk:80/gtr/api/organisations/>)
-    # FILTER (!REGEX(STR(?x), "/persons/"))
-    FILTER (REGEX(STR(?x), "organisations")) # only get organizations for people affiliations
-} ORDER BY ?x LIMIT 1000
+    ?link ?p ?o
+   # ?y rcuk:links ?links .
+   # ?links rcuk:link ?link .
+   # ?link  rcuk:href ?href
+   # BIND(IRI(?href) AS ?x)
+}
