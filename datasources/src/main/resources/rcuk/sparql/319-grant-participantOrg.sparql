@@ -40,4 +40,5 @@ CONSTRUCT {
     ?grant a vivo:Grant .
     ?link vivo:relates ?org .
 #    ?org a foaf:Organization .
+    FILTER NOT EXISTS { ?org a vivo:Grant }
 }

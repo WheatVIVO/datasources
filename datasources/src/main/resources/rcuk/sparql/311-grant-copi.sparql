@@ -42,4 +42,5 @@ CONSTRUCT {
     ?grant a vivo:Grant .
     ?link vivo:relates ?person .
 #    ?person a foaf:Person .
+    FILTER NOT EXISTS { ?person a vivo:Grant }
 }
