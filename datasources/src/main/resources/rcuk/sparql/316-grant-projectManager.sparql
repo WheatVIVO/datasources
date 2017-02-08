@@ -28,14 +28,12 @@ PREFIX rcukpj:   <http://gtr.rcuk.ac.uk/gtr/api/project/>
 CONSTRUCT {
     ?grant vivo:relates ?person .
     ?grant vivo:relates _:role .
-    _:role a vivo:CoPrincipalInvestigatorRole .
+    # not perfect mapping in core: using LeaderRole for now since 
+    # interface assumes AdministratorRole inheres in an organization
+    _:role a vivo:LeaderRole . 
     _:role obo:RO_0000052 ?person .
 } WHERE {
-    { 
-      ?link rcuk:rel "COI_PER" 
-    } UNION {
-      ?link rcuk:rel "RESEARCH_COI_PER"
-    }
+    ?link rcuk:rel "PM_PER" .
     ?links rcuk:link ?link .
     ?grant rcuk:links ?links .
     # ?link vivo:relates ?grant .

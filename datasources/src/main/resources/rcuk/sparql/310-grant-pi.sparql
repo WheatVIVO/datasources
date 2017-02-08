@@ -37,5 +37,5 @@ CONSTRUCT {
     # ?link vivo:relates ?grant .
     ?grant a vivo:Grant .
     ?link vivo:relates ?person .
-    ?person a foaf:Person .
+#    ?person a foaf:Person .
 }

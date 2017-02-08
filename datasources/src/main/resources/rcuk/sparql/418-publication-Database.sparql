@@ -23,23 +23,10 @@ PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX rcuk:     <http://gtr.rcuk.ac.uk/gtr/api/>
 PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
 PREFIX rcuko:    <http://gtr.rcuk.ac.uk/gtr/api/organisation/>
-PREFIX rcukpj:   <http://gtr.rcuk.ac.uk/gtr/api/project/>
+PREFIX rcukoc:   <http://gtr.rcuk.ac.uk/gtr/api/project/outcome/>
 
 CONSTRUCT {
-    ?grant vivo:relates ?person .
-    ?grant vivo:relates _:role .
-    _:role a vivo:CoPrincipalInvestigatorRole .
-    _:role obo:RO_0000052 ?person .
+    ?x a obo:ERO_0001716 .
 } WHERE {
-    { 
-      ?link rcuk:rel "COI_PER" 
-    } UNION {
-      ?link rcuk:rel "RESEARCH_COI_PER"
-    }
-    ?links rcuk:link ?link .
-    ?grant rcuk:links ?links .
-    # ?link vivo:relates ?grant .
-    ?grant a vivo:Grant .
-    ?link vivo:relates ?person .
-#    ?person a foaf:Person .
+    ?x rcukoc:type "Database/Collection of data" .
 }

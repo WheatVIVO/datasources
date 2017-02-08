@@ -41,9 +41,11 @@ CONSTRUCT {
     OPTIONAL { ?address rcuk:line1 ?line1 }
     OPTIONAL { ?address rcuk:line2 ?line2 }
     OPTIONAL { ?address rcuk:line3 ?line3 }
-    BIND(concat(?line1, "; ", ?line2, "; ", ?line3) AS ?streetAddress)
-    OPTIONAL { ?address rcuk:line4 ?locality }
-    OPTIONAL { ?address rcuk:line5 ?region }
+    BIND(COALESCE(CONCAT(" <br/> ", ?line2), "") AS ?lineTwo)
+    BIND(COALESCE(CONCAT(" <br/> ", ?line3), "") AS ?lineThree)
+    BIND(concat(?line1, ?lineTwo, ?lineThree) AS ?streetAddress)
+    OPTIONAL { ?address rcuk:city ?locality }
+    OPTIONAL { ?address rcuk:county ?region }
     OPTIONAL { ?address rcuk:postCode ?postalCode }
     OPTIONAL { ?address rcuk:country ?country }
 }

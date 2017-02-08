@@ -51,7 +51,7 @@ public class Rcuk extends DataSourceBase implements DataSource {
     private static final String SPARQL_RESOURCE_DIR = "/rcuk/sparql/";
     private static final int MAX_SIZE = 25; // number of search results that can
                                              // be retrieved in a single request
-    private static final int MAX_PAGES = 9;  // maximum number of pages to retrieve
+    private static final int MAX_PAGES = 40;  // maximum number of pages to retrieve
                                              // for any search term
     private static final int MIN_REST_MILLIS = 350; // ms to wait between
                                                     // subsequent API calls
@@ -258,6 +258,11 @@ public class Rcuk extends DataSourceBase implements DataSource {
                 "300-grant.sparql",
                 "310-grant-pi.sparql",
                 "311-grant-copi.sparql",
+                "313-grant-student.sparql",
+                "314-grant-supervisor.sparql",
+                "316-grant-projectManager.sparql",
+                "318-grant-leadOrg.sparql",
+                "319-grant-participantOrg.sparql",
                 "320-grant-fund.sparql",
                 "400-publication-title.sparql",
                 "410-publication-JournalArticle.sparql",
@@ -266,6 +271,7 @@ public class Rcuk extends DataSourceBase implements DataSource {
                 "413-publication-BookChapter.sparql",
                 "414-publication-Thesis.sparql",
                 "415-publication-Book.sparql",
+                "418-publication-Database.sparql",
                 "430-publication-properties.sparql",
                 "440-publication-supportedInformationResource.sparql",
                 "455-position.sparql");
@@ -330,9 +336,9 @@ public class Rcuk extends DataSourceBase implements DataSource {
         for (String uri : linkedURIs) {
             try {
                 if(retrievedURIs.contains(uri)) {
-                // can't necessarily skip because the previous retrieval may have pruned relationships
-                //    log.info("Skipping already-retrieved resource " + uri);
-                //    continue;
+                // TODO can't necessarily skip because the previous retrieval may have pruned relationships
+                    log.info("Skipping already-retrieved resource " + uri);
+                    continue;
                 }
                 log.info(uri); // TODO level debug
                 retrievedURIs.add(uri);

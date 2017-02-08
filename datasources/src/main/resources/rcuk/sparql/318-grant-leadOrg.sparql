@@ -26,20 +26,17 @@ PREFIX rcuko:    <http://gtr.rcuk.ac.uk/gtr/api/organisation/>
 PREFIX rcukpj:   <http://gtr.rcuk.ac.uk/gtr/api/project/>
 
 CONSTRUCT {
-    ?grant vivo:relates ?person .
+    ?grant vivo:relates ?org .
     ?grant vivo:relates _:role .
-    _:role a vivo:CoPrincipalInvestigatorRole .
-    _:role obo:RO_0000052 ?person .
+    # not perfect mapping in core: using AdministratorRole for now 
+    _:role a vivo:AdministratorRole . 
+    _:role obo:RO_0000052 ?org .
 } WHERE {
-    { 
-      ?link rcuk:rel "COI_PER" 
-    } UNION {
-      ?link rcuk:rel "RESEARCH_COI_PER"
-    }
+    ?link rcuk:rel "LEAD_ORG" .
     ?links rcuk:link ?link .
     ?grant rcuk:links ?links .
     # ?link vivo:relates ?grant .
     ?grant a vivo:Grant .
-    ?link vivo:relates ?person .
-#    ?person a foaf:Person .
+    ?link vivo:relates ?org .
+#    ?org a foaf:Organization .
 }

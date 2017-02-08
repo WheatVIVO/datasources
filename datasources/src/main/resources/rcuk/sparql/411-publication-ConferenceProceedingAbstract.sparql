@@ -28,5 +28,5 @@ PREFIX rcukoc:   <http://gtr.rcuk.ac.uk/gtr/api/project/outcome/>
 CONSTRUCT {
     ?x a vivo:ConferencePaper .
 } WHERE {
-    ?x rcukoc:type "Conference Proceeding_Abstract" .
+    ?x rcukoc:type "Conference/Paper/Proceeding/Abstract" .
 }
