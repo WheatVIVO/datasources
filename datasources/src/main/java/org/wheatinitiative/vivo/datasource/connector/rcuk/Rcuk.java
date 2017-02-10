@@ -95,7 +95,8 @@ public class Rcuk extends DataSourceBase implements DataSource {
             if(this.getConfiguration().getEndpointParameters() != null) {
                 String graphURI = getConfiguration().getResultsGraphURI();
                 log.info("Clearing graph " + graphURI);
-                getSparqlEndpoint().update("CLEAR GRAPH <" + graphURI + ">");
+                //getSparqlEndpoint().update("CLEAR GRAPH <" + graphURI + ">");
+                clearGraph(graphURI);
             }
             List<String> queryTerms = this.getConfiguration().getQueryTerms();
             Model m = ModelFactory.createDefaultModel();

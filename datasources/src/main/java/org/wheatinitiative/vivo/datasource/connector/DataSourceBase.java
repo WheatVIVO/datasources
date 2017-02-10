@@ -16,8 +16,11 @@ import org.wheatinitiative.vivo.datasource.util.xml.rdf.RdfUtils;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.QueryParseException;
+import com.hp.hpl.jena.query.QuerySolution;
+import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 public abstract class DataSourceBase {
 
@@ -185,9 +188,56 @@ public abstract class DataSourceBase {
             throw new RuntimeException("Results graph URI cannot be null or empty");
         }
         log.info("Clearing graph " + graphURI);
-        getSparqlEndpoint().update("CLEAR GRAPH <" + graphURI + ">");
+        //getSparqlEndpoint().update("CLEAR GRAPH <" + graphURI + ">");
+        clearGraph(graphURI);
         log.info("Updating graph " + graphURI);
         getSparqlEndpoint().writeModel(results, graphURI);
+    }
+    
+    // avoiding CLEAR because it is very inefficient with VIVO-based endpoints
+    protected void clearGraph(String graphURI) {
+        // retrieve individual URIs in batches of 1000
+        int batchSize = 1000;
+        log.info("Clearing graph " + graphURI + " in batches of " + batchSize + 
+                " individuals");
+        boolean getNextBatch = true;
+        do {
+            String individualsBatch = "SELECT DISTINCT ?s WHERE { \n" +
+                    "    GRAPH <" + graphURI + "> { \n" +
+                    "        ?s ?p ?o \n" +
+                    "    } \n" +
+                    "} LIMIT " + batchSize;
+            log.debug(individualsBatch);
+            ResultSet rs = getSparqlEndpoint().getResultSet(individualsBatch);
+            getNextBatch = rs.hasNext();
+            StringBuilder deletion = new StringBuilder();
+            while(rs.hasNext()) {
+                QuerySolution sol = rs.next();
+                Resource s = sol.getResource("s");
+                if(s.isURIResource()) {
+                    deletion.append("DELETE { \n")
+                    .append("    GRAPH<").append(graphURI).append(">")
+                    .append(" { <").append(s.getURI()).append("> ?p ?o } \n")
+                    .append("} WHERE { \n")
+                    .append("    GRAPH<").append(graphURI).append(">")
+                    .append(" { <").append(s.getURI()).append("> ?p ?o } \n")
+                    .append("}; \n");
+                }
+            }
+            String deletionStr = deletion.toString();
+            log.debug(deletionStr);
+            if(deletionStr.isEmpty()) {
+                getNextBatch = false;
+            } else {
+                getSparqlEndpoint().update(deletion.toString());    
+            }            
+        } while (getNextBatch);
+        // TODO check that count is decreasing after each N batches, otherwise 
+        // terminate loop
+        // Finally, issue the regular CLEAR to flush out anything remaining
+        // (e.g. blank nodes)
+        log.info("Clearing graph " + graphURI);
+        getSparqlEndpoint().update("CLEAR GRAPH <" + graphURI + ">");
     }
     
     protected SparqlEndpoint getEndpointFromConfiguration(

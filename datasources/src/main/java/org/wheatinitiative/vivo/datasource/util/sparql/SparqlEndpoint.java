@@ -18,6 +18,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
@@ -66,8 +67,14 @@ public class SparqlEndpoint {
     private String getSparqlQueryResponse(String queryStr, String contentType) {
         try {
             String uri = endpointParams.getEndpointURI();
-            queryStr = URLEncoder.encode(queryStr, "UTF-8");
-            HttpGet get = new HttpGet(uri + "&query=" + queryStr);
+            //queryStr = URLEncoder.encode(queryStr, "UTF-8");
+            URIBuilder uriB = new URIBuilder(uri);
+            uriB.addParameter("query", queryStr);
+            uriB.addParameter("email", endpointParams.getUsername());
+            uriB.addParameter("password", endpointParams.getPassword());
+            String uriWithParams = uriB.build().toString();
+            HttpGet get = new HttpGet(uriWithParams);
+            log.debug("Request URI " + uriWithParams);
             get.addHeader("Accept", contentType);
             HttpResponse response = httpClient.execute(get);
             try {
