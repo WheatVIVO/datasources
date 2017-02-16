@@ -15,6 +15,9 @@ public class DataSourceDescription {
     }
     
     public DataSourceConfiguration getConfiguration() {
+        if(this.configuration == null) {
+            this.configuration = new DataSourceConfiguration();
+        }
         return this.configuration;
     }
     
@@ -23,6 +26,9 @@ public class DataSourceDescription {
     }
     
     public DataSourceStatus getStatus() {
+        if(this.status == null) {
+            this.status = new DataSourceStatus();
+        }
         return this.status;
     }
     

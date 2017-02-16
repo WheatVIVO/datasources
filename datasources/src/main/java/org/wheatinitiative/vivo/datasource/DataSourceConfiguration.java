@@ -6,10 +6,31 @@ import java.util.Map;
 
 public class DataSourceConfiguration {
    
+    private String uri;
+    private String name;
     private List<String> queryTerms;
     private String resultsGraphURI;
+    private String deploymentURI;
+    private int priority;
+    private String serviceURI;
     private Map<String, Object> parameterMap = new HashMap<String, Object>();
     private SparqlEndpointParams endpointParameters = new SparqlEndpointParams();
+    
+    public String getURI() {
+        return this.uri;
+    }
+    
+    public void setURI(String uri) {
+        this.uri = uri;
+    }
+    
+    public String getName() {
+        return this.name;
+    }
+    
+    public void setName(String name) {
+        this.name = name;
+    }
     
     public List<String> getQueryTerms() {
         return this.queryTerms;
@@ -25,6 +46,30 @@ public class DataSourceConfiguration {
     
     public void setResultsGraphURI(String resultsGraphURI) {
         this.resultsGraphURI = resultsGraphURI;
+    }
+    
+    public String getDeploymentURI() {
+        return this.deploymentURI;
+    }
+    
+    public void setDeploymentURI(String deploymentURI) {
+        this.deploymentURI = deploymentURI;
+    }
+    
+    public int getPriority() {
+        return this.priority;
+    }
+    
+    public void setPriority(int priority) {
+        this.priority = priority;
+    }
+    
+    public String getServiceURI() {
+        return this.serviceURI;
+    }
+    
+    public void setServiceURI(String serviceURI) {
+        this.serviceURI = serviceURI;
     }
     
     public SparqlEndpointParams getEndpointParameters() {
