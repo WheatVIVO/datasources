@@ -10,9 +10,11 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.LaxRedirectStrategy;
+import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 
 import com.hp.hpl.jena.rdf.model.Model;
@@ -61,7 +63,14 @@ public class HttpUtils {
         HttpPost post = new HttpPost(url);
         post.addHeader("content-type", contentType);
         try {
-            post.setEntity(new StringEntity(payload));
+            try {
+                ContentType ctype = ContentType.create(contentType, "UTF-8");
+                post.setEntity(new StringEntity(payload, ctype));
+            } catch (Exception e) {
+                log.warn("Unable to use content type " + contentType +
+                        ".  Using default UTF-8 StringEntity");
+                post.setEntity(new StringEntity(payload, "UTF-8"));
+            }
             try {
                 HttpResponse response = httpClient.execute(post);
                 try {
@@ -76,8 +85,7 @@ public class HttpUtils {
             } 
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
-        }
-        
+        }        
     }
     
     public Model getRDFLinkedDataResponse(String url) throws IOException {
