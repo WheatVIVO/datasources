@@ -83,17 +83,20 @@ public class Prodinra extends DataSourceBase implements DataSource {
         List<Resource> relevantResources = new ArrayList<Resource>();
         for (String queryTerm : getConfiguration().getQueryTerms()) {
             String query = queryStr.replaceAll("\\$TERM", queryTerm);
-            log.info(query);
+            log.debug(query);
             QueryExecution qe = QueryExecutionFactory.create(query, model);
             try {
                 ResultSet rs = qe.execSelect();
+                int count = 0;
                 while(rs.hasNext()) {
+                    count++;
                     QuerySolution soln = rs.next();
                     Resource res = soln.getResource("person");
                     if(res != null) {
                         relevantResources.add(res);
                     }
                 }
+                log.info(count + " relevant resources for query term " + queryTerm);
             } finally {
                 if(qe != null) {
                     qe.close();
@@ -124,10 +127,10 @@ public class Prodinra extends DataSourceBase implements DataSource {
                 "122-inraAffiliationUnit.sparql",
                 "124-inraLab.sparql");
         for(String query : queries) {
-            log.info("Executing query " + query);
-            log.info("Pre-query model size: " + m.size());
+            log.debug("Executing query " + query);
+            log.debug("Pre-query model size: " + m.size());
             construct(SPARQL_RESOURCE_DIR + query, m, NAMESPACE_ETC);
-            log.info("Post-query model size: " + m.size());
+            log.debug("Post-query model size: " + m.size());
         }
         return m;
     }
