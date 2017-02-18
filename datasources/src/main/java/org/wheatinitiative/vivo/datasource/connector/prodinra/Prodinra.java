@@ -201,13 +201,17 @@ public class Prodinra extends DataSourceBase implements DataSource {
                 uriB.addParameter("resumptionToken", resumptionToken);
             } else {
                 uriB.addParameter("metadataPrefix", metadataPrefix);
+                //uriB.addParameter("from", "2017-01-01T00:00:00Z");
             }
             try {
-                String response = httpUtils.getHttpResponse(uriB.build().toString());
+                String request = uriB.build().toString();
+                log.info(request);
+                String response = httpUtils.getHttpResponse(request);
                 Model m = xmlToRdf.toRDF(response);
                 processResumptionToken(m);
                 if(resumptionToken == null) {
                     done = true;
+                    log.info("No more resumption token -- done.");
                 }
                 if(firstResult == null) {
                     firstResult = m;
@@ -220,6 +224,7 @@ public class Prodinra extends DataSourceBase implements DataSource {
 
         private void processResumptionToken(Model m) {
             NodeIterator nit = m.listObjectsOfProperty(RESUMPTION_TOKEN);
+            String token = null;
             while(nit.hasNext()) {
                 RDFNode n = nit.next();
                 if(n.isResource()) {
@@ -236,7 +241,6 @@ public class Prodinra extends DataSourceBase implements DataSource {
                     } 
                     StmtIterator sit = n.asResource().listProperties(VITRO_VALUE);
                     try {
-                        String token = null;
                         while(sit.hasNext()) {
                             Statement stmt = sit.next();
                             if(stmt.getObject().isLiteral()) {
@@ -244,12 +248,13 @@ public class Prodinra extends DataSourceBase implements DataSource {
                                         .asLiteral().getLexicalForm();
                             }
                         }
-                        this.resumptionToken = token;
                     } finally {
                         sit.close();
                     }
                 }
             }
+            log.debug("Token: " + token);
+            this.resumptionToken = token;
         }
         
         public int totalRecords() {
