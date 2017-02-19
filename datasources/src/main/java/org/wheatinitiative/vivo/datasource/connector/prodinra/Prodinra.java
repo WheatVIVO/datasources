@@ -31,12 +31,12 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
+import com.hp.hpl.jena.util.ResourceUtils;
 
 public class Prodinra extends DataSourceBase implements DataSource {
 
     public static final Log log = LogFactory.getLog(Prodinra.class);
     
-    private static final String ENDPOINT = "http://oai.prodinra.inra.fr/ft";
     private static final String METADATA_PREFIX = "oai_inra";
     private static final String PRODINRA_TBOX_NS = "http://record.prodinra.inra.fr/";
     private static final String PRODINRA_ABOX_NS = PRODINRA_TBOX_NS + "individual/";
@@ -59,6 +59,11 @@ public class Prodinra extends DataSourceBase implements DataSource {
     @Override
     public void runIngest() {
         try { 
+            if(this.getConfiguration().getEndpointParameters() != null) {
+                String graphURI = getConfiguration().getResultsGraphURI();
+                log.info("Clearing graph " + graphURI);
+                clearGraph(graphURI);
+            }
             OaiModelIterator it = new OaiModelIterator(
                     this.getConfiguration().getServiceURI(), 
                     METADATA_PREFIX);
@@ -71,7 +76,12 @@ public class Prodinra extends DataSourceBase implements DataSource {
                 log.info(model.size() + " statements before filtering");
                 model = filter(model);
                 log.info(model.size() + " statements after filtering");
-                result.add(model);
+                if(this.getConfiguration().getEndpointParameters() != null) {
+                    log.info("Adding " + model.size() + " triples to endpoint");
+                    addToEndpoint(model);
+                } else {
+                    result.add(model);
+                }
                 log.info(result.size() + " statements after page " + page);
             }            
             this.result = result;
@@ -134,9 +144,36 @@ public class Prodinra extends DataSourceBase implements DataSource {
     
     protected Model transformToRDF(Model m) {
         m = rdfUtils.renameBNodes(m, NAMESPACE_ETC, m);
+        m = renameByIdentifier(m);
         m = constructForVIVO(m);
         m = rdfUtils.smushResources(m, m.getProperty(
                 PRODINRA_TBOX_NS + "identifier"));
+        return m;
+    }
+    
+    protected Model renameByIdentifier(Model m) {
+        m = renameByIdentifier(m, m.getProperty(
+                PRODINRA_TBOX_NS + "identifier"), "id");
+        m = renameByIdentifier(m, m.getProperty(
+                PRODINRA_TBOX_NS + "inraIdentifier"), "in");
+        return m;
+    }
+    
+    private Model renameByIdentifier(Model m, Property identifier, 
+            String localNamePrefix) {
+        Map<Resource, String> idMap = new HashMap<Resource, String>();
+        StmtIterator sit = m.listStatements(null, identifier, (RDFNode) null);
+        while(sit.hasNext()) {
+            Statement stmt = sit.next();
+            if(stmt.getObject().isLiteral()) {
+                idMap.put(stmt.getSubject(), 
+                        stmt.getObject().asLiteral().getLexicalForm());
+            }
+        }
+        for(Resource res : idMap.keySet()) {
+            ResourceUtils.renameResource(
+                    res, PRODINRA_ABOX_NS + localNamePrefix + idMap.get(res));
+        }
         return m;
     }
     
@@ -165,7 +202,7 @@ public class Prodinra extends DataSourceBase implements DataSource {
         private URI repositoryURI;
         private String metadataPrefix;
         
-        private Model firstResult = null;
+        private Model cachedResult = null;
         private Integer totalRecords = null;
         private String resumptionToken = null;
         private boolean done = false;
@@ -177,24 +214,30 @@ public class Prodinra extends DataSourceBase implements DataSource {
         }
 
         public boolean hasNext() {
-            return (firstResult != null || !done);
+            return (cachedResult != null || !done);
         }
 
         public Model next() {
-            if(firstResult != null) {
-                Model m = firstResult;
-                firstResult = null;
+            if(cachedResult != null) {
+                Model m = cachedResult;
+                cachedResult = null;
                 return m;
             } else {
                 if(done) {
                     throw new RuntimeException("No more items");
                 } else {
-                    return fetchNext();
+                    return fetchNext(!CACHE);
                 }
             }
         }
         
-        private Model fetchNext() {
+        private final static boolean CACHE = true;
+        
+        private void cacheNext() {
+            fetchNext(CACHE);
+        }
+        
+        private Model fetchNext(boolean cacheResult) {
             URIBuilder uriB = new URIBuilder(repositoryURI);
             uriB.addParameter("verb", "ListRecords");
             if(resumptionToken != null) {
@@ -213,8 +256,8 @@ public class Prodinra extends DataSourceBase implements DataSource {
                     done = true;
                     log.info("No more resumption token -- done.");
                 }
-                if(firstResult == null) {
-                    firstResult = m;
+                if(cacheResult) {
+                    cachedResult = m;
                 }
                 return m;
             } catch (Exception e) {
@@ -259,7 +302,7 @@ public class Prodinra extends DataSourceBase implements DataSource {
         
         public int totalRecords() {
             if(totalRecords == null) {
-                fetchNext();
+                cacheNext();
             }
             return totalRecords;
         }

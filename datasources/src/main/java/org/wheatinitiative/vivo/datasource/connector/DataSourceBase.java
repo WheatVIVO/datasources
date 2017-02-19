@@ -194,6 +194,14 @@ public abstract class DataSourceBase {
         getSparqlEndpoint().writeModel(results, graphURI);
     }
     
+    protected void addToEndpoint(Model m) {
+        String graphURI = getConfiguration().getResultsGraphURI();
+        if(graphURI == null || graphURI.isEmpty()) {
+            throw new RuntimeException("Results graph URI cannot be null or empty");
+        }
+        getSparqlEndpoint().writeModel(m, graphURI);
+    }
+    
     // avoiding CLEAR because it is very inefficient with VIVO-based endpoints
     protected void clearGraph(String graphURI) {
         // retrieve individual URIs in batches of 1000
