@@ -61,7 +61,11 @@ public abstract class DataSourceBase {
             runIngest();  
             log.info("Writing results to endpoint");
             if(this.getConfiguration().getEndpointParameters() != null) {
-                writeResultsToEndpoint(getResult());    
+                // Don't clear the graph if the result is empty
+                // TODO: should be null instead of empty
+                if(getResult().size() > 0) {
+                    writeResultsToEndpoint(getResult());    
+                }
             } else {
                 log.warn("Not writing results to remote endpoint because " +
                          "none is specified");
@@ -75,7 +79,7 @@ public abstract class DataSourceBase {
             this.getStatus().setRunning(false);
         }
     }
-    
+   
     /**
      * Top level that can be overridden by subclasses
      */
@@ -237,7 +241,11 @@ public abstract class DataSourceBase {
             if(deletionStr.isEmpty()) {
                 getNextBatch = false;
             } else {
-                getSparqlEndpoint().update(deletion.toString());    
+                try {
+                    getSparqlEndpoint().update(deletionStr);    
+                } catch (Exception e) {
+                    log.info("Failed to delete batch of triples", e);
+                }
             }            
         } while (getNextBatch);
         // TODO check that count is decreasing after each N batches, otherwise 
