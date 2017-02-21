@@ -5,7 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URLEncoder;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +23,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.wheatinitiative.vivo.datasource.SparqlEndpointParams;
+import org.wheatinitiative.vivo.datasource.dao.ModelConstructor;
 
 import com.hp.hpl.jena.query.QueryParseException;
 import com.hp.hpl.jena.query.ResultSet;
@@ -32,7 +33,7 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.sparql.resultset.ResultSetException;
 
-public class SparqlEndpoint {
+public class SparqlEndpoint implements ModelConstructor {
 
     // writing too many triples at once to VIVO seems to result in 403 errors
     private static final int CHUNK_SIZE = 5000;
@@ -227,6 +228,19 @@ public class SparqlEndpoint {
             }
         }
         return sb.toString();
+    }
+
+    public Model construct(String query) {
+        Model m = ModelFactory.createDefaultModel();
+        try {
+            String ttl = getSparqlQueryResponse(query, "text/turtle");
+            m.read(new StringReader(ttl), null, "TURTLE");
+        } catch (Exception e) {
+            log.warn(e, e);
+            String rdfxml = getSparqlQueryResponse(query, "application/rdf+xml");
+            m.read(new StringReader(rdfxml), null, "RDF/XML");
+        }
+        return m;
     } 
     
 }

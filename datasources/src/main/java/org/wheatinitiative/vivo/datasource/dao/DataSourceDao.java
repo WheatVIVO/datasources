@@ -60,13 +60,18 @@ public class DataSourceDao {
         return getDataSourcesQuery(DATASOURCE);
     }
     
+    public String getAllDataSourcesQuery() {
+        return getDataSourcesQuery(null);
+    }
+    
     public String getDataSourcesQuery(String dataSourceSubclass) {
         return "CONSTRUCT { \n" +
                 "    ?dataSource ?p ?o . \n" +
                 "    ?endpoint ?endpointP ?endpointO . \n" +
                 "    ?queryTermSet ?queryTermP ?queryTermO \n" +
                 "} WHERE { \n" +
-                "    ?dataSource a <" + dataSourceSubclass + "> . \n" +
+                ((dataSourceSubclass != null) ? 
+                "    ?dataSource a <" + dataSourceSubclass + "> . \n" : "") +
                 ((DATASOURCE.equals(dataSourceSubclass)) ? 
                         "    FILTER NOT EXISTS { \n" +
                         "        ?dataSource a ?subclass . \n" +
@@ -133,7 +138,7 @@ public class DataSourceDao {
     }
 
     public DataSourceDescription getDataSource(String URI) {
-        String dataSourceQuery = dataSourcesQuery
+        String dataSourceQuery = getAllDataSourcesQuery()
                 .replaceAll("\\?dataSource", "<" + URI + ">");
         return getDataSource(URI, construct(dataSourceQuery));
     }
