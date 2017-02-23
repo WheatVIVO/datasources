@@ -1,6 +1,7 @@
 package org.wheatinitiative.vivo.datasource.dao;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -13,7 +14,6 @@ import org.wheatinitiative.vivo.datasource.SparqlEndpointParams;
 import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.ResIterator;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -130,6 +130,8 @@ public class DataSourceDao {
                 dataSources.add(this.getDataSource(res.getURI(), model));
             }
         }
+        DataSourcePriorityComparator comp = new DataSourcePriorityComparator();
+        Collections.sort(dataSources, comp);
         return dataSources;
     }
     

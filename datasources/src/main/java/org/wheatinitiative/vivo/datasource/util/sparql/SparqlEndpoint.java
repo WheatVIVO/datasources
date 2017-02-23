@@ -12,6 +12,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpVersion;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
@@ -20,17 +21,23 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.util.EntityUtils;
 import org.wheatinitiative.vivo.datasource.SparqlEndpointParams;
 import org.wheatinitiative.vivo.datasource.dao.ModelConstructor;
 
 import com.hp.hpl.jena.query.QueryParseException;
+import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.query.ResultSetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
+import com.hp.hpl.jena.sparql.engine.http.HttpParams;
 import com.hp.hpl.jena.sparql.resultset.ResultSetException;
 
 public class SparqlEndpoint implements ModelConstructor {
@@ -42,10 +49,17 @@ public class SparqlEndpoint implements ModelConstructor {
     
     private SparqlEndpointParams endpointParams;
     
-    private HttpClient httpClient = new DefaultHttpClient();
+    private static final DefaultHttpClient httpClient;
+
+    static {
+        PoolingClientConnectionManager cm = new PoolingClientConnectionManager();
+        cm.setDefaultMaxPerRoute(50);
+        cm.setMaxTotal(300);
+        httpClient = new DefaultHttpClient(cm);
+    }
     
     public SparqlEndpoint(SparqlEndpointParams params) {
-        this.endpointParams = params;
+        this.endpointParams = params;     
     }
        
     public String getURI() {
@@ -77,6 +91,7 @@ public class SparqlEndpoint implements ModelConstructor {
             HttpGet get = new HttpGet(uriWithParams);
             log.debug("Request URI " + uriWithParams);
             get.addHeader("Accept", contentType);
+            long start = System.currentTimeMillis();
             HttpResponse response = httpClient.execute(get);
             try {
                 String content = stringFromInputStream(
@@ -212,7 +227,7 @@ public class SparqlEndpoint implements ModelConstructor {
         String line;
         try {
 
-            br = new BufferedReader(new InputStreamReader(is));
+            br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
             while ((line = br.readLine()) != null) {
                 sb.append(line);
             }
@@ -242,5 +257,60 @@ public class SparqlEndpoint implements ModelConstructor {
         }
         return m;
     } 
+    
+    /**
+     * An alternative to CLEAR, which is very inefficient with VIVO-based 
+     * endpoints
+     * @param graphURI
+     */
+    public void clearGraph(String graphURI) {
+        // retrieve individual URIs in batches of 1000
+        int batchSize = 1000;
+        log.info("Clearing graph " + graphURI + " in batches of " + batchSize + 
+                " individuals");
+        boolean getNextBatch = true;
+        do {
+            String individualsBatch = "SELECT DISTINCT ?s WHERE { \n" +
+                    "    GRAPH <" + graphURI + "> { \n" +
+                    "        ?s ?p ?o \n" +
+                    "    } \n" +
+                    "} LIMIT " + batchSize;
+            log.debug(individualsBatch);
+            ResultSet rs = getResultSet(individualsBatch);
+            getNextBatch = rs.hasNext();
+            StringBuilder deletion = new StringBuilder();
+            while(rs.hasNext()) {
+                QuerySolution sol = rs.next();
+                Resource s = sol.getResource("s");
+                if(s.isURIResource()) {
+                    deletion.append("DELETE { \n")
+                    .append("    GRAPH<").append(graphURI).append(">")
+                    .append(" { <").append(s.getURI()).append("> ?p ?o } \n")
+                    .append("} WHERE { \n")
+                    .append("    GRAPH<").append(graphURI).append(">")
+                    .append(" { <").append(s.getURI()).append("> ?p ?o } \n")
+                    .append("}; \n");
+                }
+            }
+            String deletionStr = deletion.toString();
+            log.debug(deletionStr);
+            if(deletionStr.isEmpty()) {
+                getNextBatch = false;
+            } else {
+                try {
+                    update(deletionStr);    
+                } catch (Exception e) {
+                    log.info("Failed to delete batch of triples", e);
+                }
+            }            
+        } while (getNextBatch);
+        // TODO check that count is decreasing after each N batches, otherwise 
+        // terminate loop
+        // Finally, issue the regular CLEAR to flush out anything remaining
+        // (e.g. blank nodes)
+        //log.info("Clearing graph " + graphURI);
+        log.info("Calling final clear");
+        update("CLEAR GRAPH <" + graphURI + ">");
+    }
     
 }

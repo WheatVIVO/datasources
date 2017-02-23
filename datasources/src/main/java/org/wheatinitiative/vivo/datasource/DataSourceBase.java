@@ -191,7 +191,7 @@ public abstract class DataSourceBase {
         }
         log.info("Clearing graph " + graphURI);
         //getSparqlEndpoint().update("CLEAR GRAPH <" + graphURI + ">");
-        clearGraph(graphURI);
+        getSparqlEndpoint().clearGraph(graphURI);
         log.info("Updating graph " + graphURI);
         getSparqlEndpoint().writeModel(results, graphURI);
     }
@@ -202,56 +202,6 @@ public abstract class DataSourceBase {
             throw new RuntimeException("Results graph URI cannot be null or empty");
         }
         getSparqlEndpoint().writeModel(m, graphURI);
-    }
-    
-    // avoiding CLEAR because it is very inefficient with VIVO-based endpoints
-    protected void clearGraph(String graphURI) {
-        // retrieve individual URIs in batches of 1000
-        int batchSize = 1000;
-        log.info("Clearing graph " + graphURI + " in batches of " + batchSize + 
-                " individuals");
-        boolean getNextBatch = true;
-        do {
-            String individualsBatch = "SELECT DISTINCT ?s WHERE { \n" +
-                    "    GRAPH <" + graphURI + "> { \n" +
-                    "        ?s ?p ?o \n" +
-                    "    } \n" +
-                    "} LIMIT " + batchSize;
-            log.debug(individualsBatch);
-            ResultSet rs = getSparqlEndpoint().getResultSet(individualsBatch);
-            getNextBatch = rs.hasNext();
-            StringBuilder deletion = new StringBuilder();
-            while(rs.hasNext()) {
-                QuerySolution sol = rs.next();
-                Resource s = sol.getResource("s");
-                if(s.isURIResource()) {
-                    deletion.append("DELETE { \n")
-                    .append("    GRAPH<").append(graphURI).append(">")
-                    .append(" { <").append(s.getURI()).append("> ?p ?o } \n")
-                    .append("} WHERE { \n")
-                    .append("    GRAPH<").append(graphURI).append(">")
-                    .append(" { <").append(s.getURI()).append("> ?p ?o } \n")
-                    .append("}; \n");
-                }
-            }
-            String deletionStr = deletion.toString();
-            log.debug(deletionStr);
-            if(deletionStr.isEmpty()) {
-                getNextBatch = false;
-            } else {
-                try {
-                    getSparqlEndpoint().update(deletionStr);    
-                } catch (Exception e) {
-                    log.info("Failed to delete batch of triples", e);
-                }
-            }            
-        } while (getNextBatch);
-        // TODO check that count is decreasing after each N batches, otherwise 
-        // terminate loop
-        // Finally, issue the regular CLEAR to flush out anything remaining
-        // (e.g. blank nodes)
-        log.info("Clearing graph " + graphURI);
-        getSparqlEndpoint().update("CLEAR GRAPH <" + graphURI + ">");
     }
     
     protected SparqlEndpoint getEndpointFromConfiguration(

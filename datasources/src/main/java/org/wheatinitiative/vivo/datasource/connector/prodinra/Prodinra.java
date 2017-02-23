@@ -62,7 +62,7 @@ public class Prodinra extends DataSourceBase implements DataSource {
             if(this.getConfiguration().getEndpointParameters() != null) {
                 String graphURI = getConfiguration().getResultsGraphURI();
                 log.info("Clearing graph " + graphURI);
-                clearGraph(graphURI);
+                getSparqlEndpoint().clearGraph(graphURI);
             }
             OaiModelIterator it = new OaiModelIterator(
                     this.getConfiguration().getServiceURI(), 
