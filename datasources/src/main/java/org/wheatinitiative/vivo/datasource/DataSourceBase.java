@@ -61,7 +61,7 @@ public abstract class DataSourceBase {
             if(this.getConfiguration().getEndpointParameters() != null) {
                 // Don't clear the graph if the result is empty
                 // TODO: should be null instead of empty
-                if(getResult().size() > 0) {
+                if(getResult() != null && getResult().size() > 0) {
                     writeResultsToEndpoint(getResult());    
                 }
             } else {

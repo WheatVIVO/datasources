@@ -1,6 +1,8 @@
 package org.wheatinitiative.vivo.datasource.publish;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -80,8 +82,9 @@ public class Publisher extends DataSourceBase implements DataSource {
             graphURIPreferenceList.add(
                     dataSource.getConfiguration().getResultsGraphURI());
         }
+        OntModel sameAsModel = getSameAsModel(sourceEndpoint);
         Map<String, String> sameAsMap = getSameAsMap(graphURIPreferenceList, 
-                sourceEndpoint);
+                sourceEndpoint, sameAsModel);
         log.info("Starting to publish");        
         // iterate through data source graphs in order of priority
         Map<String, Model> buffer = new HashMap<String, Model>();
@@ -98,16 +101,15 @@ public class Publisher extends DataSourceBase implements DataSource {
                 if(completedIndividuals.contains(individualURI)) {
                     continue;
                 }
-                log.info("Retrieving " + individualURI);
                 List<Quad> individualQuads = getIndividualQuads(individualURI, 
                         sourceEndpoint);
                 Map<String, Model> quadStore = new HashMap<String, Model>();                
                 addQuadsToStore(rewrite(individualQuads, sameAsMap), quadStore);
-                List<String> sameAsURIs = getSameAsURIs(individualURI, quadStore);
+                List<String> sameAsURIs = getSameAsURIs(individualURI, 
+                        sameAsModel);
                 // don't waste memory recording an individual if we won't 
                 // encounter it again later
                 if(quadStore.keySet().size() <= 1 && !sameAsURIs.isEmpty()) {
-                    log.info("Adding " + individualURI + " to completed list");
                     completedIndividuals.add(individualURI);
                 }
                 for (String sameAsURI : sameAsURIs) {
@@ -150,11 +152,11 @@ public class Publisher extends DataSourceBase implements DataSource {
     }
     
     private Map<String, String> getSameAsMap(
-            List<String> graphURIPreferenceList, SparqlEndpoint endpoint) {
+            List<String> graphURIPreferenceList, SparqlEndpoint endpoint, 
+            OntModel sameAsModel) {
         Map<String, String> homeGraphMap = getHomeGraphMap(
                 endpoint, graphURIPreferenceList);        
         Map<String, String> sameAsMap = new HashMap<String, String>();
-        OntModel sameAsModel = getSameAsModel(endpoint);
         Iterator<Individual> indIt = sameAsModel.listIndividuals();
         while(indIt.hasNext()) {
             Individual ind = indIt.next();
@@ -175,6 +177,7 @@ public class Publisher extends DataSourceBase implements DataSource {
                 if(this.isHigherPriorityThan(candidateGraph, currentGraph, 
                         graphURIPreferenceList)) {
                     uriToMapTo = sameAsURI;
+                } else {
                 }
             }
             sameAsMap.put(ind.getURI(), uriToMapTo);
@@ -198,7 +201,7 @@ public class Publisher extends DataSourceBase implements DataSource {
                    "    { ?ind <" + OWL.sameAs.getURI() + "> ?something } \n" +
                    "    UNION \n" +
                    "    { ?something2 <" + OWL.sameAs.getURI() + "> ?ind } \n" +
-                   "    GRAPH ?graph { ?ind1 a ?typeDeclaration } \n" +
+                   "    GRAPH ?graph { ?ind a ?typeDeclaration } \n" +
                    "} \n";
         ResultSet homeGraphRs = endpoint.getResultSet(homeGraphQuery);
         while(homeGraphRs.hasNext()) {
@@ -280,7 +283,7 @@ public class Publisher extends DataSourceBase implements DataSource {
             Set<Property> predicateSet = getPredicatesInUse(m);
             for(Property predicate : predicateSet) {
                 if(completedProperties.contains(predicate.getURI())) {
-                    log.info("Removing all " + predicate.getURI() + " in " + graphURI);
+                    log.debug("Removing all " + predicate.getURI() + " in " + graphURI);
                     m.removeAll(null, predicate, (RDFNode) null);
                 } else if(functionalPropertyURIs.contains(predicate.getURI())) {
                     LinkedList<Statement> duplicates = new LinkedList<Statement>();
@@ -289,15 +292,34 @@ public class Publisher extends DataSourceBase implements DataSource {
                     while(sit.hasNext()) {
                         duplicates.add(sit.next());
                     }
+                    Collections.sort(duplicates, new StatementSorter());
                     // drop the first from the duplicate list since we want
                     // to retain it in the model
                     duplicates.poll();
-                    log.info("Removing " + duplicates.size() + " " + predicate.getURI() + " from " + graphURI);
+                    log.debug("Removing " + duplicates.size() + " " + predicate.getURI() + " from " + graphURI);
                     m.remove(duplicates);
                     completedProperties.add(predicate.getURI());
                 }
             }
         }
+    }
+    
+    private class StatementSorter implements Comparator<Statement> {
+        
+        public int compare(Statement stmt1, Statement stmt2) {
+            return getObjectAsString(stmt1).compareTo(getObjectAsString(stmt2));
+        }
+        
+        private String getObjectAsString(Statement stmt) {
+            if(stmt.getObject().isLiteral()) {
+                return stmt.getObject().asLiteral().toString();
+            } else if(stmt.getObject().isURIResource()) {
+                return stmt.getObject().asResource().getURI();
+            } else {
+                return "";
+            }
+        }
+        
     }
     
     private Set<Property> getPredicatesInUse(Model model) {
@@ -531,9 +553,23 @@ public class Publisher extends DataSourceBase implements DataSource {
             QuerySolution qsoln = rs.next();
             funcPropSet.add(qsoln.getResource("funcProp").getURI());
         }
-        // Also treat rdfs:label as a function propert
+        // Also treat rdfs:label as a functional property
         funcPropSet.add(RDFS.label.getURI());
         return funcPropSet;
+    }
+    
+    private List<String> getSameAsURIs(String individualURI, 
+            OntModel sameAsModel) {
+        List<String> sameAsURIs = new ArrayList<String>();
+        NodeIterator nit = sameAsModel.listObjectsOfProperty(
+                sameAsModel.getResource(individualURI), OWL.sameAs);
+        while(nit.hasNext()) {
+            RDFNode node = nit.next();
+            if(node.isURIResource()) {
+                sameAsURIs.add(node.asResource().getURI());
+            }
+        }
+        return sameAsURIs;        
     }
     
     private List<String> getSameAsURIs(String individualURI, 
