@@ -13,7 +13,7 @@ public class DataSourceConfiguration {
     private String deploymentURI;
     private int priority;
     private String serviceURI;
-    private int limit;
+    private int limit = Integer.MAX_VALUE;
     private int offset;
     private Map<String, Object> parameterMap = new HashMap<String, Object>();
     private SparqlEndpointParams endpointParameters = new SparqlEndpointParams();

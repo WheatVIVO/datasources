@@ -12,8 +12,6 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.vocabulary.RDF;
 
 public abstract class CsvDataSource extends ConnectorDataSource {
-
-    private Model resultModel;
     
     /**
      * to be overridden by subclasses
@@ -76,10 +74,6 @@ public abstract class CsvDataSource extends ConnectorDataSource {
             return inner.size();
         }
         
-    }
-    
-    public Model getResult() {
-        return this.resultModel;
     }
     
 }

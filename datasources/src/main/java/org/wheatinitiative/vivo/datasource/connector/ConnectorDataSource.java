@@ -52,11 +52,11 @@ public abstract class ConnectorDataSource extends DataSourceBase {
         while(it.hasNext() && count < this.getConfiguration().getLimit()) {
             count++;
             Model model = mapToVIVO(it.next());
-            log.info(model.size() + " statements before filtering");
+            log.debug(model.size() + " statements before filtering");
             model = filter(model);
-            log.info(model.size() + " statements after filtering");
+            log.debug(model.size() + " statements after filtering");
             if(activeEndpointForResults()) {
-                log.info("Adding " + model.size() + " triples to endpoint");
+                log.debug("Adding " + model.size() + " triples to endpoint");
                 addToEndpoint(model);
             } else {
                 result.add(model);

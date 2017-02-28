@@ -59,7 +59,6 @@ public abstract class DataSourceBase {
         try {
             log.info("Running ingest");
             runIngest();  
-            log.info("Writing results to endpoint");
             if(this.getConfiguration().getEndpointParameters() != null) {
                 // Don't clear the graph if the result is empty
                 // TODO: should be null instead of empty
@@ -67,7 +66,7 @@ public abstract class DataSourceBase {
                     writeResultsToEndpoint(getResult());    
                 }
             } else {
-                log.warn("Not writing results to remote endpoint because " +
+                log.info("Not writing results to remote endpoint because " +
                          "none is specified");
             }
         } catch (Exception e) {

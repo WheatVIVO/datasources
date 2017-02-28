@@ -51,7 +51,7 @@ public class HttpUtils {
             }
         }
         try {
-            return EntityUtils.toString(response.getEntity());
+            return EntityUtils.toString(response.getEntity(), "UTF-8");
         } finally {
             EntityUtils.consume(response.getEntity());
         }   

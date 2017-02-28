@@ -67,7 +67,7 @@ public class VivoDataSource extends ConnectorDataSource {
                 for (String filterTerm : this.getConfiguration().getQueryTerms()) {
                     uris.addAll(getUrisFromSearchResults(getRemoteVivoURL(), filterTerm, 
                             PEOPLE));
-                    int limit = LIMIT;
+                    int limit = this.getConfiguration().getLimit();
                     for(String uri : uris) {
                         limit--;
                         if (limit < 0) {

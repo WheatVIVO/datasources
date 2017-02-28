@@ -106,8 +106,8 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
                 m.add(projectsRdf);
                 updateResults(m, retrievedURIs);
                 int totalPages = getTotalPages(projectsRdf);
-                if (totalPages > MAX_PAGES) {
-                    totalPages = MAX_PAGES;
+                if (totalPages > this.getConfiguration().getLimit()) {
+                    totalPages = this.getConfiguration().getLimit();
                 }
                 if (totalPages > 1) {
                     for (int page = 2; page <= totalPages ; page++) {
