@@ -5,7 +5,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +12,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.client.utils.URIBuilder;
 import org.wheatinitiative.vivo.datasource.DataSource;
-import org.wheatinitiative.vivo.datasource.DataSourceBase;
+import org.wheatinitiative.vivo.datasource.connector.ConnectorDataSource;
+import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
 import org.wheatinitiative.vivo.datasource.util.http.HttpUtils;
 import org.wheatinitiative.vivo.datasource.util.xml.XmlToRdf;
 import org.wheatinitiative.vivo.datasource.util.xml.rdf.RdfUtils;
@@ -33,7 +33,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.util.ResourceUtils;
 
-public class Prodinra extends DataSourceBase implements DataSource {
+public class Prodinra extends ConnectorDataSource implements DataSource {
 
     public static final Log log = LogFactory.getLog(Prodinra.class);
     
@@ -50,45 +50,9 @@ public class Prodinra extends DataSourceBase implements DataSource {
     private static final Property VITRO_VALUE = ResourceFactory.createProperty(
             "http://vitro.mannlib.cornell.edu/ns/vitro/0.7#value");
     
-    private Model result;
-    
     private HttpUtils httpUtils = new HttpUtils();
     private XmlToRdf xmlToRdf = new XmlToRdf();
-    private RdfUtils rdfUtils = new RdfUtils();
-    
-    @Override
-    public void runIngest() {
-        try { 
-            if(this.getConfiguration().getEndpointParameters() != null) {
-                String graphURI = getConfiguration().getResultsGraphURI();
-                log.info("Clearing graph " + graphURI);
-                getSparqlEndpoint().clearGraph(graphURI);
-            }
-            OaiModelIterator it = new OaiModelIterator(
-                    this.getConfiguration().getServiceURI(), 
-                    METADATA_PREFIX);
-            log.info(it.totalRecords() + " total records");
-            Model result = ModelFactory.createDefaultModel();
-            int page = 0;
-            while(it.hasNext()) {
-                page++;
-                Model model = transformToRDF(it.next());
-                log.info(model.size() + " statements before filtering");
-                model = filter(model);
-                log.info(model.size() + " statements after filtering");
-                if(this.getConfiguration().getEndpointParameters() != null) {
-                    log.info("Adding " + model.size() + " triples to endpoint");
-                    addToEndpoint(model);
-                } else {
-                    result.add(model);
-                }
-                log.info(result.size() + " statements after page " + page);
-            }            
-            this.result = result;
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-    }
+    private RdfUtils rdfUtils = new RdfUtils();  
     
     protected Model filter(Model model) {
         Model filtered = ModelFactory.createDefaultModel();
@@ -142,7 +106,7 @@ public class Prodinra extends DataSourceBase implements DataSource {
         return relevantResources;
     }
     
-    protected Model transformToRDF(Model m) {
+    protected Model mapToVIVO(Model m) {
         m = rdfUtils.renameBNodes(m, NAMESPACE_ETC, m);
         m = renameByIdentifier(m);
         m = constructForVIVO(m);
@@ -197,7 +161,7 @@ public class Prodinra extends DataSourceBase implements DataSource {
         return m;
     }
     
-    private class OaiModelIterator implements Iterator<Model> {
+    private class OaiModelIterator implements IteratorWithSize<Model> {
         
         private URI repositoryURI;
         private String metadataPrefix;
@@ -300,7 +264,7 @@ public class Prodinra extends DataSourceBase implements DataSource {
             this.resumptionToken = token;
         }
         
-        public int totalRecords() {
+        public Integer size() {
             if(totalRecords == null) {
                 cacheNext();
             }
@@ -309,8 +273,15 @@ public class Prodinra extends DataSourceBase implements DataSource {
         
     }
 
-    public Model getResult() {
-        return this.result;
+    @Override
+    protected IteratorWithSize<Model> getSourceModelIterator() {
+        try {
+            return new OaiModelIterator(
+                    this.getConfiguration().getServiceURI(), 
+                    METADATA_PREFIX);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
    
 }

@@ -14,11 +14,8 @@ import org.wheatinitiative.vivo.datasource.util.xml.rdf.RdfUtils;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.QueryParseException;
-import com.hp.hpl.jena.query.QuerySolution;
-import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Resource;
 
 public abstract class DataSourceBase {
 
@@ -34,6 +31,11 @@ public abstract class DataSourceBase {
     public DataSourceBase() {
         this.rdfUtils = new RdfUtils();
     }
+   
+    /**
+     * Top level to be overridden by subclasses
+     */
+    protected abstract void runIngest();
     
     public DataSourceConfiguration getConfiguration() {
         return this.configuration;
@@ -77,11 +79,6 @@ public abstract class DataSourceBase {
             this.getStatus().setRunning(false);
         }
     }
-   
-    /**
-     * Top level that can be overridden by subclasses
-     */
-    protected abstract void runIngest();
     
     /**
      * To be overriden by subclasses

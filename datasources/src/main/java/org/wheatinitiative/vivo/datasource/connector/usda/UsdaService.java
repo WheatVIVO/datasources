@@ -3,7 +3,6 @@ package org.wheatinitiative.vivo.datasource.connector.usda;
 import javax.servlet.http.HttpServletRequest;
 
 import org.wheatinitiative.vivo.datasource.DataSource;
-import org.wheatinitiative.vivo.datasource.connector.wheatinitiative.WheatInitiative;
 import org.wheatinitiative.vivo.datasource.service.DataSourceService;
 
 public class UsdaService extends DataSourceService {

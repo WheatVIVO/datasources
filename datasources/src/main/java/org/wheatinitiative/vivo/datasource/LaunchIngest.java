@@ -31,18 +31,27 @@ public class LaunchIngest {
             DataSource connector = null;
             if("rcuk".equals(connectorName)) {
                 connector = new Rcuk();
+                connector.getConfiguration().setServiceURI(
+                        "http://http://gtr.rcuk.ac.uk/gtr/api/");
             } else if ("prodinra".equals(connectorName)) {
                 connector = new Prodinra();
+                connector.getConfiguration().setServiceURI(
+                        "http://oai.prodinra.inra.fr/ft");
             } else if ("usda".equals(connectorName)) {
                 connector = new Usda();
+                connector.getConfiguration().setServiceURI(
+                        "http://vivo.usda.gov/");
             } else if ("wheatinitiative".equals(connectorName)) {
                 connector = new WheatInitiative();
+                connector.getConfiguration().setServiceURI(
+                        "http://www.wheatinitiative.org/administration/users/csv");
             } else {
                 throw new RuntimeException("Connector not found: " 
                         + connectorName);
             }
             connector.getConfiguration().setQueryTerms(queryTerms);
             connector.getConfiguration().setEndpointParameters(null);
+            connector.getConfiguration().setLimit(10);
             connector.run();
             Model result = connector.getResult();
             if(result != null) {

@@ -15,6 +15,7 @@ import java.util.Set;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
@@ -103,50 +104,85 @@ public class CsvToRdf {
     public void removeNullValueString(String nullValueString) {
         this.nullValueStrings.remove(nullValueString);
     }
+    
+    private class RowModelIterator implements IteratorWithSize<Model> {
 
-    public Model toRDF(InputStream csvInputStream) throws IOException {
-        Model model = ModelFactory.createDefaultModel();
+        private Iterator<CSVRecord> recordIterator;
+        
+        public RowModelIterator(Iterator<CSVRecord> recordIterator) {
+            this.recordIterator = recordIterator;
+        }
+        
+        public boolean hasNext() {
+            return recordIterator.hasNext();
+        }
+
+        public Model next() {
+            return recordAsRDF(recordIterator.next());
+        }
+
+        public Integer size() {
+            // return null as size is unknown
+            return null;
+        }
+        
+    }
+    
+    public IteratorWithSize<Model> getModelIterator(InputStream csvInputStream) {
         InputStreamReader in = new InputStreamReader(csvInputStream,
                 StandardCharsets.UTF_8);
-        Iterable<CSVRecord> records = this.format.parse(in);
-        Iterator<CSVRecord> rows = records.iterator();
-        int rowCount = 0;
-        while(rows.hasNext()) {
-            rowCount++;
-            CSVRecord rec = rows.next();
-            if(rowCount == 1 && this.skipFirstRow) {
+        try {
+            Iterable<CSVRecord> records = this.format.parse(in);
+            Iterator<CSVRecord> rows = records.iterator();
+            if(this.skipFirstRow && rows.hasNext()) {
+                rows.next(); // skip over the header 
+            }
+        return new RowModelIterator(rows);
+        } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
+        }
+    }
+
+    public Model toRDF(InputStream csvInputStream) {
+        Model model = ModelFactory.createDefaultModel();
+        Iterator<Model> modelIt = getModelIterator(csvInputStream);
+        while(modelIt.hasNext()) {
+            model.add(modelIt.next());
+        }
+        return model;
+    }
+    
+    private Model recordAsRDF(CSVRecord rec) {
+        Model model = ModelFactory.createDefaultModel();
+        if(rec.size() != columnList.size()) {
+            throw new RuntimeException("Row has " +
+                    rec.size() + " columns while expected width is " +
+                    columnList.size() + " columns");
+        }
+        Resource recRes = model.createResource();
+        Iterator<String> valueIt = rec.iterator();
+        Iterator<Column> colIt = columnList.iterator();
+        while(valueIt.hasNext()) {
+            Column column = colIt.next();
+            String value = valueIt.next();
+            if(value == null || value.isEmpty()) {
                 continue;
             }
-            if(rec.size() != columnList.size()) {
-                throw new RuntimeException("Row number " + rowCount + " has " +
-                        rec.size() + " columns while expected width is " +
-                        columnList.size() + " columns");
+            if(nullValueStrings.contains(value)) {
+                continue;
             }
-            Resource recRes = model.createResource();
-            Iterator<String> valueIt = rec.iterator();
-            Iterator<Column> colIt = columnList.iterator();
-            while(valueIt.hasNext()) {
-                Column column = colIt.next();
-                String value = valueIt.next();
-                if(value == null || value.isEmpty()) {
-                    continue;
-                }
-                if(nullValueStrings.contains(value)) {
-                    continue;
-                }
-                List<String> values = null;
-                if(column.getSplitValuesRegex() == null) {
-                    values = Arrays.asList(value); 
-                } else {
-                    values = Arrays.asList(
-                            value.split(column.getSplitValuesRegex()));
-                }
-                for (String singleValue : values) {
-                    singleValue = singleValue.trim();
-                    RDFNode objNode = getNode(singleValue, column, model);
-                    model.add(recRes, model.getProperty(
-                            column.getPropertyURI()), objNode);
-                }
+            List<String> values = null;
+            if(column.getSplitValuesRegex() == null) {
+                values = Arrays.asList(value); 
+            } else {
+                values = Arrays.asList(
+                        value.split(column.getSplitValuesRegex()));
+            }
+            for (String singleValue : values) {
+                singleValue = singleValue.trim();
+                RDFNode objNode = getNode(singleValue, column, model);
+                model.add(recRes, model.getProperty(
+                        column.getPropertyURI()), objNode);
             }
         }
         return model;
@@ -175,12 +211,19 @@ public class CsvToRdf {
                     + column.getClass().getSimpleName());
         }
     }
+    
+    public IteratorWithSize<Model> getModelIterator(String csvString) {
+        return getModelIterator(getInputStream(csvString));
+    }
 
     public Model toRDF(String csvString) throws IOException {
+        return toRDF(getInputStream(csvString));
+    }
+    
+    private InputStream getInputStream(String string) {
         try {
-            InputStream csvInputStream = new ByteArrayInputStream(
-                    csvString.getBytes("UTF-8"));
-            return toRDF(csvInputStream);
+            return new ByteArrayInputStream(
+                    string.getBytes("UTF-8")); 
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }

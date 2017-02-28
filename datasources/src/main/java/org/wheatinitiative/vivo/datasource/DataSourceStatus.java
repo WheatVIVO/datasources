@@ -1,7 +1,5 @@
 package org.wheatinitiative.vivo.datasource;
 
-import org.wheatinitiative.vivo.datasource.DataSourceStatus;
-
 public class DataSourceStatus {
 
     private boolean ok;

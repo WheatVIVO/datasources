@@ -13,6 +13,8 @@ public class DataSourceConfiguration {
     private String deploymentURI;
     private int priority;
     private String serviceURI;
+    private int limit;
+    private int offset;
     private Map<String, Object> parameterMap = new HashMap<String, Object>();
     private SparqlEndpointParams endpointParameters = new SparqlEndpointParams();
     
@@ -70,6 +72,22 @@ public class DataSourceConfiguration {
     
     public void setServiceURI(String serviceURI) {
         this.serviceURI = serviceURI;
+    }
+    
+    public int getLimit() {
+        return this.limit;
+    }
+    
+    public void setLimit(int limit) {
+        this.limit = limit;
+    }
+    
+    public int getOffset() {
+        return this.offset;
+    }
+    
+    public void setOffset(int offset) {
+        this.offset = offset;
     }
     
     public SparqlEndpointParams getEndpointParameters() {

@@ -76,5 +76,5 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     public Model getResult() {
         return this.result;
     }
-
+    
 }

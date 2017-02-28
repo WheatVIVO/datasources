@@ -1,23 +1,18 @@
 package org.wheatinitiative.vivo.datasource.connector.wheatinitiative;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.wheatinitiative.vivo.datasource.DataSource;
-import org.wheatinitiative.vivo.datasource.DataSourceBase;
+import org.wheatinitiative.vivo.datasource.connector.CsvDataSource;
 import org.wheatinitiative.vivo.datasource.util.csv.CsvToRdf;
-import org.wheatinitiative.vivo.datasource.util.http.HttpUtils;
-import org.wheatinitiative.vivo.datasource.util.xml.rdf.RdfUtils;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.vocabulary.XSD;
 
-public class WheatInitiative extends DataSourceBase implements DataSource {
+public class WheatInitiative extends CsvDataSource implements DataSource {
 
-    private static final String SERVICE_URI = 
+    public static final String SERVICE_URI = 
             "http://www.wheatinitiative.org/administration/users/csv";
     private static final String TBOX = 
             "http://www.wheatinitiative.org/administration/users/ontology/";
@@ -26,33 +21,9 @@ public class WheatInitiative extends DataSourceBase implements DataSource {
     private static final String ABOX_ETC = ABOX + "n";
     private static final String VIVO_NS = "http://vivoweb.org/ontology/core#";
     private static final String SPARQL_RESOURCE_DIR = "/wheatinitiative/sparql/";
-    private Model resultModel;
-    
-    private static final Log log = LogFactory.getLog(WheatInitiative.class);
-    
-    @Override
-    public void runIngest() {
-        CsvToRdf csvParser = getWheatInitiativeCsvParser();
-        HttpUtils httpUtils = new HttpUtils();
-        this.getStatus().setRunning(true);
-        try {
-            RdfUtils rdfUtils = new RdfUtils();
-            String csvString = httpUtils.getHttpResponse(SERVICE_URI);
-            Model model = csvParser.toRDF(csvString);
-            model = rdfUtils.renameBNodes(model, ABOX_ETC, model);
-            model = constructForVIVO(model);
-            this.resultModel = model;
-            log.info(model.size() + " triples in result model");
-            // TODO any filter stage needed?
-        } catch (Exception e) {
-            log.info(e, e);
-            throw new RuntimeException(e);
-        } finally {
-            this.getStatus().setRunning(false);
-        }
-    }
 
-    private CsvToRdf getWheatInitiativeCsvParser() {
+    @Override
+    protected CsvToRdf getCsvConverter() {
         CsvToRdf csvParser = new CsvToRdf();
         csvParser.addNullValueString("-");
         csvParser.addNullValueString("hidden");
@@ -84,9 +55,7 @@ public class WheatInitiative extends DataSourceBase implements DataSource {
      * @param m containing RDF lifted directly from RCUK XML
      * @return model with VIVO RDF added
      */
-    private Model constructForVIVO(Model m) {
-        // TODO dynamically get/sort list from classpath resource directory
-        // TODO add remaining rules
+    protected Model mapToVIVO(Model m) {
         List<String> queries = Arrays.asList( 
                 "100-person-vcard-name.sparql", 
                 "105-person-label.sparql",
@@ -101,9 +70,16 @@ public class WheatInitiative extends DataSourceBase implements DataSource {
         }
         return m;
     }
-    
-    public Model getResult() {
-        return this.resultModel;
+
+    @Override
+    protected String getABoxNamespaceAndPrefix() {
+        return ABOX_ETC;
+    }
+
+    @Override
+    protected Model filter(Model model) {
+        // nothing to do, for now
+        return model;
     }
     
 }

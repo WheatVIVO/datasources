@@ -14,7 +14,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.client.utils.URIBuilder;
 import org.wheatinitiative.vivo.datasource.DataSource;
-import org.wheatinitiative.vivo.datasource.DataSourceBase;
+import org.wheatinitiative.vivo.datasource.connector.ConnectorDataSource;
+import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
 import org.wheatinitiative.vivo.datasource.util.http.HttpUtils;
 import org.wheatinitiative.vivo.datasource.util.xml.XmlToRdf;
 
@@ -35,7 +36,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.util.ResourceUtils;
 
-public class Rcuk extends DataSourceBase implements DataSource {
+public class Rcuk extends ConnectorDataSource implements DataSource {
 
     private static final Log log = LogFactory.getLog(Rcuk.class);
     private static final String API_URL = "http://gtr.rcuk.ac.uk/gtr/api/";
@@ -58,50 +59,46 @@ public class Rcuk extends DataSourceBase implements DataSource {
     
     private HttpUtils httpUtils = new HttpUtils();
     private XmlToRdf xmlToRdf = new XmlToRdf();
-    //private List<String> queryTerms;
     private Model result;
     
     /**
      *  Override top-level method to avoid single SPARQL update
      */
-    public void run() {
-        this.getStatus().setRunning(true);
-        try {
-            log.info("Running ingest");
-            runIngest();  
-            log.info("Writing results to endpoint");
-            if(this.getConfiguration().getEndpointParameters() != null) {
-                // writeResultsToEndpoint(getResult());    
-            } else {
-                log.warn("Not writing results to remote endpoint because " +
-                         "none is specified");
-            }
-        } catch (Exception e) {
-            log.info(e, e);
-            throw new RuntimeException(e);
-        } finally {
-            log.info("Finishing ingest");
-            log.info(this.getStatus().getErrorRecords() + " errors");
-            this.getStatus().setRunning(false);
-        }
-    }
+//    public void run() {
+//        this.getStatus().setRunning(true);
+//        try {
+//            log.info("Running ingest");
+//            runIngest();  
+//            log.info("Writing results to endpoint");
+//            if(this.getConfiguration().getEndpointParameters() != null) {
+//                // writeResultsToEndpoint(getResult());    
+//            } else {
+//                log.warn("Not writing results to remote endpoint because " +
+//                         "none is specified");
+//            }
+//        } catch (Exception e) {
+//            log.info(e, e);
+//            throw new RuntimeException(e);
+//        } finally {
+//            log.info("Finishing ingest");
+//            log.info(this.getStatus().getErrorRecords() + " errors");
+//            this.getStatus().setRunning(false);
+//        }
+//    }
     
     @Override
     public void runIngest() {
         // TODO progress percentage calculation from totals
-        // TODO construct search terms with projects so we can take intersections?
         try {
             result = ModelFactory.createDefaultModel();
             if(this.getConfiguration().getEndpointParameters() != null) {
                 String graphURI = getConfiguration().getResultsGraphURI();
                 log.info("Clearing graph " + graphURI);
-                //getSparqlEndpoint().update("CLEAR GRAPH <" + graphURI + ">");
                 getSparqlEndpoint().clearGraph(graphURI);
             }
             List<String> queryTerms = this.getConfiguration().getQueryTerms();
             Model m = ModelFactory.createDefaultModel();
             Set<String> retrievedURIs = new HashSet<String>();
-            int totalRecords = 0;
             for(String queryTerm : queryTerms) {
                 m.removeAll();
                 String projects = getProjects(queryTerm, 1);
@@ -138,9 +135,8 @@ public class Rcuk extends DataSourceBase implements DataSource {
         model = pruneRedundantResources(model, retrievedURIs);
         // TODO get total number of linked entities and use to update status
         model = addLinkedEntities(model, retrievedURIs);
-        // get a certain subset of further entities related to these new entities
         model = addSecondLevelLinkedEntities(model, retrievedURIs);
-        model = constructForVIVO(model);
+        model = mapToVIVO(model);
         model = pruneDeadendRelationships(model);
         if(this.getConfiguration().getEndpointParameters() != null) {
             log.info("Writing " + model.size() + " to endpoint");
@@ -212,19 +208,6 @@ public class Rcuk extends DataSourceBase implements DataSource {
         return totalPages;
     }
     
-    @SuppressWarnings("unchecked")
-    private List<String> getQueryTerms() {
-        Object param = getConfiguration().getParameterMap().get("queryTerms");
-        if(param instanceof List<?>) {
-            @SuppressWarnings("rawtypes")
-            List queryTerms = (List) param;
-            if(queryTerms.isEmpty() || queryTerms.get(0) instanceof String) {
-                return (List<String>) queryTerms;    
-            }
-        }
-        return new ArrayList<String>();
-    }
-    
     public Model getResult() {
         return this.result;
     }
@@ -237,7 +220,7 @@ public class Rcuk extends DataSourceBase implements DataSource {
         builder.addParameter("p", Integer.toString(pageNum, 10));
         String url = builder.build().toString();
         try {
-            log.info(url); // TODO level debug
+            log.info(url); 
             return httpUtils.getHttpResponse(url);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -249,8 +232,8 @@ public class Rcuk extends DataSourceBase implements DataSource {
      * @param m containing RDF lifted directly from RCUK XML
      * @return model with VIVO RDF added
      */
-    private Model constructForVIVO(Model m) {
-        // TODO dynamically get/sort list from classpath resource directory
+    @Override
+    protected Model mapToVIVO(Model m) {
         List<String> queries = Arrays.asList("002-linkRelates.sparql", 
                 "100-person-vcard-name.sparql", 
                 "105-person-label.sparql",
@@ -337,11 +320,10 @@ public class Rcuk extends DataSourceBase implements DataSource {
         for (String uri : linkedURIs) {
             try {
                 if(retrievedURIs.contains(uri)) {
-                // TODO can't necessarily skip because the previous retrieval may have pruned relationships
                     log.info("Skipping already-retrieved resource " + uri);
                     continue;
                 }
-                log.info(uri); // TODO level debug
+                log.info(uri); 
                 retrievedURIs.add(uri);
                 String doc = httpUtils.getHttpResponse(uri);
                 m.add(transformToRdf(doc));
@@ -379,19 +361,6 @@ public class Rcuk extends DataSourceBase implements DataSource {
     }
     
     /**
-     * Renames all blank nodes with URIs based on a namespaceEtc part 
-     * concatenated with a random integer.
-     * @param m model in which blank nodes are to be renamed
-     * @param namespaceEtc the first (non-random) part of the generated URIs
-     * @param dedupModel containing named resources whose URIs should not be reused
-     * @return model with named nodes
-     */
-    private Model renameBlankNodes(Model m, String namespaceEtc, 
-            Model dedupModel) {
-        return rdfUtils.renameBNodes(m, namespaceEtc, m);
-    }
-    
-    /**
      * Takes a model with blank nodes generated by lifting XML data into RDF
      * and renames certain resources based on the value of the href attribute.
      * This method will not rename 'link' resources because the href 
@@ -418,6 +387,18 @@ public class Rcuk extends DataSourceBase implements DataSource {
             ResourceUtils.renameResource(bnode, bnodeToURI.get(bnode));
         }
         return m;
+    }
+
+    @Override
+    protected Model filter(Model model) {
+        // nothing to do, for now
+        return model;
+    }
+
+    @Override
+    protected IteratorWithSize<Model> getSourceModelIterator() {
+        // not (yet) used; runIngest() itself is currently overridden
+        return null;
     }  
     
 }
