@@ -54,6 +54,12 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
     private XmlToRdf xmlToRdf = new XmlToRdf();
     private RdfUtils rdfUtils = new RdfUtils();  
     
+    @Override 
+    protected int getBatchSize() {
+        return 1; // only keep one iterator element in memory at a time
+    }
+    
+    @Override
     protected Model filter(Model model) {
         Model filtered = ModelFactory.createDefaultModel();
         List<Resource> relevantResources = getRelevantResources(model);
@@ -106,6 +112,7 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
         return relevantResources;
     }
     
+    @Override
     protected Model mapToVIVO(Model m) {
         m = rdfUtils.renameBNodes(m, NAMESPACE_ETC, m);
         m = renameByIdentifier(m);

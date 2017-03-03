@@ -11,7 +11,12 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 public abstract class ConnectorDataSource extends DataSourceBase {
     
     private static final Log log = LogFactory.getLog(ConnectorDataSource.class);
+    /* number of iterator elements to be processed at once in memory 
+    before being flushed to a SPARQL endpoint */
+    protected final static int DEFAULT_BATCH_SIZE = 100;
+    
     private Model result;
+    
     /**
      * to be overridden by subclasses
      * @return Model representing a discrete "record" in the source data,
@@ -19,6 +24,15 @@ public abstract class ConnectorDataSource extends DataSourceBase {
      * filtered for relevance 
      */
     protected abstract IteratorWithSize<Model> getSourceModelIterator();
+    
+    /**
+     * The number of table rows to be processed at once in memory before
+     * being flushed to a SPARQL endpoint
+     * @return
+     */
+    protected int getBatchSize() {
+        return DEFAULT_BATCH_SIZE;
+    }
     
     /**
      * to be overridden by subclasses
@@ -37,6 +51,8 @@ public abstract class ConnectorDataSource extends DataSourceBase {
  
     @Override
     public void runIngest() {
+        log.debug("Processing a limit of " + this.getConfiguration().getLimit() + " records");
+        log.debug("Processing in batches of " + getBatchSize() + " records");
         if(activeEndpointForResults()) {
             String graphURI = getConfiguration().getResultsGraphURI();
             log.info("Clearing graph " + graphURI);
@@ -48,6 +64,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
         if(it.size() != null) {
             log.info(it.size() + " total records");
         }        
+        Model buffer = ModelFactory.createDefaultModel();
         int count = 0;
         while(it.hasNext() && count < this.getConfiguration().getLimit()) {
             count++;
@@ -56,8 +73,12 @@ public abstract class ConnectorDataSource extends DataSourceBase {
             model = filter(model);
             log.debug(model.size() + " statements after filtering");
             if(activeEndpointForResults()) {
-                log.debug("Adding " + model.size() + " triples to endpoint");
-                addToEndpoint(model);
+                buffer.add(model);                
+                if(count % getBatchSize() == 0 || !it.hasNext()) {
+                    log.debug("Adding " + buffer.size() + " triples to endpoint");
+                    addToEndpoint(buffer);
+                    buffer.removeAll();
+                }
             } else {
                 result.add(model);
             }
