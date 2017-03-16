@@ -1,26 +1,48 @@
 package org.wheatinitiative.vivo.datasource.connector.cordis;
 
+// Java imports
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+// Wheatvivo imports
 import org.apache.http.client.utils.URIBuilder;
 import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.connector.ConnectorDataSource;
+import org.wheatinitiative.vivo.datasource.connector.prodinra.Prodinra;
 import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
 import org.wheatinitiative.vivo.datasource.util.http.HttpUtils;
 import org.wheatinitiative.vivo.datasource.util.xml.XmlToRdf;
 import org.wheatinitiative.vivo.datasource.util.xml.rdf.RdfUtils;
 
+// Jena imports
+import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.query.QueryExecutionFactory;
+import com.hp.hpl.jena.query.QuerySolution;
+import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.NodeIterator;
+import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
+import com.hp.hpl.jena.util.ResourceUtils;
+
 
 public class Cordis extends ConnectorDataSource implements DataSource {
 
 	
-    private static final String PRODINRA_TBOX_NS = "http://cordis.europa.eu/";
-    private static final String PRODINRA_ABOX_NS = PRODINRA_TBOX_NS + "individual/";
-    private static final String NAMESPACE_ETC = PRODINRA_ABOX_NS + "n";
+	public static final Log log = LogFactory.getLog(Cordis.class);
 	
+    private static final String CORDIS_TBOX_NS = "http://cordis.europa.eu/";
+    private static final String CORDIS_ABOX_NS = CORDIS_TBOX_NS + "individual/";
+    private static final String NAMESPACE_ETC = CORDIS_ABOX_NS + "n";
+    private static final String SPARQL_RESOURCE_DIR = "/cordis/sparql/";
 	
 	@Override
 	protected Model filter(Model model) {
