@@ -1,12 +1,15 @@
 package org.wheatinitiative.vivo.datasource.connector.cordis;
 
+
 // Java imports
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 
+// Logging imports
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 // Wheatvivo imports
 import org.apache.http.client.utils.URIBuilder;
 import org.wheatinitiative.vivo.datasource.DataSource;
@@ -58,7 +61,7 @@ public class Cordis extends ConnectorDataSource implements DataSource {
 				);
 	}
 	
-		
+	
 	private class CordisModelIterator implements IteratorWithSize<Model> {
 
 		private String service_URI;
@@ -73,11 +76,12 @@ public class Cordis extends ConnectorDataSource implements DataSource {
 	    private RdfUtils rdfUtils = new RdfUtils();
 		
 		
+	    // Constructor
 		public CordisModelIterator(String serviceURI, List<String> queryTerms) {
 			this.service_URI = serviceURI;
 			this.queryTerms = queryTerms;
 		}
-
+		
 		public boolean hasNext() {
 			
 			return ( (cachedResult != null || !done) && !this.queryTerms.isEmpty() );
@@ -88,14 +92,22 @@ public class Cordis extends ConnectorDataSource implements DataSource {
 			CurrentPage++ ;
 			URIBuilder uriB;
 			try {
-				uriB = new URIBuilder( this.service_URI );
-				uriB.addParameter( "q", this.queryTerms.get(0) );
-				uriB.addParameter( "format", "xml" );
-				uriB.addParameter( "p", Integer.toString(CurrentPage, 10) );
-				uriB.addParameter( "num", Integer.toString(SearchResultsPerPage, 10) );
 				
-				String request = uriB.build().toString() ;
-				String response = httpUtils.getHttpResponse(request);
+				String request = null;
+				String response = null;
+				
+				for (String qTerm : this.queryTerms)
+				{
+						uriB = new URIBuilder( this.service_URI );
+						uriB.addParameter( "q", qTerm );
+						uriB.addParameter( "format", "xml" );
+						uriB.addParameter( "p", Integer.toString(CurrentPage, 10) );
+						uriB.addParameter( "num", Integer.toString(SearchResultsPerPage, 10) );
+				
+						request = uriB.build().toString() ;
+						response = httpUtils.getHttpResponse(request);
+				}
+				
 				Model m = xmlToRdf.toRDF(response);
 				
 				if ( CurrentPage == 20 /*sum_of_pages*/ )
