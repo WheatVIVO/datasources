@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wheatinitiative.vivo.datasource.connector.cordis.Cordis;
 import org.wheatinitiative.vivo.datasource.connector.prodinra.Prodinra;
 import org.wheatinitiative.vivo.datasource.connector.rcuk.Rcuk;
 import org.wheatinitiative.vivo.datasource.connector.usda.Usda;
@@ -58,7 +59,11 @@ public class LaunchIngest {
     
     private static DataSource getConnector(String connectorName) {
         DataSource connector = null;
-        if("rcuk".equals(connectorName)) {
+        if("cordis".equals(connectorName)) {
+            connector = new Cordis();
+            connector.getConfiguration().setServiceURI(
+                    "http://cordis.europa.eu/search/result_en");
+        } else if("rcuk".equals(connectorName)) {
             connector = new Rcuk();
             connector.getConfiguration().setServiceURI(
                     "http://http://gtr.rcuk.ac.uk/gtr/api/");
