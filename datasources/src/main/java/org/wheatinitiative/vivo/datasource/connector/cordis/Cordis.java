@@ -169,8 +169,8 @@ public class Cordis extends ConnectorDataSource implements DataSource {
          */
         private int totalResults(Map<String, Model> initialResultsCache) {
             int total = 0;
-            for(String key : initialResultsCache.keySet()) {
-                total += totalResults(initialResultsCache.get(key));
+            for(String queryTerm : initialResultsCache.keySet()) {
+                total += totalResults(initialResultsCache.get(queryTerm));
             }
             return total;
         }
