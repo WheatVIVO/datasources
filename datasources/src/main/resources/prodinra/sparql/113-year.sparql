@@ -23,13 +23,11 @@ PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
 
 CONSTRUCT {
-    ?org a foaf:Organization .
-    ?org rdfs:label ?orgLabel .
-    _:position a vivo:Position .
-    _:position vivo:relates ?x .
-    _:position vivo:relates ?org .
+   ?x vivo:dateTimeValue _:dtv .
+   _:dtv a vivo:DateTimeValue .
+   _:dtv vivo:dateTimePrecision vivo:yearPrecision .
+   _:dtv vivo:dateTime ?dateTime
 } WHERE {
-    ?x a foaf:Person .
-    ?x prodinra:externalAffiliation ?org .
-    OPTIONAL { ?org prodinra:name ?orgLabel }
+   ?x prodinra:year ?year .
+   BIND(xsd:dateTime(concat(str(?year), "-01-01T00:00:00Z")) AS ?dateTime)
 }

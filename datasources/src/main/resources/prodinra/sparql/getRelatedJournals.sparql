@@ -23,13 +23,14 @@ PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
 
 CONSTRUCT {
-    ?org a foaf:Organization .
-    ?org rdfs:label ?orgLabel .
-    _:position a vivo:Position .
-    _:position vivo:relates ?x .
-    _:position vivo:relates ?org .
-} WHERE {
-    ?x a foaf:Person .
-    ?x prodinra:externalAffiliation ?org .
-    OPTIONAL { ?org prodinra:name ?orgLabel }
+    ?document vivo:hasPublicationVenue ?journal .
+    ?journal ?journalP ?journalO
+}
+WHERE {
+    ?authorship vivo:relates ?person .
+    ?authorship a vivo:Authorship .
+    ?authorship vivo:relates ?document .
+    FILTER (?document != ?person) 
+    ?document vivo:hasPublicationVenue ?journal .
+    ?journal ?journalP ?journalO
 }
