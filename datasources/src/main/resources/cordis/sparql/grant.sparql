@@ -8,7 +8,7 @@ CONSTRUCT {
     ?y rdfs:label ?title .
     ?y vivo:description ?objective .
 } WHERE {
-	?x cordis:project ?y .
+	?y a cordis:project .
     ?y cordis:title ?title .
 	OPTIONAL { ?y cordis:objective ?objective }
 }
