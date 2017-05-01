@@ -288,7 +288,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         }
     }
     
-    private void dedupFunctionalProperties(Map<String, Model> quadStore, 
+    protected void dedupFunctionalProperties(Map<String, Model> quadStore, 
             Set<String> functionalPropertyURIs, 
             List<String> graphURIPreferenceList) {
         Set<String> completedProperties = new HashSet<String>();
