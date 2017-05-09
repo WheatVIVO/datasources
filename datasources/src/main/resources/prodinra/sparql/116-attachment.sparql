@@ -23,13 +23,19 @@ PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
 
 CONSTRUCT {
-    ?org a foaf:Organization .
-    ?org rdfs:label ?orgLabel .
-    _:position a vivo:Position .
-    _:position vivo:relates ?x .
-    _:position vivo:relates ?org .
+   ?record obo:ARG_2000028 _:vcard .
+   _:vcard a vcard:Kind .
+   _:vcard vcard:hasURL _:url .
+   _:url a vcard:URL .
+   _:url rdfs:label ?urlLabel .
+   _:url vcard:url ?urlValue .
+  
 } WHERE {
-    ?x a foaf:Person .
-    ?x prodinra:externalAffiliation ?org .
-    OPTIONAL { ?org prodinra:name ?orgLabel }
+   ?x prodinra:attachment ?attachment .
+   ?x prodinra:record ?record .
+   ?attachment prodinra:accessCondition "Publique" .
+   ?attachment prodinra:fileName ?fileName .
+   ?attachment prodinra:attachmentId ?attachmentId .
+   BIND(?fileName AS ?urlLabel) 
+   BIND(xsd:anyURI(concat("http://prodinra.inra.fr/ft?id=", ?attachmentId)) AS ?urlValue)
 }

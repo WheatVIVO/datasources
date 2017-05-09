@@ -80,6 +80,15 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
         subgraph.add(constructQuery(
                 SPARQL_RESOURCE_DIR + "getPersonalSubgraph2.sparql", m, 
                 NAMESPACE_ETC, substitutions));
+        subgraph.add(constructQuery(
+                SPARQL_RESOURCE_DIR + "getRelatedVcards.sparql", m, 
+                NAMESPACE_ETC, substitutions));
+        subgraph.add(constructQuery(
+                SPARQL_RESOURCE_DIR + "getRelatedDateTimeValues.sparql", m, 
+                NAMESPACE_ETC, substitutions));
+        subgraph.add(constructQuery(
+                SPARQL_RESOURCE_DIR + "getRelatedJournals.sparql", m, 
+                NAMESPACE_ETC, substitutions));
         return subgraph;
     }
     
@@ -127,6 +136,8 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
                 PRODINRA_TBOX_NS + "identifier"), "id");
         m = renameByIdentifier(m, m.getProperty(
                 PRODINRA_TBOX_NS + "inraIdentifier"), "in");
+        m = renameByIdentifier(m, m.getProperty(
+                PRODINRA_TBOX_NS + "idCollection"), "ic");
         return m;
     }
     
@@ -156,6 +167,10 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
                 "107-authorLabel.sparql",
                 "110-abstract.sparql",
                 "112-keywords.sparql",
+                "113-year.sparql",
+                "114-doi.sparql",
+                "115-journal.sparql",
+                "116-attachment.sparql",
                 "120-externalAffiliation.sparql",
                 "122-inraAffiliationUnit.sparql",
                 "124-inraLab.sparql");

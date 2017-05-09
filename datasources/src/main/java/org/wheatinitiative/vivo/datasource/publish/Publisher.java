@@ -36,6 +36,7 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.vocabulary.OWL;
+import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
 
 /**
@@ -57,10 +58,10 @@ public class Publisher extends DataSourceBase implements DataSource {
     private static final String KB2 = 
             "http://vitro.mannlib.cornell.edu/default/vitro-kb-2";
     // number of individuals to process before writing results
-    private static final int BATCH_SIZE = 500;
+    private static final int BATCH_SIZE = 1000;
+    private static final int PAUSE_BETWEEN_BATCHES = 6 * 1000; // ms
     
     private DataSourceDao dataSourceDao;
-    private Set<String> completedIndividuals = new HashSet<String>();
     
     protected DataSourceDao getDataSourceDao() {
         if(dataSourceDao == null) {
@@ -75,13 +76,8 @@ public class Publisher extends DataSourceBase implements DataSource {
         Set<String> functionalPropertyURIs = getFunctionalPropertyURIs();      
         emptyDestination();
         log.info("building maps");
-        List<String> graphURIPreferenceList = new ArrayList<String>();
-        graphURIPreferenceList.add(KB2);
-        for(DataSourceDescription dataSource : new DataSourceDao(
-                sourceEndpoint).listDataSources()) {
-            graphURIPreferenceList.add(
-                    dataSource.getConfiguration().getResultsGraphURI());
-        }
+        List<String> graphURIPreferenceList = getGraphURIPreferenceList(
+                sourceEndpoint);
         OntModel sameAsModel = getSameAsModel(sourceEndpoint);
         Map<String, String> sameAsMap = getSameAsMap(graphURIPreferenceList, 
                 sourceEndpoint, sameAsModel);
@@ -89,6 +85,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         // iterate through data source graphs in order of priority
         Map<String, Model> buffer = new HashMap<String, Model>();
         int individualCount = 0;
+        Set<String> completedIndividuals = new HashSet<String>();
         for(String graphURI : graphURIPreferenceList) {
             if(graphURI == null) {
                 continue;
@@ -132,6 +129,21 @@ public class Publisher extends DataSourceBase implements DataSource {
         log.info("ending");
     }
     
+    private List<String> getGraphURIPreferenceList(
+            SparqlEndpoint sourceEndpoint) {
+        List<String> graphURIPreferenceList = new ArrayList<String>();
+        graphURIPreferenceList.add(KB2);
+        for(DataSourceDescription dataSource : new DataSourceDao(
+                sourceEndpoint).listDataSources()) {
+            String graphURI = 
+                    dataSource.getConfiguration().getResultsGraphURI();
+            if(graphURI != null) {
+                graphURIPreferenceList.add(graphURI);
+            }
+        }
+        return graphURIPreferenceList;
+    }
+    
     /**
      * 
      * @return OntModel with reasoned transitive closure of owl:sameAs statements
@@ -139,7 +151,7 @@ public class Publisher extends DataSourceBase implements DataSource {
      */
     private OntModel getSameAsModel(SparqlEndpoint endpoint) {
         OntModel ontModel = ModelFactory.createOntologyModel(
-                OntModelSpec.OWL_MEM_MINI_RULE_INF);
+                OntModelSpec.OWL_MEM);
         String sameAsQuery = "CONSTRUCT { \n" +
                 "    ?ind1 a <" + OWL.Thing + "> . \n" +
                 "    ?ind2 a <" + OWL.Thing + "> . \n" +
@@ -237,6 +249,11 @@ public class Publisher extends DataSourceBase implements DataSource {
      */
     private boolean isHigherPriorityThan(String graphURI1, String graphURI2, 
             List<String> graphURIPreferenceList) {
+        if(graphURI2 == null && graphURI1 != null) {
+            return true;
+        } else if (graphURI1 == null) {
+            return false;
+        }
         int graphURI1position = getListPosition(graphURI1, graphURIPreferenceList);
         int graphURI2position = getListPosition(graphURI2, graphURIPreferenceList);
         return(graphURI1position < graphURI2position);
@@ -271,7 +288,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         }
     }
     
-    private void dedupFunctionalProperties(Map<String, Model> quadStore, 
+    protected void dedupFunctionalProperties(Map<String, Model> quadStore, 
             Set<String> functionalPropertyURIs, 
             List<String> graphURIPreferenceList) {
         Set<String> completedProperties = new HashSet<String>();
@@ -366,6 +383,17 @@ public class Publisher extends DataSourceBase implements DataSource {
         buffer.clear();
     }
     
+    /**
+     * Pause to let the remote VIVO catch up with search index updates, etc.
+     */
+    private void pause() {
+        try {
+            Thread.sleep(PAUSE_BETWEEN_BATCHES);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
     private void writeQuadStoreToDestination(Map<String, Model> quadStore) {
         for(String graphURI : quadStore.keySet()) {
             Model m = quadStore.get(graphURI);
@@ -373,6 +401,7 @@ public class Publisher extends DataSourceBase implements DataSource {
             long start = System.currentTimeMillis();
             getSparqlEndpoint().writeModel(m, graphURI);
             log.info(System.currentTimeMillis() - start + " ms to write.");
+            pause();
         }
     }
     
@@ -440,7 +469,7 @@ public class Publisher extends DataSourceBase implements DataSource {
     
     private class IndividualURIIterator implements Iterator<String> {
 
-        private static final int INDIVIDUAL_BATCH_SIZE = 10000;
+        private static final int INDIVIDUAL_BATCH_SIZE = 5000;
         int individualOffset = 0;
         
         Queue<String> currentBatch = null;
