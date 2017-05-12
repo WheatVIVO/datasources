@@ -4,7 +4,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -23,10 +22,14 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
 import org.wheatinitiative.vivo.datasource.DataSource;
+import org.wheatinitiative.vivo.datasource.SparqlEndpointParams;
 import org.wheatinitiative.vivo.datasource.connector.ConnectorDataSource;
 import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
+import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
 import org.wheatinitiative.vivo.datasource.util.xml.XmlToRdf;
 
+import com.hp.hpl.jena.query.QuerySolution;
+import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.RDFNode;
@@ -47,6 +50,8 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
     private static final String CLIENT_SECRET = "orcid.clientSecret";
     private String clientId;
     private String clientSecret;
+    private static final String ORCIDID = "http://vivoweb.org/ontology/core#orcidId";
+    private static final String SPARQL_RESOURCE_DIR = "/orcid/sparql/";
     private DefaultHttpClient httpClient;
     
     public OrcidConnector() {
@@ -108,6 +113,10 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
         }
         
         private Model getOrcidModel(String orcidId) {
+            if(orcidId.length() < 36) {
+                log.error("Skipping invalid orcid iD " + orcidId);
+                return ModelFactory.createDefaultModel();
+            }
             String orcidNum = orcidId.substring("http://orcid.org/".length());
             //HttpGet get = new HttpGet(PUBLIC_API_BASE_URL + orcidNum + "/record");
             String response = getOrcidResponse(PUBLIC_API_BASE_URL + orcidNum + "/works");
@@ -196,7 +205,33 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
     }
     
     protected List<String> getOrcidIds() {
-        return Collections.EMPTY_LIST; // TODO implement
+        List<String> orcidIds = new ArrayList<String>();
+        SparqlEndpoint sourceEndpoint = getSourceEndpoint();
+        ResultSet rs = sourceEndpoint.getResultSet(
+                "SELECT DISTINCT ?o WHERE { ?x <" + ORCIDID + "> ?o }");
+        while(rs.hasNext()) {
+            QuerySolution qsoln = rs.next();
+            RDFNode n = qsoln.get("o");
+            if(n.isURIResource()) {
+                orcidIds.add(n.asResource().getURI());
+            }
+        }
+        return orcidIds;
+    }
+    
+    private SparqlEndpoint getSourceEndpoint() {
+        String sourceServiceURI = this.getConfiguration().getServiceURI();
+        if(!sourceServiceURI.endsWith("/")) {
+            sourceServiceURI += "/";
+        }
+        SparqlEndpointParams params = new SparqlEndpointParams();
+        params.setEndpointURI(sourceServiceURI + "api/sparqlQuery");
+        params.setEndpointUpdateURI(sourceServiceURI + "api/sparqlUpdate");
+        params.setUsername(
+                this.getConfiguration().getEndpointParameters().getUsername());
+        params.setPassword(
+                this.getConfiguration().getEndpointParameters().getPassword());
+        return new SparqlEndpoint(params);
     }
 
     @Override
@@ -206,7 +241,22 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
 
     @Override
     protected Model mapToVIVO(Model model) {
-        return model;
+        List<String> queries = Arrays.asList("100-documentTypes.sparql",
+                "102-authorship.sparql",
+                "105-title.sparql",
+                "113-year.sparql",
+                "114-doi.sparql",
+                "115-journal.sparql",
+                "116-url.sparql"
+                );
+        for(String query : queries) {
+            log.debug("Executing query " + query);
+            log.debug("Pre-query model size: " + model.size());
+            construct(SPARQL_RESOURCE_DIR + query, model, NAMESPACE_ETC);
+            log.debug("Post-query model size: " + model.size());
+        }
+        return rdfUtils.renameBNodes(
+                model, NAMESPACE_ETC, model);
     }
 
 }
