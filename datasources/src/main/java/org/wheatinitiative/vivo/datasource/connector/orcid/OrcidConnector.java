@@ -101,7 +101,13 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
         }
 
         public Model next() {
-            return getOrcidModel(orcidIds.next());
+            String orcidId = orcidIds.next();
+            try {
+                return getOrcidModel(orcidId);
+            } catch (Exception e) {
+                log.error("Error getting model for orcid iD " + orcidId, e);
+                return ModelFactory.createDefaultModel();
+            }
         }
 
         public Integer size() {
