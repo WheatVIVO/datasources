@@ -207,17 +207,16 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
     
     protected List<String> getOrcidIds() {
         List<String> orcidIds = new ArrayList<String>();
-        orcidIds.add("http://orcid.org/0000-0002-1107-0210");
-//        SparqlEndpoint sourceEndpoint = getSourceEndpoint();
-//        ResultSet rs = sourceEndpoint.getResultSet(
-//                "SELECT DISTINCT ?o WHERE { ?x <" + ORCIDID + "> ?o }");
-//        while(rs.hasNext()) {
-//            QuerySolution qsoln = rs.next();
-//            RDFNode n = qsoln.get("o");
-//            if(n.isURIResource()) {
-//                orcidIds.add(n.asResource().getURI());
-//            }
-//        }
+        SparqlEndpoint sourceEndpoint = getSourceEndpoint();
+        ResultSet rs = sourceEndpoint.getResultSet(
+                "SELECT DISTINCT ?o WHERE { ?x <" + ORCIDID + "> ?o }");
+        while(rs.hasNext()) {
+            QuerySolution qsoln = rs.next();
+            RDFNode n = qsoln.get("o");
+            if(n.isURIResource()) {
+                orcidIds.add(n.asResource().getURI());
+            }
+        }
         return orcidIds;
     }
     
