@@ -118,7 +118,8 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
                 return ModelFactory.createDefaultModel();
             }
             String orcidNum = orcidId.substring("http://orcid.org/".length());
-            //HttpGet get = new HttpGet(PUBLIC_API_BASE_URL + orcidNum + "/record");
+            String orcidRecord = getOrcidResponse(PUBLIC_API_BASE_URL + orcidNum + "/record");
+            Model record = xmlToRdf.toRDF(orcidRecord);
             String response = getOrcidResponse(PUBLIC_API_BASE_URL + orcidNum + "/works");
             log.debug("Response to request for ORCID record: \n" + response);
             Model workSummaries = xmlToRdf.toRDF(response);
@@ -135,6 +136,7 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
                     works.add(xmlToRdf.toRDF(work));
                 }
             }
+            works.add(record);
             return rdfUtils.renameBNodes(
                     works, NAMESPACE_ETC, works);
         }
@@ -201,21 +203,21 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
                 throw new RuntimeException(e);
             }
         }
-        
     }
     
     protected List<String> getOrcidIds() {
         List<String> orcidIds = new ArrayList<String>();
-        SparqlEndpoint sourceEndpoint = getSourceEndpoint();
-        ResultSet rs = sourceEndpoint.getResultSet(
-                "SELECT DISTINCT ?o WHERE { ?x <" + ORCIDID + "> ?o }");
-        while(rs.hasNext()) {
-            QuerySolution qsoln = rs.next();
-            RDFNode n = qsoln.get("o");
-            if(n.isURIResource()) {
-                orcidIds.add(n.asResource().getURI());
-            }
-        }
+        orcidIds.add("http://orcid.org/0000-0002-1107-0210");
+//        SparqlEndpoint sourceEndpoint = getSourceEndpoint();
+//        ResultSet rs = sourceEndpoint.getResultSet(
+//                "SELECT DISTINCT ?o WHERE { ?x <" + ORCIDID + "> ?o }");
+//        while(rs.hasNext()) {
+//            QuerySolution qsoln = rs.next();
+//            RDFNode n = qsoln.get("o");
+//            if(n.isURIResource()) {
+//                orcidIds.add(n.asResource().getURI());
+//            }
+//        }
         return orcidIds;
     }
     
@@ -243,6 +245,7 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
     protected Model mapToVIVO(Model model) {
         List<String> queries = Arrays.asList("100-documentTypes.sparql",
                 "102-authorship.sparql",
+                "103-knownPerson.sparql", 
                 "105-title.sparql",
                 "113-year.sparql",
                 "114-doi.sparql",
