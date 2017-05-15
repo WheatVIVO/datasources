@@ -196,9 +196,9 @@ public class Publisher extends DataSourceBase implements DataSource {
             }
             sameAsMap.put(ind.getURI(), uriToMapTo);
         }
-        log.info("sameAs:");
+        log.debug("sameAs:");
         for(String uri : sameAsMap.keySet()) {
-            log.info(uri + " ===> " + sameAsMap.get(uri));
+            log.debug(uri + " ===> " + sameAsMap.get(uri));
         }
         return sameAsMap;
     }
@@ -302,7 +302,7 @@ public class Publisher extends DataSourceBase implements DataSource {
             Set<Property> predicateSet = getPredicatesInUse(m);
             for(Property predicate : predicateSet) {
                 if(completedProperties.contains(predicate.getURI())) {
-                    log.info("Removing all " + predicate.getURI() + " in " + graphURI);
+                    log.debug("Removing all " + predicate.getURI() + " in " + graphURI);
                     m.removeAll(null, predicate, (RDFNode) null);
                 } else if(functionalPropertyURIs.contains(predicate.getURI())) {
                     LinkedList<Statement> duplicates = new LinkedList<Statement>();
@@ -315,10 +315,10 @@ public class Publisher extends DataSourceBase implements DataSource {
                     // drop the first from the duplicate list since we want
                     // to retain it in the model
                     duplicates.poll();
-                    log.info("Removing " + duplicates + " " + predicate.getURI() + " from " + graphURI);
+                    log.debug("Removing " + duplicates + " " + predicate.getURI() + " from " + graphURI);
                     m.remove(duplicates);
                     completedProperties.add(predicate.getURI());
-                    log.info("Completed property " + predicate.getURI() + " on graph " + graphURI);
+                    log.debug("Completed property " + predicate.getURI() + " on graph " + graphURI);
                 }
             }
         }
