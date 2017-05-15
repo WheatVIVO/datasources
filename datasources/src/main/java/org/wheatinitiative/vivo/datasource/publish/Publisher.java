@@ -189,7 +189,9 @@ public class Publisher extends DataSourceBase implements DataSource {
                 if(this.isHigherPriorityThan(candidateGraph, currentGraph, 
                         graphURIPreferenceList)) {
                     uriToMapTo = sameAsURI;
-                } else {
+                } else if(sameAsURI.compareTo(uriToMapTo) < 0) {
+                    // pick alphabetically-lower URIs within equal-level graphs
+                    uriToMapTo = sameAsURI;
                 }
             }
             sameAsMap.put(ind.getURI(), uriToMapTo);
@@ -300,7 +302,7 @@ public class Publisher extends DataSourceBase implements DataSource {
             Set<Property> predicateSet = getPredicatesInUse(m);
             for(Property predicate : predicateSet) {
                 if(completedProperties.contains(predicate.getURI())) {
-                    log.debug("Removing all " + predicate.getURI() + " in " + graphURI);
+                    log.info("Removing all " + predicate.getURI() + " in " + graphURI);
                     m.removeAll(null, predicate, (RDFNode) null);
                 } else if(functionalPropertyURIs.contains(predicate.getURI())) {
                     LinkedList<Statement> duplicates = new LinkedList<Statement>();
@@ -313,9 +315,10 @@ public class Publisher extends DataSourceBase implements DataSource {
                     // drop the first from the duplicate list since we want
                     // to retain it in the model
                     duplicates.poll();
-                    log.debug("Removing " + duplicates.size() + " " + predicate.getURI() + " from " + graphURI);
+                    log.info("Removing " + duplicates + " " + predicate.getURI() + " from " + graphURI);
                     m.remove(duplicates);
                     completedProperties.add(predicate.getURI());
+                    log.info("Completed property " + predicate.getURI() + " on graph " + graphURI);
                 }
             }
         }
