@@ -1,0 +1,28 @@
+PREFIX cordis:	<http://cordis.europa.eu/>
+PREFIX vivo:	<http://vivoweb.org/ontology/core#>
+PREFIX xsd:		<http://www.w3.org/2001/XMLSchema#>
+
+
+CONSTRUCT {
+    ?grant vivo:dateTimeInterval _:dti .
+    _:dti a vivo:DateTimeInterval .
+    _:dti vivo:start _:start .
+    
+    _:start a vivo:DateTimeValue .
+    _:start vivo:dateTime ?start_date .
+    _:start vivo:dateTimePrecision vivo:yearMonthDayPrecision .
+    
+    _:dti vivo:end _:end .
+    _:end a vivo:DateTimeValue .
+    _:end vivo:dateTime ?end_date .
+    _:end vivo:dateTimePrecision vivo:yearMonthDayPrecision .
+    
+} WHERE {
+    ?grant a vivo:Project .
+    
+    ?grant cordis:startDate ?cordisStart .
+    BIND ( xsd:dateTime( CONCAT ( ?cordisStart, "T00:00:00Z") ) AS ?start_date)
+    
+    ?grant cordis:endDate ?cordisEnd .
+    BIND ( xsd:dateTime( CONCAT ( ?cordisEnd, "T00:00:00Z") ) AS ?end_date)
+}

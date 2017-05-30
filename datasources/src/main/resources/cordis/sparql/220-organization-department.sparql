@@ -1,0 +1,22 @@
+PREFIX cordis:	<http://cordis.europa.eu/>
+PREFIX rdfs:	<http://www.w3.org/2000/01/rdf-schema#>
+PREFIX foaf:	<http://xmlns.com/foaf/0.1/>
+PREFIX obo:		<http://purl.obolibrary.org/obo/>
+
+
+
+CONSTRUCT {
+    _:department a foaf:AcademicDepartment .
+    _:department rdfs:label ?org_dep_name .
+    
+    _:department obo:BFO_0000050 ?y .
+    # z is "PartOf" y
+    
+} WHERE {
+
+    { ?y cordis:departmentName ?org_dep_name . }
+    UNION
+    { ?y cordis:otherDepartmentName ?org_dep_name . }
+	
+    FILTER ( ?org_dep_name != "N/A" && "-" )
+}

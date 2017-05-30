@@ -1,0 +1,41 @@
+PREFIX cordis:	<http://cordis.europa.eu/>
+PREFIX rdfs:	<http://www.w3.org/2000/01/rdf-schema#>
+PREFIX foaf:	<http://xmlns.com/foaf/0.1/>
+PREFIX vcard:	<http://www.w3.org/2006/vcard/ns#>
+PREFIX vivo:	<http://vivoweb.org/ontology/core#>
+PREFIX obo:		<http://purl.obolibrary.org/obo/>
+
+
+
+CONSTRUCT {
+
+	# x "has contact info" 
+    ?x obo:ARG_2000028 _:vcard .
+    
+    _:vcard a vcard:Organization .
+    _:vcard vcard:hasAddress _:address .
+    _:address vcard:streetAddress ?org_street .
+	_:address vcard:locality ?org_city .
+	_:address vcard:postalCode ?org_post .
+	_:address vivo:Country ?org_country_name .
+	
+	_:vcard vcard:hasURL _:url .
+	_:url a vcard:URL .
+	_:url rdfs:label ?org_url .
+	
+	
+} WHERE {
+
+	?x a foaf:Organization .
+
+	?x cordis:address ?adr .
+	?adr cordis:street ?org_street .
+	?adr cordis:city ?org_city .
+	?adr cordis:postalCode ?org_post .
+	?adr cordis:url ?org_url .
+	
+	?x cordis:relations ?rel .
+	?rel cordis:regions ?reg_pl .
+	?reg_pl cordis:region ?reg .
+	?reg cordis:name ?org_country_name .
+}

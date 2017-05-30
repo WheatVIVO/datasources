@@ -1,0 +1,19 @@
+PREFIX cordis:	<http://cordis.europa.eu/>
+PREFIX rdfs:	<http://www.w3.org/2000/01/rdf-schema#>
+PREFIX foaf:	<http://xmlns.com/foaf/0.1/>
+PREFIX vivo:	<http://vivoweb.org/ontology/core#>
+
+
+CONSTRUCT {
+    ?z a foaf:Organization .
+    ?z rdfs:label ?legal_name .
+	?z foaf:alternativeTerm ?short_name .
+	?z vivo:identifier ?id_code .
+	
+} WHERE {
+
+    ?x cordis:organization ?z .
+    ?z cordis:legalName ?legal_name .
+    ?z cordis:shortName ?short_name .
+    ?z cordis:id ?id_code .
+}

@@ -2,6 +2,7 @@ package org.wheatinitiative.vivo.datasource.connector.cordis;
 
 // Java imports
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -295,17 +296,28 @@ public class Cordis extends ConnectorDataSource implements DataSource {
 	
 	
 	protected Model constructForVIVO(Model model) {
-		String query = "grant.sparql";
+		List<String> queries =  Arrays.asList("100-grant.sparql",
+								"110-grant-date.sparql",
+								"200-organization.sparql",
+								"210-organization-role.sparql",
+								"220-organization-department.sparql",
+								"230-organization-address.sparql",
+								"300-person-vcard-name.sparql",
+								"310-person-label.sparql",
+								"320-person-function.sparql",
+								"330-person-address.sparql",
+								"500-keyword.sparql");
 		
-		log.debug("Executing query " + query);
-        log.debug("Pre-query model size: " + model.size());
-        
-        construct(SPARQL_RESOURCE_DIR + query, model, NAMESPACE_ETC);
-        
-        log.debug("Post-query model size: " + model.size());
+        for(String query : queries) {
+        	log.debug("Executing query " + query);
+            log.debug("Pre-query model size: " + model.size());
+            construct(SPARQL_RESOURCE_DIR + query, model, NAMESPACE_ETC);
+            log.debug("Post-query model size: " + model.size());
+        }
         
         return model;
 	}
+	
 	
 	@Override
 	protected Model mapToVIVO(Model model) {
