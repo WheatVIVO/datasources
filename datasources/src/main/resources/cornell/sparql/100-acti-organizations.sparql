@@ -1,0 +1,27 @@
+PREFIX acti:	<http://vivoweb.org/ontology/activity-insight#>
+PREFIX obo:		<http://purl.obolibrary.org/obo/>
+PREFIX foaf:	<http://xmlns.com/foaf/0.1/>
+PREFIX rdfs:	<http://www.w3.org/2000/01/rdf-schema#>
+
+
+
+CONSTRUCT {
+	
+	_:org a foaf:Organization .
+	_:org rdfs:label ?title .
+	
+	_:org obo:RO_0000053 _:role .
+	# An organazation has (_53) a role
+	
+	_:role a obo:ERO_0000224 .
+	# That role is a _224 (funding) role
+	
+	_:role obo:BFO_0000054 ?proj .
+	# This role gets realised (_54) in the project
+	
+} WHERE {
+	
+	?proj a acti:ImpactProject .
+	?proj acti:otherFedResearchFunding ?title .
+}
+
