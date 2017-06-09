@@ -228,8 +228,9 @@ public class Cordis extends ConnectorDataSource implements DataSource {
         
         private Collection<String> getResultURIs(Model searchResultsModel) {
             List<String> resultURIs = new ArrayList<String>();
-            resultURIs.addAll(getResultURIs(searchResultsModel, "result"));
             resultURIs.addAll(getResultURIs(searchResultsModel, "project"));
+            resultURIs.addAll(getResultURIs(searchResultsModel, "publication"));
+            resultURIs.addAll(getResultURIs(searchResultsModel, "result"));
             return resultURIs;
         }
         
