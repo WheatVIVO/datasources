@@ -30,6 +30,7 @@ CONSTRUCT {
     ?grant vivo:relates _:role .
     _:role a vivo:CoPrincipalInvestigatorRole .
     _:role obo:RO_0000052 ?person .
+    _:role obo:BFO_0000054 ?project
 } WHERE {
     { 
       ?link rcuk:rel "COI_PER" 
@@ -37,10 +38,9 @@ CONSTRUCT {
       ?link rcuk:rel "RESEARCH_COI_PER"
     }
     ?links rcuk:link ?link .
-    ?grant rcuk:links ?links .
-    # ?link vivo:relates ?grant .
-    ?grant a vivo:Grant .
+    ?project rcuk:links ?links .
+    ?project a vivo:Project .
+    ?grant vivo:fundingVehicleFor ?project .
     ?link vivo:relates ?person .
-#    ?person a foaf:Person .
-    FILTER NOT EXISTS { ?person a vivo:Grant }
+    FILTER NOT EXISTS { ?person a vivo:Project }
 }

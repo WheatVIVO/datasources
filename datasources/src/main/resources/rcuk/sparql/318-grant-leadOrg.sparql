@@ -31,13 +31,13 @@ CONSTRUCT {
     # not perfect mapping in core: using AdministratorRole for now 
     _:role a vivo:AdministratorRole . 
     _:role obo:RO_0000052 ?org .
+    _:role obo:BFO_0000054 ?project .
 } WHERE {
     ?link rcuk:rel "LEAD_ORG" .
     ?links rcuk:link ?link .
-    ?grant rcuk:links ?links .
-    # ?link vivo:relates ?grant .
-    ?grant a vivo:Grant .
+    ?project rcuk:links ?links .
+    ?project a vivo:Project .
+    ?grant vivo:fundingVehicleFor ?project .
     ?link vivo:relates ?org .
-#    ?org a foaf:Organization .
-    FILTER NOT EXISTS { ?org a vivo:Grant }
+    FILTER NOT EXISTS { ?org a vivo:Project }
 }
