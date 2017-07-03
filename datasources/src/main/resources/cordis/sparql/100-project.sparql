@@ -1,0 +1,55 @@
+PREFIX cordis:	<http://cordis.europa.eu/>
+PREFIX rdfs:	<http://www.w3.org/2000/01/rdf-schema#>
+PREFIX vivo:	<http://vivoweb.org/ontology/core#>
+PREFIX obo:		<http://purl.obolibrary.org/obo/>
+PREFIX vcard:   <http://www.w3.org/2006/vcard/ns#>
+PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
+
+
+CONSTRUCT {
+	?proj a vivo:Project .
+	?proj rdfs:label ?title .
+	?proj vivo:description ?objective .
+	?proj vivo:identifier ?project_id .
+	?proj vcard:hasURL _:url .
+	
+	_:url a vcard:URL .
+    _:url vcard:url ?project_url .
+    _:url rdfs:label ?project_url_str .
+	
+	# Project "has participant" a Grant.
+	?proj obo:RO_0000057 _:grant .
+	
+	_:grant a vivo:Grant .
+    _:grant rdfs:label ?title .
+    _:grant vivo:description ?objective .
+    _:grant vivo:identifier ?project_id .
+    _:grant vivo:totalAwardAmount ?project_cost .
+    
+    _:grant vcard:hasURL _:url .
+    
+    _:url a vcard:URL .
+    _:url vcard:url ?project_url .
+    _:url rdfs:label ?project_url_str .
+    
+    # Grant "participates in" a Project.
+	_:grant obo:RO_0000056 ?proj .
+    
+} WHERE {
+	?proj a cordis:project .
+	?proj cordis:acronym ?acronym .
+	?proj cordis:title ?cordis_title .
+	
+    BIND( CONCAT( ?acronym, " - ", ?cordis_title ) AS ?title )
+    
+	OPTIONAL { ?proj cordis:objective ?objective }
+	
+	?proj cordis:reference ?project_id .
+	
+	OPTIONAL {
+        ?proj cordis:url ?project_url_str .
+        BIND ( xsd:anyURI( ?project_url_str ) AS ?project_url )   
+	}
+	
+	?proj cordis:totalCost ?project_cost .
+}
