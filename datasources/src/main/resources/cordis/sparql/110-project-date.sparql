@@ -4,7 +4,7 @@ PREFIX xsd:		<http://www.w3.org/2001/XMLSchema#>
 
 
 CONSTRUCT {
-    ?grant vivo:dateTimeInterval _:dti .
+    ?proj vivo:dateTimeInterval _:dti .
     _:dti a vivo:DateTimeInterval .
     _:dti vivo:start _:start .
     
@@ -18,11 +18,11 @@ CONSTRUCT {
     _:end vivo:dateTimePrecision vivo:yearMonthDayPrecision .
     
 } WHERE {
-    ?grant a vivo:Project .
+    ?proj a vivo:Project .
     
-    ?grant cordis:startDate ?cordisStart .
+    ?proj cordis:startDate ?cordisStart .
     BIND ( xsd:dateTime( CONCAT ( ?cordisStart, "T00:00:00Z") ) AS ?start_date)
     
-    ?grant cordis:endDate ?cordisEnd .
+    ?proj cordis:endDate ?cordisEnd .
     BIND ( xsd:dateTime( CONCAT ( ?cordisEnd, "T00:00:00Z") ) AS ?end_date)
 }
