@@ -1,0 +1,33 @@
+PREFIX cordis:	<http://cordis.europa.eu/>
+PREFIX foaf:	<http://xmlns.com/foaf/0.1/>
+PREFIX vcard:	<http://www.w3.org/2006/vcard/ns#>
+PREFIX obo:		<http://purl.obolibrary.org/obo/>
+PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+
+
+CONSTRUCT {
+
+	?vcard a vcard:Organization .
+	?vcard vcard:hasTelephone _:tel .
+	_:tel a vcard:Telephone .
+	_:tel vcard:telephone ?persons_tel .
+	
+#	_:tel a vcard:Voice .
+#	currently there is a bug in VIVO that doesn't recognize the vcard:Voice...
+	
+	_:vcard vcard:hasTelephone _:fax .
+	_:fax a vcard:Telephone .
+	_:fax vcard:telephone ?persons_fax .
+	
+	_:fax a vcard:Fax .
+	
+} WHERE {
+
+	?x a foaf:Person .
+	?x obo:ARG_2000028 ?vcard .
+	?x cordis:address ?y .
+	?y cordis:telephoneNumber ?persons_tel .
+	
+	OPTIONAL { ?y cordis:faxNumber ?persons_fax }
+}

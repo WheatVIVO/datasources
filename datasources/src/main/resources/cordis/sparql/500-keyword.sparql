@@ -1,0 +1,13 @@
+PREFIX cordis:	<http://cordis.europa.eu/>
+PREFIX vivo:	<http://vivoweb.org/ontology/core#>
+
+
+
+CONSTRUCT {
+
+   ?x vivo:freetextKeyword ?value .
+   
+} WHERE {
+
+	?x cordis:keywords ?value .
+}

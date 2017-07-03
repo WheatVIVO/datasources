@@ -1,0 +1,24 @@
+PREFIX cordis:	<http://cordis.europa.eu/>
+PREFIX foaf:	<http://xmlns.com/foaf/0.1/>
+PREFIX obo:		<http://purl.obolibrary.org/obo/>
+PREFIX vcard:	<http://www.w3.org/2006/vcard/ns#>
+
+
+
+CONSTRUCT {
+
+	?x a foaf:Person .
+    ?x obo:ARG_2000028 _:vcard .
+    
+    _:vcard a vcard:Individual .
+    _:vcard vcard:hasName _:name .
+    _:name a vcard:Name .
+    _:name vcard:familyName ?lastName .
+    _:name vcard:givenName ?firstName .
+    
+} WHERE {
+
+    ?y cordis:person ?x .
+    ?x cordis:lastName ?lastName .
+    OPTIONAL { ?x cordis:firstNames ?firstName }
+}

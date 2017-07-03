@@ -1,0 +1,18 @@
+PREFIX cordis:	<http://cordis.europa.eu/>
+PREFIX rdfs:	<http://www.w3.org/2000/01/rdf-schema#>
+PREFIX foaf:	<http://xmlns.com/foaf/0.1/>
+
+
+
+CONSTRUCT {
+
+    ?x rdfs:label ?names .
+    
+} WHERE {
+
+    ?x a foaf:Person .
+    ?x cordis:lastName ?last_name .
+    ?x cordis:firstNames ?first_names .
+    
+    BIND( CONCAT( ?last_name, ", ", ?first_names ) AS ?names )
+}

@@ -13,7 +13,7 @@ CONSTRUCT {
     # z is "PartOf" y
     
 } WHERE {
-	
+
     { ?y cordis:departmentName ?org_dep_name . }
     UNION
     { ?y cordis:otherDepartmentName ?org_dep_name . }

@@ -16,7 +16,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.client.utils.URIBuilder;
 
-//WheatInitiative imports
+//Wheatinitiative imports
 import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.connector.ConnectorDataSource;
 import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
@@ -40,12 +40,13 @@ import com.hp.hpl.jena.util.ResourceUtils;
 public class Cordis extends ConnectorDataSource implements DataSource {
 	
     public static final Log log = LogFactory.getLog(Cordis.class);
-    
+
     private static final String CORDIS_TBOX_NS = "http://cordis.europa.eu/";
     private static final String CORDIS_ABOX_NS = CORDIS_TBOX_NS + "individual/";
     private static final String NAMESPACE_ETC = CORDIS_ABOX_NS + "n";
     private static final String SPARQL_RESOURCE_DIR = "/cordis/sparql/";
     private static final int MIN_REST_AFTER_HTTP_REQUEST = 250; //ms
+
     
     
     @Override
@@ -58,16 +59,16 @@ public class Cordis extends ConnectorDataSource implements DataSource {
     
 	
 	private class CordisModelIterator implements IteratorWithSize<Model> {
-		
+
         private String service_URI;
         private List<String> queryTerms;
-        private static final int SEARCH_RESULTS_PER_PAGE = 30;
-        // Cordis' website can't handle more than 30 results per page..
-        
+        private static final int SEARCH_RESULTS_PER_PAGE = 20;
+
         private boolean done = false;
         private HttpUtils httpUtils = new HttpUtils();
         private XmlToRdf xmlToRdf = new XmlToRdf();
         private RdfUtils rdfUtils = new RdfUtils();
+        
         private Map<String, Model> initialResultsCache;
         private Map<String, Integer> totalForQueryTerm;
         private Iterator<String> queryTermIterator;
@@ -84,11 +85,9 @@ public class Cordis extends ConnectorDataSource implements DataSource {
             totalForQueryTerm = getTotalsForQueryTerms(initialResultsCache);
         }
 		
-        
         public boolean hasNext() {
             return ((this.size() > 0) && !done);
         }
-        
         
         public Model next() {
             if(currentQueryTerm == null){
@@ -115,10 +114,10 @@ public class Cordis extends ConnectorDataSource implements DataSource {
                 } else {
                     done = true;
                 }
-            }
+            }             
             return getResourcesForSearchResults(searchResultsModel);
         }
-        
+
         
         public Integer size() {
             return totalResults(initialResultsCache);
@@ -134,8 +133,9 @@ public class Cordis extends ConnectorDataSource implements DataSource {
         }
         
         
-        private Map<String, Integer> getTotalsForQueryTerms(Map<String, Model> initialResultsCache) {
-        	Map<String, Integer> totalsForQueryTerms = new HashMap<String, Integer>();
+        private Map<String, Integer> getTotalsForQueryTerms(
+                Map<String, Model> initialResultsCache) {
+            Map<String, Integer> totalsForQueryTerms = new HashMap<String, Integer>();
             for(String queryTerm : initialResultsCache.keySet()) {
                 int total = totalResults(initialResultsCache.get(queryTerm));
                 totalsForQueryTerms.put(queryTerm, total);
@@ -159,9 +159,7 @@ public class Cordis extends ConnectorDataSource implements DataSource {
                 String response = httpUtils.getHttpResponse(request);
                 Model model = xmlToRdf.toRDF(response);
                 Thread.sleep(MIN_REST_AFTER_HTTP_REQUEST);
-                
                 return rdfUtils.renameBNodes(model, NAMESPACE_ETC, model);
-                
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -175,17 +173,7 @@ public class Cordis extends ConnectorDataSource implements DataSource {
                 try {
                     log.info("Requesting result " + resultURI);
                     String response = httpUtils.getHttpResponse(resultURI);
-                    try {
-                    	resourcesModel.add(xmlToRdf.toRDF(response));
-                    } catch (Exception e) {
-                    	// More error checks to be added later. HttpUtil has to give us access.
-                    	log.info("After requesting: " + resultURI + "/n"
-                    						+ "we propably encountered an HTTP:404"
-                    						+ "- \"Not found!\" error."
-                    						+ "/nCheck the debug log for more.");
-                    	log.debug(e);
-                    	continue;
-                    }
+                    resourcesModel.add(xmlToRdf.toRDF(response));
                     Thread.sleep(MIN_REST_AFTER_HTTP_REQUEST);                                        
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -193,7 +181,7 @@ public class Cordis extends ConnectorDataSource implements DataSource {
             }
             return rdfUtils.renameBNodes(
                     resourcesModel, NAMESPACE_ETC, resourcesModel);
-}
+        }
         
         
         /*
@@ -238,14 +226,11 @@ public class Cordis extends ConnectorDataSource implements DataSource {
         }
         
         
-        /*
-         * It seems that we are not getting scientific publications from Cordis.
-         * All we get, are abstracts describing what the real publications include, but no link to the real publications.
-         * Also the different types of results that we are getting, are mostly reports to the EU commission but are not scientific publications.
-         */
         private Collection<String> getResultURIs(Model searchResultsModel) {
             List<String> resultURIs = new ArrayList<String>();
             resultURIs.addAll(getResultURIs(searchResultsModel, "project"));
+            resultURIs.addAll(getResultURIs(searchResultsModel, "publication"));
+            resultURIs.addAll(getResultURIs(searchResultsModel, "result"));
             return resultURIs;
         }
         
@@ -280,9 +265,10 @@ public class Cordis extends ConnectorDataSource implements DataSource {
     }
 	
 	
-	protected Model renameByIdentifier(Model model, Property identifier, String localNamePrefix) {
+	protected Model renameByIdentifier(Model model, Property identifier, 
+            String localNamePrefix) {
 		
-		Map<Resource, String> idMap = new HashMap<Resource, String>();
+		 Map<Resource, String> idMap = new HashMap<Resource, String>();
         StmtIterator sit = model.listStatements(null, identifier, (RDFNode) null);
         while(sit.hasNext()) {
             Statement stmt = sit.next();
@@ -311,16 +297,17 @@ public class Cordis extends ConnectorDataSource implements DataSource {
 	
 	
 	protected Model constructForVIVO(Model model) {
-		List<String> queries =  Arrays.asList(
-								"100-project.sparql",
-								"110-project-date.sparql",
+		List<String> queries =  Arrays.asList("100-grant.sparql",
+								"110-grant-date.sparql",
 								"200-organization.sparql",
-								"210-organization-project-adminrole.sparql",
-								"211-orgaization-project-participantrole.sparql",
-								"212-organization-project-generalrole.sparql",
+								"210-organization-role.sparql",
 								"220-organization-department.sparql",
-								"230-organization-address.sparql"
-								);
+								"230-organization-address.sparql",
+								"300-person-vcard-name.sparql",
+								"310-person-label.sparql",
+								"320-person-function.sparql",
+								"330-person-address.sparql",
+								"500-keyword.sparql");
 		
         for(String query : queries) {
         	log.debug("Executing query " + query);
@@ -328,6 +315,7 @@ public class Cordis extends ConnectorDataSource implements DataSource {
             construct(SPARQL_RESOURCE_DIR + query, model, NAMESPACE_ETC);
             log.debug("Post-query model size: " + model.size());
         }
+        
         return model;
 	}
 	
@@ -342,12 +330,12 @@ public class Cordis extends ConnectorDataSource implements DataSource {
 		return rdfUtils.smushResources(model, model.getProperty(
 					CORDIS_TBOX_NS + "identifier"));
 	}
-	
-	
+
+
 	@Override
 	protected Model filter(Model model) {
 		// TODO Auto-generated method stub
 		return model;
 	}
-	
+
 }

@@ -1,0 +1,15 @@
+PREFIX cordis:	<http://cordis.europa.eu/>
+PREFIX foaf:	<http://xmlns.com/foaf/0.1/>
+PREFIX vivo:	<http://vivoweb.org/ontology/core#>
+
+
+
+CONSTRUCT {
+
+	?x vivo:position ?pos .
+
+} WHERE {
+
+	?x a foaf:Person .
+	?x cordis:function ?pos .
+}
