@@ -1,8 +1,10 @@
 package org.wheatinitiative.vivo.datasource.merge;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -64,22 +66,47 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         log.info("Merging relationships");
         result.add(getRelationshipSameAs());
         log.info(result.size() + " after merged relationships");
+        Map<String, Long> statistics = new HashMap<String, Long>();
         for(String mergeRuleURI : getMergeRuleURIs(dataSourceURI)) {
             // TODO flush to endpoint and repeat rules until quiescent?
+            long previousSize = result.size();
             log.info("Processing rule " + mergeRuleURI);            
             MergeRule rule = getMergeRule(mergeRuleURI, rulesModel); 
             String query = getSameAsQuery(rule, fauxPropertyContextModel);
             Model fuzzySameAs = getFuzzySameAs(rule, fauxPropertyContextModel);
+            Model ruleResult;
             if(query == null) {
-                result.add(fuzzySameAs);
+                ruleResult = fuzzySameAs;
             } else if(fuzzySameAs.size() > 0) {
-                result.add(constructQueryWithBoundFuzzyResults(query, fuzzySameAs));
+                ruleResult = constructQueryWithBoundFuzzyResults(query, fuzzySameAs);
             } else {
                 log.debug(query);
-                result.add(this.getSparqlEndpoint().construct(query));                
+                ruleResult = this.getSparqlEndpoint().construct(query);                
             }
+            filterObviousResults(ruleResult);
+            result.add(ruleResult);
+            getSparqlEndpoint().clearGraph(mergeRuleURI);
+            getSparqlEndpoint().writeModel(ruleResult, mergeRuleURI);
+            statistics.put(mergeRuleURI, result.size() - previousSize);
             log.info("Results size: " + this.getResult().size());
         }
+        log.info("======== Final Results ========");
+        for(String ruleURI : statistics.keySet()) {            
+            log.info("Rule " + ruleURI + " added " + statistics.get(ruleURI));
+        }
+    }
+    
+    private void filterObviousResults(Model m) {
+        Model delete = ModelFactory.createDefaultModel();
+        StmtIterator sit = m.listStatements();
+        while(sit.hasNext()) {
+            Statement stmt = sit.next();
+            if(stmt.getObject().isURIResource() 
+                    && stmt.getObject().asResource().getURI().equals(stmt.getSubject().getURI())) {
+                delete.add(stmt);
+            }
+        }
+        m.remove(delete);
     }
     
     protected Model constructQueryWithBoundFuzzyResults(String queryStr, Model fuzzyResults) {
