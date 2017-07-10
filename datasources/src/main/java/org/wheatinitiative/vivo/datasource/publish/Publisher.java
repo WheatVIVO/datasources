@@ -56,8 +56,8 @@ public class Publisher extends DataSourceBase implements DataSource {
     private static final String KB2 = 
             "http://vitro.mannlib.cornell.edu/default/vitro-kb-2";
     // number of individuals to process before writing results
-    private static final int BATCH_SIZE = 1000;
-    private static final int PAUSE_BETWEEN_BATCHES = 6 * 1000; // ms
+    private static final int BATCH_SIZE = 250;
+    private static final int PAUSE_BETWEEN_BATCHES = 3 * 1000; // ms
     
     private DataSourceDao dataSourceDao;
     
