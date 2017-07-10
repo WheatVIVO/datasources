@@ -201,10 +201,6 @@ public class Publisher extends DataSourceBase implements DataSource {
         ResultSet homeGraphRs = endpoint.getResultSet(homeGraphQuery);
         while(homeGraphRs.hasNext()) {
             QuerySolution qsoln = homeGraphRs.next();
-            RDFNode n = qsoln.get("ind");
-            if(!n.isURIResource()) {
-                continue;
-            }
             RDFNode g = qsoln.get("graph");
             if(!g.isURIResource()) {
                 continue;
