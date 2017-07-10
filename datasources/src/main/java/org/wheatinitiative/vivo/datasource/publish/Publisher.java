@@ -162,8 +162,14 @@ public class Publisher extends DataSourceBase implements DataSource {
         return ontModel;
     }
     
+    private static Map<String, String> sameAsCache = new HashMap<String, String>();
+    
     private String getSameAs(String individualURI, 
             List<String> graphURIPreferenceList, SparqlEndpoint endpoint) {
+        if(sameAsCache.containsKey(individualURI)) {
+            return sameAsCache.get(individualURI);
+        }
+        long start = System.currentTimeMillis();
         String uriToMapTo = individualURI;
         Model sameAsModel = getSameAsModel(individualURI, endpoint);
         StmtIterator sit = sameAsModel.listStatements(
@@ -183,6 +189,9 @@ public class Publisher extends DataSourceBase implements DataSource {
                 // pick alphabetically-lower URIs within equal-level graphs
                 uriToMapTo = sameAsURI;
             }
+        }
+        if(System.currentTimeMillis() - start > 250) {
+            sameAsCache.put(individualURI, uriToMapTo);
         }
         log.debug("sameAs:");
         log.debug(individualURI + " ===> " + uriToMapTo);
