@@ -22,7 +22,8 @@ public class Upenn extends VivoDataSource implements DataSource {
     
     @Override
     protected Model mapToVIVO(Model model) {
-        return model;
+    	// UPENN VIVO is still using ontology version 1.5
+        return updateToOneSix(model);
     }
     
 }
