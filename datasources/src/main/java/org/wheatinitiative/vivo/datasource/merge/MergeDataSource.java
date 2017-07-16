@@ -68,6 +68,11 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         log.info("Retrieving faux property contexts from " + fauxPropertyModelURI);
         fauxPropertyContextModel.read(fauxPropertyModelURI);
         log.info(fauxPropertyContextModel.size() + " faux property context statements.");
+        log.info("Clearing previous merge state");
+        for(String mergeRuleURI : getMergeRuleURIs(dataSourceURI)) {
+            getSparqlEndpoint().clearGraph(mergeRuleURI);
+        }
+        getSparqlEndpoint().clearGraph(getConfiguration().getResultsGraphURI());
         log.info("Merging relationships");
         result.add(getRelationshipSameAs()); 
         log.info(result.size() + " after merged relationships");
@@ -80,8 +85,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             filterObviousResults(ruleResult);
             //result.add(ruleResult);
             statistics.put(mergeRuleURI, ruleResult.size());
-            log.info("Rule results size: " + ruleResult.size());
-            getSparqlEndpoint().clearGraph(mergeRuleURI);
+            log.info("Rule results size: " + ruleResult.size());            
             getSparqlEndpoint().writeModel(ruleResult, mergeRuleURI);
         }
         log.info("======== Final Results ========");
