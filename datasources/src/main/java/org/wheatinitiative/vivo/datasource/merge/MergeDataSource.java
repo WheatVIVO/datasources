@@ -113,7 +113,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                     + atom.getMatchDegree());
             if(atom.getMatchDegree() < 100) {
                 sameAsModel = join(sameAsModel, getFuzzySameAs(
-                        rule, fauxPropertyContextModel));
+                        rule, atom, fauxPropertyContextModel));
             } else {
                 String queryStr = null;
                 if (atom.getMergeObjectPropertyURI() != null) {
@@ -605,39 +605,32 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     
     private static final int WINDOW_SIZE = 11;
     
-    protected Model getFuzzySameAs(MergeRule rule, Model fauxPropertyContextModel) {
+    protected Model getFuzzySameAs(MergeRule rule, MergeRuleAtom atom, 
+            Model fauxPropertyContextModel) {
         Model fuzzySameAs = ModelFactory.createDefaultModel();
-        boolean fuzzyUsed  = false;
-        for(MergeRuleAtom atom : rule.getAtoms()) {
-            if(atom.getMatchDegree() < 100) {
-                fuzzyUsed = true;
-                String fuzzyQueryStr = getFuzzyQueryStr(
-                        rule, atom, fauxPropertyContextModel);
-                log.info("Processing fuzzy query " + fuzzyQueryStr);
-                ResultSet rs = getSparqlEndpoint().getResultSet(fuzzyQueryStr);
-                log.debug("Processing matches");
-                LinkedList<QuerySolution> window = new LinkedList<QuerySolution>();
-                window = prepopulate(window, rs);
-                log.debug("Window prepopulated.");
-                fuzzySameAs.add(getMatches(window, atom.getMatchDegree()));
-                log.debug("Initial window processed");
-                if(!rs.hasNext()) {
-                    return fuzzySameAs;
-                }
-                int pos = WINDOW_SIZE / 2;
-                while(rs.hasNext()) {
-                    window.add(rs.next()); // add one
-                    window.poll(); // drop one
-                    fuzzySameAs.add(getMatches(window, atom.getMatchDegree(), pos));
-                }
-                log.debug("Result set processed.");
-                fuzzySameAs.add(getMatches(window, atom.getMatchDegree()));
-                log.debug("Final window processed.");
-            } 
+        String fuzzyQueryStr = getFuzzyQueryStr(
+                rule, atom, fauxPropertyContextModel);
+        log.info("Processing fuzzy query " + fuzzyQueryStr);
+        ResultSet rs = getSparqlEndpoint().getResultSet(fuzzyQueryStr);
+        log.debug("Processing matches");
+        LinkedList<QuerySolution> window = new LinkedList<QuerySolution>();
+        window = prepopulate(window, rs);
+        log.debug("Window prepopulated.");
+        fuzzySameAs.add(getMatches(window, atom.getMatchDegree()));
+        log.debug("Initial window processed");
+        if(!rs.hasNext()) {
+            return fuzzySameAs;
         }
-        if(fuzzyUsed) {
-            log.debug(fuzzySameAs.size() + " fuzzy sameAs results");
+        int pos = WINDOW_SIZE / 2;
+        while(rs.hasNext()) {
+            window.add(rs.next()); // add one
+            window.poll(); // drop one
+            fuzzySameAs.add(getMatches(window, atom.getMatchDegree(), pos));
         }
+        log.debug("Result set processed.");
+        fuzzySameAs.add(getMatches(window, atom.getMatchDegree()));
+        log.debug("Final window processed.");
+        log.debug(fuzzySameAs.size() + " fuzzy sameAs results");
         return fuzzySameAs;
     }
     
