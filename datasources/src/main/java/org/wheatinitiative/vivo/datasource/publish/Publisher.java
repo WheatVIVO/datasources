@@ -190,7 +190,7 @@ public class Publisher extends DataSourceBase implements DataSource {
                 uriToMapTo = sameAsURI;
             }
         }
-        if(System.currentTimeMillis() - start > 250) {
+        if(System.currentTimeMillis() - start > 2) {
             sameAsCache.put(individualURI, uriToMapTo);
         }
         log.debug("sameAs:");
