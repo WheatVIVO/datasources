@@ -13,6 +13,8 @@ import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.DataSourceBase;
 import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
 
+import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -70,9 +72,9 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         log.info(fauxPropertyContextModel.size() + " faux property context statements.");
         log.info("Clearing previous merge state");
         for(String mergeRuleURI : getMergeRuleURIs(dataSourceURI)) {
-            getSparqlEndpoint().clearGraph(mergeRuleURI);
+            getSparqlEndpoint().clearGraph(mergeRuleURI); 
         }
-        getSparqlEndpoint().clearGraph(getConfiguration().getResultsGraphURI());
+        getSparqlEndpoint().clearGraph(getConfiguration().getResultsGraphURI()); 
         log.info("Merging relationships");
         result.add(getRelationshipSameAs()); 
         log.info(result.size() + " after merged relationships");
@@ -82,15 +84,53 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             log.info("Processing rule " + mergeRuleURI);            
             MergeRule rule = getMergeRule(mergeRuleURI, rulesModel); 
             Model ruleResult = getSameAs(rule, fauxPropertyContextModel, sparqlEndpoint);
+            if(isSuspicious(ruleResult)) {
+                log.error(mergeRuleURI + " produced a suspiciously large number (" + 
+                        ruleResult.size() + ") of triples; ignoring rule." );
+            }
             filterObviousResults(ruleResult);
             //result.add(ruleResult);
             statistics.put(mergeRuleURI, ruleResult.size());
             log.info("Rule results size: " + ruleResult.size());            
-            getSparqlEndpoint().writeModel(ruleResult, mergeRuleURI);
+            getSparqlEndpoint().writeModel(ruleResult, mergeRuleURI); 
         }
         log.info("======== Final Results ========");
         for(String ruleURI : statistics.keySet()) {            
             log.info("Rule " + ruleURI + " added " + statistics.get(ruleURI));
+        }
+    }
+    
+    /**
+     * Check if a result model is likely to contain an unwanted Cartesian product
+     * @param m 
+     * @return true if the number of triples in the model is greater than
+     * one half the square of the number of distinct URIs
+     */
+    protected boolean isSuspicious(Model m) {
+        if(m.size() < 128) {
+            return false;
+        }
+        String distinctURIs = "SELECT (COUNT(DISTINCT ?x) AS ?count) WHERE { \n" +
+                "    { ?x ?p ?o } UNION { ?s ?p ?x } \n" +
+                "} \n";
+        QueryExecution qe = QueryExecutionFactory.create(distinctURIs, m);
+        try {
+            ResultSet rs = qe.execSelect();
+            while(rs.hasNext()) {
+                QuerySolution qsoln = rs.next();
+                RDFNode node = qsoln.get("count");
+                if(node.isLiteral()) {
+                    int distinctURICount = Integer.parseInt(
+                            node.asLiteral().getLexicalForm(), 10);
+                    boolean suspicious = m.size() >= ((distinctURICount * distinctURICount) / 2);
+                    log.info("Distinct URIs: " + distinctURICount + "; result size: " + m.size());
+                    log.info(suspicious ? "suspicious!" : "not suspicious");
+                    return suspicious;
+                }
+            }
+            return false;
+        } finally {
+            qe.close();
         }
     }
     
