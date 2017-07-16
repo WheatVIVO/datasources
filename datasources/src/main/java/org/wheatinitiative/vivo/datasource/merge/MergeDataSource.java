@@ -74,16 +74,15 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         Map<String, Long> statistics = new HashMap<String, Long>();
         for(String mergeRuleURI : getMergeRuleURIs(dataSourceURI)) {
             // TODO flush to endpoint and repeat rules until quiescent?
-            long previousSize = result.size();
             log.info("Processing rule " + mergeRuleURI);            
             MergeRule rule = getMergeRule(mergeRuleURI, rulesModel); 
             Model ruleResult = getSameAs(rule, fauxPropertyContextModel, sparqlEndpoint);
             filterObviousResults(ruleResult);
-            result.add(ruleResult);
+            //result.add(ruleResult);
+            statistics.put(mergeRuleURI, ruleResult.size());
+            log.info("Rule results size: " + ruleResult.size());
             getSparqlEndpoint().clearGraph(mergeRuleURI);
             getSparqlEndpoint().writeModel(ruleResult, mergeRuleURI);
-            statistics.put(mergeRuleURI, ruleResult.size() - previousSize);
-            log.info("Rule results size: " + ruleResult.size());
         }
         log.info("======== Final Results ========");
         for(String ruleURI : statistics.keySet()) {            
