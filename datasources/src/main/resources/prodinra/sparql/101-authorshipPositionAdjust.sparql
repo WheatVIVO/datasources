@@ -22,17 +22,23 @@ PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
 
+# For each publication, find the lowest integer position where an author 
+# occurs and record it in prodinra:minPosition, so we can remove this
+# offset later and ensure that the first author gets a rank of 1.
+
+# Could be done in the following query as a subquery, but there seems to 
+# be a bug in Jena where this doesn't actually work the way one might expect.  
+# This keeps things a bit simpler anyway.
+
 CONSTRUCT {
-    ?y a vivo:Authorship .
-    ?z a foaf:Person .
-    ?y vivo:rank ?rank .
-    ?y vivo:relates ?x .
-    ?y vivo:relates ?z .
+    ?x prodinra:minPosition ?minPosition
 } WHERE {
-    ?x prodinra:creator ?y .
-    ?x prodinra:minPosition ?minPosition .
-    # not available without reasoning: ?x a bibo:Document .
-    ?y prodinra:author ?z .
-    ?y vitro:position ?position
-    BIND( (xsd:int(?position) - ?minPosition + 1) AS ?rank)
+    {
+        SELECT ?x (MIN(?positionInt) AS ?minPosition) WHERE {
+	    ?x prodinra:creator ?y .
+            ?y prodinra:author ?z .
+            ?y vitro:position ?position
+            BIND( xsd:int(?position) AS ?positionInt)
+        } GROUP BY ?x 
+    }
 }

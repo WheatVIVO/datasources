@@ -163,6 +163,7 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
         // TODO dynamically get/sort list from classpath resource directory
         List<String> queries = Arrays.asList("100-documentTypes.sparql",
                 "105-title.sparql",
+                "101-authorshipPositionAdjust.sparql",
                 "102-authorshipPersonTypes.sparql",
                 "107-authorLabel.sparql",
                 "110-abstract.sparql",
