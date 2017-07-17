@@ -1,0 +1,10 @@
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+
+<http://vivo.wheatinitiative.org/individual/orcid-345056>
+        owl:sameAs  <http://www.wheatinitiative.org/administration/users/n869927> , <http://vivo.wheatinitiative.org/individual/orcid-345056> , <http://www.wheatinitiative.org/administration/users/n3745994> .
+
+<http://www.wheatinitiative.org/administration/users/n3745994>
+        owl:sameAs  <http://www.wheatinitiative.org/administration/users/n869927> , <http://vivo.wheatinitiative.org/individual/orcid-345056> .
+
+<http://www.wheatinitiative.org/administration/users/n869927>
+        owl:sameAs  <http://www.wheatinitiative.org/administration/users/n3745994> , <http://vivo.wheatinitiative.org/individual/orcid-345056> .
