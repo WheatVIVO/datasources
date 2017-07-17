@@ -76,6 +76,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         log.info("Getting graph preference list");
         List<String> graphURIPreferenceList = getGraphURIPreferenceList(
                 sourceEndpoint);
+        log.debug("Graph URI preference list: " + graphURIPreferenceList);
         //OntModel sameAsModel = getSameAsModel(sourceEndpoint);
         log.info("Starting to publish");        
         // iterate through data source graphs in order of priority
@@ -92,27 +93,35 @@ public class Publisher extends DataSourceBase implements DataSource {
                 individualCount++;
                 String individualURI = indIt.next();
                 if(completedIndividuals.contains(individualURI)) {
+                    if(!indIt.hasNext()) {
+                        flushBufferToDestination(buffer);
+                    }
                     continue;
                 }
                 List<Quad> individualQuads = getIndividualQuads(individualURI, 
                         sourceEndpoint);
-                Map<String, Model> quadStore = new HashMap<String, Model>();                
+                Map<String, Model> quadStore = new HashMap<String, Model>();   
+                log.debug("Adding " + individualURI + " to store");
                 addQuadsToStore(
                         rewrite(individualQuads, graphURIPreferenceList, 
                                 sourceEndpoint), quadStore);
                 List<String> sameAsURIs = getSameAsURIs(individualURI, sourceEndpoint);
+                report(quadStore);
+                log.debug("same as URIs " + sameAsURIs);
                 // don't waste memory recording an individual if we won't 
                 // encounter it again later
                 if(quadStore.keySet().size() <= 1 && !sameAsURIs.isEmpty()) {
                     completedIndividuals.add(individualURI);
                 }
                 for (String sameAsURI : sameAsURIs) {
+                    log.debug("Adding " + sameAsURI + " to store");
                     completedIndividuals.add(sameAsURI);
                     List<Quad> sameAsQuads = getIndividualQuads(
                             sameAsURI, sourceEndpoint);
                     addQuadsToStore(
                             rewrite(sameAsQuads, graphURIPreferenceList, 
                                     sourceEndpoint), quadStore);
+                    report(quadStore);
                 }
                 dedupFunctionalProperties(quadStore, functionalPropertyURIs, 
                         graphURIPreferenceList);  
@@ -127,6 +136,14 @@ public class Publisher extends DataSourceBase implements DataSource {
         log.info("ending");
     }
     
+    private void report(Map<String, Model> quadStore) {
+        if(log.isDebugEnabled()) {
+            for(String graph : quadStore.keySet()) {
+                log.debug(graph + " has " + quadStore.get(graph).size() + " triples.");
+            }
+        }
+    }
+    
     private List<String> getGraphURIPreferenceList(
             SparqlEndpoint sourceEndpoint) {
         List<String> graphURIPreferenceList = new ArrayList<String>();
@@ -137,6 +154,9 @@ public class Publisher extends DataSourceBase implements DataSource {
                     dataSource.getConfiguration().getResultsGraphURI();
             if(graphURI != null) {
                 graphURIPreferenceList.add(graphURI);
+            } else {
+                throw new RuntimeException("Graph URI is null for " + 
+                        dataSource.getConfiguration().getName());
             }
         }
         return graphURIPreferenceList;
@@ -174,6 +194,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         Model sameAsModel = getSameAsModel(individualURI, endpoint);
         StmtIterator sit = sameAsModel.listStatements(
                 sameAsModel.getResource(individualURI), OWL.sameAs, (Resource) null);
+        List<String> sameAsURIs = new ArrayList<String>();
         while(sit.hasNext()) {
             Statement stmt = sit.next();
             if(stmt.getObject().isAnon()) {
@@ -182,17 +203,24 @@ public class Publisher extends DataSourceBase implements DataSource {
             String sameAsURI = stmt.getObject().asResource().getURI();
             String currentGraph = getHomeGraph(uriToMapTo, endpoint, graphURIPreferenceList);
             String candidateGraph = getHomeGraph(sameAsURI, endpoint, graphURIPreferenceList);
+            log.debug(candidateGraph + (isHigherPriorityThan(candidateGraph, currentGraph, 
+                    graphURIPreferenceList) ? " IS higher than " : " IS NOT higher than ") + currentGraph);
             if(this.isHigherPriorityThan(candidateGraph, currentGraph, 
                     graphURIPreferenceList)) {
                 uriToMapTo = sameAsURI;
-            } else if(sameAsURI.compareTo(uriToMapTo) < 0) {
+            } else if(!this.isHigherPriorityThan(
+                    currentGraph, candidateGraph, graphURIPreferenceList) 
+                    && sameAsURI.compareTo(uriToMapTo) < 0) {
                 // pick alphabetically-lower URIs within equal-level graphs
                 uriToMapTo = sameAsURI;
             }
         }
-        if(System.currentTimeMillis() - start > 2) {
+        //if(System.currentTimeMillis() - start > 2) {
             sameAsCache.put(individualURI, uriToMapTo);
-        }
+            for(String sameAsURI : sameAsURIs) {
+                sameAsCache.put(sameAsURI, uriToMapTo);
+            }
+        //}
         log.debug("sameAs:");
         log.debug(individualURI + " ===> " + uriToMapTo);
         return uriToMapTo;
@@ -224,6 +252,7 @@ public class Publisher extends DataSourceBase implements DataSource {
                 }
             }
         }
+        log.debug("Home graph for " + individualURI + " is " + graphURI);
         return graphURI;
     }
     
@@ -424,6 +453,9 @@ public class Publisher extends DataSourceBase implements DataSource {
     private void writeQuadStoreToDestination(Map<String, Model> quadStore) {
         for(String graphURI : quadStore.keySet()) {
             Model m = quadStore.get(graphURI);
+            if(m.size() == 0) {
+                continue;
+            }
             log.info("Writing " + m.size() + " triples to graph " + graphURI);
             long start = System.currentTimeMillis();
             getSparqlEndpoint().writeModel(m, graphURI);
@@ -586,7 +618,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         
     }
 
-    private SparqlEndpoint getSourceEndpoint() {
+    protected SparqlEndpoint getSourceEndpoint() {
         String sourceServiceURI = this.getConfiguration().getServiceURI();
         if(!sourceServiceURI.endsWith("/")) {
             sourceServiceURI += "/";
