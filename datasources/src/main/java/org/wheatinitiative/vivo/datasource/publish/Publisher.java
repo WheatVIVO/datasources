@@ -58,6 +58,9 @@ public class Publisher extends DataSourceBase implements DataSource {
     // number of individuals to process before writing results
     private static final int BATCH_SIZE = 250;
     private static final int PAUSE_BETWEEN_BATCHES = 3 * 1000; // ms
+    private static final String DATETIMEVALUE = "http://vivoweb.org/ontology/core#dateTimeValue";
+    private static final String DATETIMEINTERVAL = "http://vivoweb.org/ontology/core#dateTimeInterval";
+    private static final String HASCONTACTINFO = "http://purl.obolibrary.org/obo/ARG_2000028";
     
     private DataSourceDao dataSourceDao;
     
@@ -645,6 +648,9 @@ public class Publisher extends DataSourceBase implements DataSource {
         }
         // Also treat rdfs:label as a functional property
         funcPropSet.add(RDFS.label.getURI());
+        funcPropSet.add(DATETIMEVALUE);
+        funcPropSet.add(DATETIMEINTERVAL);
+        funcPropSet.add(HASCONTACTINFO);
         return funcPropSet;
     }
     
