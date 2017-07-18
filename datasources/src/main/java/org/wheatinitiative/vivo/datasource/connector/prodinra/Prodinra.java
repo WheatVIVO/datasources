@@ -251,8 +251,24 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
                 }
                 return m;
             } catch (Exception e) {
+                if(this.resumptionToken != null) {
+                    this.resumptionToken = guessAtNextResumptionToken(
+                            this.resumptionToken);
+                }
                 throw new RuntimeException(e);
             }       
+        }
+        
+        private String guessAtNextResumptionToken(String resumptionToken) {
+            try {
+                String[] tokens = resumptionToken.split("!");
+                int cursor = Integer.parseInt(tokens[1], 10);
+                cursor = cursor + 200;
+                return tokens[0] + "!" + cursor + "!" + tokens[2] + "!" + tokens[3] + "!"  + tokens[4];
+            } catch (Exception e) {
+                log.error(e, e);
+                return null;
+            }
         }
 
         private void processResumptionToken(Model m) {
