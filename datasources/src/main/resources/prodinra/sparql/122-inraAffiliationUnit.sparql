@@ -24,6 +24,9 @@ PREFIX prodinra: <http://record.prodinra.inra.fr/>
 
 CONSTRUCT {
     ?lab a vivo:Laboratory .
+    ?lab obo:BFO_0000050 <http://record.prodinra.inra.fr/individual/INRA> .
+    <http://record.prodinra.inra.fr/individual/INRA> a foaf:Organization .
+    <http://record.prodinra.inra.fr/individual/INRA> rdfs:label "INRA" .
     ?lab rdfs:label ?labLabel .
     _:position a vivo:Position .
     _:position vivo:relates ?x .
