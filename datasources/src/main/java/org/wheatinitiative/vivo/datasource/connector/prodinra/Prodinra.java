@@ -166,6 +166,7 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
                 "101-authorshipPositionAdjust.sparql",
                 "102-authorshipPersonTypes.sparql",
                 "107-authorLabel.sparql",
+                "108-authorVcardName.sparql",
                 "110-abstract.sparql",
                 "112-keywords.sparql",
                 "113-year.sparql",
