@@ -16,37 +16,33 @@ PREFIX obo:      <http://purl.obolibrary.org/obo/>
 PREFIX ocrer:    <http://purl.org/net/OCRe/research.owl#>
 PREFIX ocresd:   <http://purl.org/net/OCRe/study_design.owl#>
 PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
+PREFIX nih:      <http://vivo.scripps.edu/ontology/nih#>
+PREFIX tsri:     <http://vivo.scripps.edu/ontology/tsri#>
 PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>
 PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
-PREFIX prodinra: <http://record.prodinra.inra.fr/>
-PREFIX orcidwork:   <http://www.orcid.org/ns/work/>
-PREFIX orcidcommon: <http://www.orcid.org/ns/common/>
-PREFIX orcidrecord: <http://www.orcid.org/ns/record/>
-PREFIX orcidperson: <http://www.orcid.org/ns/person/>
-PREFIX generic: <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
+PREFIX rcuk:     <http://gtr.rcuk.ac.uk/gtr/api/>
+PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
 
 CONSTRUCT {
-    _:authorship a vivo:Authorship .
-    _:authorship vivo:relates ?x .
-    ?x vivo:relatedBy _:authorship .
-    _:authorship vivo:relates ?person .
-    ?person vivo:relatedBy _:authorship .
-    ?person a foaf:Person .
-    ?person rdfs:label ?personLabel .
-    ?person vivo:orcidId ?orcidId .
-    ?orcidId a owl:Thing .
+    ?authorship vivo:rank ?rank
 } WHERE {
-    ?x a orcidwork:work .
-    ?x generic:path ?workPath .
-    BIND(strbefore(?workPath, "/work") AS ?path)
-    BIND(strafter(?path, "/") AS ?rawOrcid)
-    BIND(IRI(concat("http://orcid.org/", ?rawOrcid)) AS ?orcidId)
-    BIND(concat("/", ?rawOrcid, "/person") AS ?personPath)
-    ?person generic:path ?personPath .
-    ?person orcidperson:name ?name .
-    ?name <http://www.orcid.org/ns/personal-details/family-name> ?familyName .
-    ?name  <http://www.orcid.org/ns/personal-details/given-names> ?givenName .
-    BIND(concat(?familyName, ", ", ?givenName) AS ?personLabel)
+    ?authorship a vivo:Authorship .
+    ?authorship vivo:relates ?knownPerson 
+    FILTER NOT EXISTS { ?authorship vivo:rank ?rank }
+    ?knownPerson vivo:orcidId ?orcid .
+    ?knownPerson obo:ARG_2000028 ?vcard .
+    ?vcard vcard:hasName ?name .
+    ?name vcard:givenName ?givenName1 .
+    ?name vcard:familyName ?familyName .
+    ?name2 vcard:familyName ?familyName .
+    ?name2 vcard:givenName ?givenName2 .
+    FILTER(substr(str(?givenName1), 1, 1) = substr(str(?givenName2), 1, 1)) 
+    ?vcard2 vcard:hasName ?name2 .
+    ?unknownPerson obo:ARG_2000028 ?vcard2 .
+    FILTER NOT EXISTS { ?unknownPerson vivo:orcidId ?orcid2 }
+    ?unknownPerson vivo:relatedBy ?authorship2 .
+    ?authorship2 a vivo:Authorship .
+    ?authorship2 vivo:rank ?rank
 }
