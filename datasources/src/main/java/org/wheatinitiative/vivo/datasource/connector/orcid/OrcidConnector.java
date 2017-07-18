@@ -46,7 +46,7 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
             "https://pub.orcid.org/v2.0/";
     private static final String NAMESPACE_ETC = 
             "http://vivo.wheatinitiative.org/individual/orcid-";
-    private static final int MIN_REST = 250; // ms
+    private static final int MIN_REST = 125; // ms
     private static final String CLIENT_ID = "orcid.clientId";
     private static final String CLIENT_SECRET = "orcid.clientSecret";
     private String clientId;
@@ -256,24 +256,31 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
         List<String> queries = Arrays.asList("100-documentTypes.sparql",
                 "102-authorship.sparql",
                 "103-knownPerson.sparql", 
-                "104-personVcard.sparql",
+                "104-personVcard.sparql");
+        executeQueries(queries, model);
+        parseNames(model);
+        queries = Arrays.asList(
                 "1045-knownPersonRankMatch.sparql",
                 "105-title.sparql",
                 "113-year.sparql",
                 "114-doi.sparql",
                 "115-journal.sparql",
                 "116-url.sparql",
-                "119-internalSameAs.sparql"
+                "119-internalSameAs.sparql",
+                "129-sameRank.sparql"
                 );
-        for(String query : queries) {
-            log.debug("Executing query " + query);
-            log.debug("Pre-query model size: " + model.size());
-            construct(SPARQL_RESOURCE_DIR + query, model, NAMESPACE_ETC);
-            log.debug("Post-query model size: " + model.size());
-        }
-        model = parseNames(model);
+        executeQueries(queries, model);
         return rdfUtils.renameBNodes(
                 model, NAMESPACE_ETC, model);
+    }
+    
+    private void executeQueries(List<String> queries, Model model) {
+        for(String query : queries) {
+            log.info("Executing query " + query);
+            log.info("Pre-query model size: " + model.size());
+            construct(SPARQL_RESOURCE_DIR + query, model, NAMESPACE_ETC);
+            log.info("Post-query model size: " + model.size());
+        }
     }
     
     private Model parseNames(Model model) {

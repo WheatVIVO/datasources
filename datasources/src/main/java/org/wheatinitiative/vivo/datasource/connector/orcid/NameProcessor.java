@@ -96,7 +96,15 @@ public class NameProcessor {
         if(string.length() < 2) {
             return string;
         } else {
-            return string.substring(0,1) + string.substring(1).toLowerCase();
+            StringBuffer buff = new StringBuffer();
+            String[] tokens = string.split("-");
+            for(int i = 0; i < tokens.length; i++) {
+                buff.append(tokens[i].substring(0,1) + tokens[i].substring(1).toLowerCase());
+                if(i < (tokens.length - 1)) {
+                    buff.append("-");
+                }
+            }
+            return buff.toString();
         }
     }
     
