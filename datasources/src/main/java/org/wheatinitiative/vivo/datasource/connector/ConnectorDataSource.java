@@ -13,7 +13,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
     private static final Log log = LogFactory.getLog(ConnectorDataSource.class);
     /* number of iterator elements to be processed at once in memory 
     before being flushed to a SPARQL endpoint */
-    protected final static int DEFAULT_BATCH_SIZE = 100;
+    protected final static int DEFAULT_BATCH_SIZE = 50;
     
     private Model result;
     
@@ -74,7 +74,8 @@ public abstract class ConnectorDataSource extends DataSourceBase {
             log.debug(model.size() + " statements after filtering");
             if(activeEndpointForResults()) {
                 buffer.add(model);                
-                if(count % getBatchSize() == 0 || !it.hasNext()) {
+                if(count % getBatchSize() == 0 || !it.hasNext() 
+                        || count == this.getConfiguration().getLimit()) {
                     log.debug("Adding " + buffer.size() + " triples to endpoint");
                     addToEndpoint(buffer);
                     buffer.removeAll();
@@ -82,7 +83,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
             } else {
                 result.add(model);
             }
-        }
+        }        
     }
     
     private boolean activeEndpointForResults() {

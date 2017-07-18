@@ -50,7 +50,7 @@ public class VivoDataSource extends ConnectorDataSource {
 
     private static final String PEOPLE = 
             "http://vivoweb.org/ontology#vitroClassGrouppeople";
-    private final static int MIN_REST = 300; // ms between linked data requests
+    private final static int MIN_REST = 125; // ms between linked data requests
     private static final String RESOURCE_PATH = "/vivo/update15to16/"; 
     
     private Set<String> retrievedURIs = new HashSet<String>();
