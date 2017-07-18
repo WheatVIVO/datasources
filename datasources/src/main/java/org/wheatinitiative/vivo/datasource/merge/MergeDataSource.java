@@ -1,6 +1,8 @@
 package org.wheatinitiative.vivo.datasource.merge;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -55,6 +57,12 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     private static final String MERGEATOMOBJECTPROPERTY = ADMIN_APP_TBOX + "mergeAtomObjectProperty";
     private static final String HASCONTACTINFO = "http://purl.obolibrary.org/obo/ARG_2000028";
     private static final String VCARD = "http://www.w3.org/2006/vcard/ns#";
+    private static final String FOAF_PERSON = "http://xmlns.com/foaf/0.1/Person";
+    private static final String FOAF_ORGANIZATION = "http://xmlns.com/foaf/0.1/Organization";
+    private static final String BIBO_COLLECTION = "http://purl.org/ontology/bibo/Collection";
+    private static final String BIBO_DOCUMENT = "http://purl.org/ontology/bibo/Document";
+    private static final String COAUTHOR = ADMIN_APP_TBOX + "coauthor";
+    
     
     private Model result = ModelFactory.createDefaultModel();
     protected LevenshteinDistance ld = LevenshteinDistance.getDefaultInstance();
@@ -71,22 +79,21 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         fauxPropertyContextModel.read(fauxPropertyModelURI);
         log.info(fauxPropertyContextModel.size() + " faux property context statements.");
         log.info("Clearing previous merge state");
+        List<MergeRule> mergeRules = new ArrayList<MergeRule>();
         for(String mergeRuleURI : getMergeRuleURIs(dataSourceURI)) {
             getSparqlEndpoint().clearGraph(mergeRuleURI); 
+            mergeRules.add(getMergeRule(mergeRuleURI, rulesModel));
         }
-        getSparqlEndpoint().clearGraph(getConfiguration().getResultsGraphURI()); 
-        log.info("Merging relationships");
-        result.add(getRelationshipSameAs()); 
-        log.info(result.size() + " after merged relationships");
+        Collections.sort(mergeRules, new AffectedClassRuleComparator(getSparqlEndpoint()));        
         Map<String, Long> statistics = new HashMap<String, Long>();
-        for(String mergeRuleURI : getMergeRuleURIs(dataSourceURI)) {
+        for(MergeRule rule : mergeRules) {
+            String mergeRuleURI = rule.getURI();
             // TODO flush to endpoint and repeat rules until quiescent?
-            log.info("Processing rule " + mergeRuleURI);            
-            MergeRule rule = getMergeRule(mergeRuleURI, rulesModel); 
+            log.info("Processing rule " + mergeRuleURI);                         
             Model ruleResult = getSameAs(rule, fauxPropertyContextModel, sparqlEndpoint);
             if(isSuspicious(ruleResult)) {
-                log.error(mergeRuleURI + " produced a suspiciously large number (" + 
-                        ruleResult.size() + ") of triples; ignoring rule." );
+                log.warn(mergeRuleURI + " produced a suspiciously large number (" + 
+                        ruleResult.size() + ") of triples." );
             }
             filterObviousResults(ruleResult);
             //result.add(ruleResult);
@@ -94,6 +101,10 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             log.info("Rule results size: " + ruleResult.size());            
             getSparqlEndpoint().writeModel(ruleResult, mergeRuleURI); 
         }
+        getSparqlEndpoint().clearGraph(getConfiguration().getResultsGraphURI()); 
+        log.info("Merging relationships");
+        result.add(getRelationshipSameAs());
+        log.info(result.size() + " after merged relationships");
         log.info("======== Final Results ========");
         for(String ruleURI : statistics.keySet()) {            
             log.info("Rule " + ruleURI + " added " + statistics.get(ruleURI));
@@ -731,6 +742,11 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             RDFNode n2 = qsoln2.get("value");
             if(n2.isLiteral()) {
                 String string2 = n2.asLiteral().getString();
+                // TODO express some other way
+                // matchDegree 19 is magic value for initial-only match
+                if(matchDegree == 19) {
+                    return initialsMatch(string1, string2);
+                }
                 int distance = distance(string1, string2);
                 if(distance == 0) {
                     return true;
@@ -750,6 +766,14 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             }
         }
         return false;
+    }
+    
+    private boolean initialsMatch(String string1, String string2) {
+        if(string1.isEmpty() || string2.isEmpty()) {
+            return false;
+        } else {
+            return (string1.charAt(0) == string2.charAt(0));
+        }
     }
     
     private LinkedList<QuerySolution> prepopulate(
@@ -863,6 +887,51 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             }
         }
         return m;
+    }
+    
+    private class AffectedClassRuleComparator implements Comparator<MergeRule> {
+
+        private SparqlEndpoint sparqlEndpoint;
+        
+        public AffectedClassRuleComparator(SparqlEndpoint sparqlEndpoint) {
+            this.sparqlEndpoint = sparqlEndpoint;
+        }
+        
+        public int compare(MergeRule a, MergeRule b) {
+            // TODO Auto-generated method stub
+            int aRank = rankAffectedClass(a.getMergeClassURI());
+            int bRank = rankAffectedClass(b.getMergeClassURI());
+            if(aRank != bRank) {
+                return aRank - bRank;
+            } else {
+                if(a.getMergeClassURI() == null) {
+                    return -1;
+                } else if (b.getMergeClassURI() == null) {
+                    return 1;
+                } else {
+                    return a.getMergeClassURI().compareTo(b.getMergeClassURI());
+                }
+            }
+        }
+        
+        private int rankAffectedClass(String classURI) {
+            if(classURI == null) {
+                return 0;
+            } else {
+                if(isSubclass(classURI, BIBO_COLLECTION, this.sparqlEndpoint)) {
+                    return -2;
+                } else if (isSubclass(classURI, BIBO_DOCUMENT, this.sparqlEndpoint)) {
+                    return -1;
+                } else if (isSubclass(classURI, FOAF_ORGANIZATION, this.sparqlEndpoint)) {
+                    return 1;
+                } else if (isSubclass(classURI, FOAF_PERSON, this.sparqlEndpoint)) {
+                    return 2;
+                } else {
+                    return 0;
+                }
+            }
+        }
+        
     }
     
 }
