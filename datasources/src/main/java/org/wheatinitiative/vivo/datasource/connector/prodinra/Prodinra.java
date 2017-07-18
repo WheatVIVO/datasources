@@ -67,6 +67,8 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
         for (Resource res : relevantResources) {
             filtered.add(constructPersonalSubgraph(res, model));
         }
+        filtered.add(model.listStatements(model.getResource(
+                PRODINRA_ABOX_NS + "INRA"), null, (RDFNode) null));
         return filtered;
     }
     
