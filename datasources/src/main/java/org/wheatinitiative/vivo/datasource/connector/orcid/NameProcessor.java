@@ -138,27 +138,4 @@ public class NameProcessor {
         return true;
     }
     
-    public static void main (String[] args) {
-        InputStream is = NameProcessor.class.getResourceAsStream("/orcid/names.n3");
-        Model model = ModelFactory.createDefaultModel();
-        Model output = ModelFactory.createDefaultModel();
-        model.read(is, null, "N3");
-        StmtIterator sit = model.listStatements(null, FAMILY_NAME, (Literal) null);
-        while(sit.hasNext()) {
-            Statement stmt = sit.next();
-            String label = stmt.getObject().asLiteral().getLexicalForm();
-            Name name = new NameProcessor().parseName(label);
-            output.add(stmt.getSubject(), RDFS.label, label);
-            output.add(stmt.getSubject(), FAMILY_NAME, name.getFamilyName());
-            output.add(stmt.getSubject(), GIVEN_NAME, name.getGivenName());
-        }
-        File out = new File(args[0]);
-        try {
-            FileOutputStream fos = new FileOutputStream(out);
-            output.write(fos, "N3");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-    
 }
