@@ -24,6 +24,7 @@ PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX rcuk:     <http://gtr.rcuk.ac.uk/gtr/api/>
 PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
+PREFIX prodinra: <http://record.prodinra.inra.fr/>
 
 CONSTRUCT {
     ?x obo:ARG_2000028 _:vcard .
