@@ -62,8 +62,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     private static final String BIBO_COLLECTION = "http://purl.org/ontology/bibo/Collection";
     private static final String BIBO_DOCUMENT = "http://purl.org/ontology/bibo/Document";
     private static final String COAUTHOR = ADMIN_APP_TBOX + "coauthor";
-    
-    
+        
     private Model result = ModelFactory.createDefaultModel();
     protected LevenshteinDistance ld = LevenshteinDistance.getDefaultInstance();
     
