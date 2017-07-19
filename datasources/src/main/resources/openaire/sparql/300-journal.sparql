@@ -1,0 +1,35 @@
+PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX bibo:    <http://purl.org/ontology/bibo/>
+PREFIX vitro:   <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>
+PREFIX vivo:    <http://vivoweb.org/ontology/core#>
+
+
+
+CONSTRUCT {
+    
+    _:journal a bibo:Journal .
+    _:journal rdfs:label ?journalName .
+    
+    _:journal bibo:issn ?issn .
+    _:journal bibo:eissn ?eissn .
+    
+    _:journal vivo:publicationVenueFor ?pub .
+    ?pub vivo:hasPublicationVenue _:journal .
+    
+} WHERE {
+
+    ?pub a bibo:AcademicArticle .
+    
+    ?pub ingest:journal ?journal .
+    ?journal vitro:value ?journalName .
+    
+    OPTIONAL {
+       ?journal ingest:issn ?issn .
+        FILTER ( ?issn != "" ) .
+    }
+    OPTIONAL {
+        ?journal ingest:eissn ?eissn .
+        FILTER ( ?eissn != "" ) .
+    }
+}

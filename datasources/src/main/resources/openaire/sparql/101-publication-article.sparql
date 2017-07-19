@@ -1,0 +1,22 @@
+PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
+PREFIX bibo:    <http://purl.org/ontology/bibo/>
+PREFIX obo:     <http://purl.obolibrary.org/obo/>
+
+
+
+CONSTRUCT {
+
+    ?pub a bibo:AcademicArticle .
+    
+#   Should it be a JournalArticle ?
+#   Not sure about the following.
+#   ?pub a obo:IAO_0000013 .
+
+} WHERE {
+
+    ?pub a bibo:Document .
+    ?pub ingest:children ?child .
+    ?child ingest:instance ?inst .
+    ?inst ingest:instancetype ?type .
+    ?type ingest:classname "Article" .
+}

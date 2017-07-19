@@ -239,9 +239,10 @@ public class Cordis extends ConnectorDataSource implements DataSource {
         
         
         /*
-         * It seems that we are not getting scientific publications from Cordis.
-         * All we get, are abstracts describing what the real publications include, but no link to the real publications.
-         * Also the different types of results that we are getting, are mostly reports to the EU commission but are not scientific publications.
+         * Due to the lack of scientific publications in Cordis (in xml-retrieved data)
+         * (e.g. academic articles and links to the actual pubs' text).
+         * we will retrieve the project-related pubs from OpenAIRE.
+         * So we just work on the projects' data here in Cordis.
          */
         private Collection<String> getResultURIs(Model searchResultsModel) {
             List<String> resultURIs = new ArrayList<String>();

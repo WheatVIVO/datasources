@@ -10,6 +10,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wheatinitiative.vivo.datasource.connector.cordis.Cordis;
+import org.wheatinitiative.vivo.datasource.connector.openaire.OpenAire;
 import org.wheatinitiative.vivo.datasource.connector.prodinra.Prodinra;
 import org.wheatinitiative.vivo.datasource.connector.rcuk.Rcuk;
 import org.wheatinitiative.vivo.datasource.connector.usda.Usda;
@@ -79,6 +80,9 @@ public class LaunchIngest {
             connector = new WheatInitiative();
             connector.getConfiguration().setServiceURI(
                     "http://www.wheatinitiative.org/administration/users/csv");
+        } else if ("openaire".equals(connectorName)) {
+        	connector = new OpenAire();
+        	connector.getConfiguration().setServiceURI("http://api.openaire.eu/");
         } else {
             throw new RuntimeException("Connector not found: " 
                     + connectorName);

@@ -1,0 +1,28 @@
+PREFIX foaf:    <http://xmlns.com/foaf/0.1/>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX bibo:    <http://purl.org/ontology/bibo/>
+PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
+PREFIX vivo:    <http://vivoweb.org/ontology/core#>
+
+
+
+CONSTRUCT {
+
+    _:org a foaf:Publisher .
+    _:org rdfs:label ?publisherLegalName .
+    
+    
+#   See how to connect the publisher with the Journal.
+
+    _:org vivo:publisherOf ?journal .
+#    ?journal publishedIn ???
+
+} WHERE {
+
+    ?pub a bibo:AcademicArticle .
+    
+    ?pub ingest:publisher ?publisherLegalName .
+    
+    ?pub vivo:hasPublicationVenue ?journal .
+    ?journal a bibo:Journal .
+}

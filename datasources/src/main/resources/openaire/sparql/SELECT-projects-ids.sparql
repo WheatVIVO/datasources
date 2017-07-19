@@ -1,0 +1,11 @@
+PREFIX vivo:    <http://vivoweb.org/ontology/core#>
+
+
+
+SELECT ?project_id
+
+} WHERE {
+
+    ?proj a vivo:Project .
+    ?proj vivo:identifier ?project_id .
+}
