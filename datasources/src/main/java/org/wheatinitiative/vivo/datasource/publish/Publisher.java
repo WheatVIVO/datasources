@@ -232,10 +232,10 @@ public class Publisher extends DataSourceBase implements DataSource {
     private String getHomeGraph(String individualURI, SparqlEndpoint endpoint,
             List<String> graphURIPreferenceList) {
         String graphURI = null;
-        String homeGraphQuery = "SELECT ?graph WHERE { \n" +
-                "    { <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?something } \n" +
-                "    UNION \n" +
-                "    { ?something2 <" + OWL.sameAs.getURI() + "> <" + individualURI + "> } \n" +
+        String homeGraphQuery = "SELECT DISTINCT ?graph WHERE { \n" +
+//                "    { <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?something } \n" +
+//                "    UNION \n" +
+//                "    { ?something2 <" + OWL.sameAs.getURI() + "> <" + individualURI + "> } \n" +
                 "    GRAPH ?graph { <" + individualURI + "> a ?typeDeclaration } \n" +
                 "} \n";
         ResultSet homeGraphRs = endpoint.getResultSet(homeGraphQuery);
@@ -512,6 +512,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         String quadsQuery = "SELECT ?g ?s ?p ?o WHERE { \n" +
                 "    GRAPH ?g { <" + individualURI + "> ?p ?o } \n" +
                 "    BIND(<" + individualURI + "> AS ?s) \n" +
+                "    FILTER(?p != <" + OWL.sameAs.getURI() + ">) \n" +
                 GRAPH_FILTER +
                 "} ORDER BY ?p ?o";
         log.debug(quadsQuery);
