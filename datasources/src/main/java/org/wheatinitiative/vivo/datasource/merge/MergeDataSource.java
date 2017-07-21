@@ -23,6 +23,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.ResIterator;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
@@ -62,6 +63,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     private static final String BIBO_COLLECTION = "http://purl.org/ontology/bibo/Collection";
     private static final String BIBO_DOCUMENT = "http://purl.org/ontology/bibo/Document";
     private static final String COAUTHOR = ADMIN_APP_TBOX + "coauthor";
+    private static final String BASIC_SAMEAS_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/basicSameAs";
         
     private Model result = ModelFactory.createDefaultModel();
     protected LevenshteinDistance ld = LevenshteinDistance.getDefaultInstance();
@@ -77,6 +79,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         log.info("Retrieving faux property contexts from " + fauxPropertyModelURI);
         fauxPropertyContextModel.read(fauxPropertyModelURI);
         log.info(fauxPropertyContextModel.size() + " faux property context statements.");
+        addBasicSameAsAssertions(this.getSparqlEndpoint());
         log.info("Clearing previous merge state");
         List<MergeRule> mergeRules = new ArrayList<MergeRule>();
         for(String mergeRuleURI : getMergeRuleURIs(dataSourceURI)) {
@@ -108,6 +111,20 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         for(String ruleURI : statistics.keySet()) {            
             log.info("Rule " + ruleURI + " added " + statistics.get(ruleURI));
         }
+    }
+    
+    /**
+     * Materialize inferences of type sameAs(x,x) for query support
+     */
+    protected void addBasicSameAsAssertions(SparqlEndpoint endpoint) {
+        log.info("Clearing " + BASIC_SAMEAS_GRAPH);
+        endpoint.clearGraph(BASIC_SAMEAS_GRAPH);
+        String queryStr = "CONSTRUCT { ?x <" + OWL.sameAs.getURI() + "> ?x } WHERE { \n" +
+                "    ?x a ?thing \n" +
+                "} \n";
+        Model m = endpoint.construct(queryStr);
+        log.info("Writing " + m.size() + " triples to " + BASIC_SAMEAS_GRAPH);
+        endpoint.writeModel(m, BASIC_SAMEAS_GRAPH);        
     }
     
     /**
@@ -167,6 +184,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             if(atom.getMatchDegree() < 100) {
                 sameAsModel = join(sameAsModel, getFuzzySameAs(
                         rule, atom, fauxPropertyContextModel));
+                sameAsModel = supplementFuzzySameAs(sameAsModel, sparqlEndpoint);
             } else {
                 String queryStr = null;
                 if (atom.getMergeObjectPropertyURI() != null) {
@@ -186,9 +204,16 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                     continue;
                 } else {
                     queryStr = "CONSTRUCT { \n " +
-                            "    ?x <" + OWL.sameAs.getURI() + "> ?y \n" +
+                            "    ?x1 <" + OWL.sameAs.getURI() + "> ?y1 . \n" +
+                            "    ?y1 <" + OWL.sameAs.getURI() + "> ?x1  \n" +
                             "} WHERE { \n"
-                            + queryStr + "} \n";
+//                            + "  FILTER NOT EXISTS { ?x <" + OWL.sameAs + "> ?y } \n" 
+                            + queryStr +
+                            "    ?x <" + OWL.sameAs.getURI() + "> ?x1 . \n" +
+                            "    ?y <" + OWL.sameAs.getURI() + "> ?y1 . \n" +
+                            "    FILTER NOT EXISTS { ?x <" + OWL.differentFrom.getURI() + "> ?y } \n" +
+                            "    FILTER NOT EXISTS { ?y <" + OWL.differentFrom.getURI() + "> ?x } \n" +
+                            "} \n";
                     log.info("Generated sameAs query: \n" + queryStr);                    
                     sameAsModel = join(sameAsModel, sparqlEndpoint.construct(
                             queryStr));
@@ -207,6 +232,53 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                     + sameAsModel.size() + "; atom=" + atomModel.size());
             return intersection;
         }
+    }
+    
+    /**
+     * Add additional sameAs matches (based on existing sameAs statements)
+     * as if we had a reasoned model
+     */
+    protected Model supplementFuzzySameAs(Model m, SparqlEndpoint endpoint) {
+        String inverse = "CONSTRUCT { ?y <" + OWL.sameAs.getURI() + "> ?x }" +
+                " WHERE { ?x <" + OWL.sameAs.getURI() + "> ?y }";
+        QueryExecution qe = QueryExecutionFactory.create(inverse, m);
+        try {
+            m.add(qe.execConstruct());
+        } finally {
+            qe.close();
+        }
+        Model supplement = ModelFactory.createDefaultModel();
+        ResIterator rit = m.listSubjects();
+        while(rit.hasNext()) {
+            Resource r = rit.next();
+            supplement.add(getSupplement(r, m, endpoint));
+        }
+        m.add(supplement);
+        return m;
+    }
+    
+    private Model getSupplement(Resource r, Model m, SparqlEndpoint endpoint) {
+        Model supplement = ModelFactory.createDefaultModel();
+        List<Resource> peers = new ArrayList<Resource>();
+        ResultSet resultSet = endpoint.getResultSet(
+                "SELECT ?y WHERE { <" + r.getURI() + ">" + 
+                " <" + OWL.sameAs.getURI() + "> ?y }");
+        while(resultSet.hasNext()) {
+            QuerySolution qsoln = resultSet.next();
+            RDFNode node = qsoln.get("y");
+            if(!node.isURIResource()) {
+                continue;
+            }
+            peers.add(node.asResource());
+        }
+        StmtIterator sit = m.listStatements(r, null, (RDFNode) null);
+        while(sit.hasNext()) {
+            Statement stmt = sit.next();
+            for(Resource peer : peers) {
+                supplement.add(peer, stmt.getPredicate(), stmt.getObject());
+            }
+        }
+        return supplement;
     }
           
     private String getVcardNameSameAs(MergeRule rule, MergeRuleAtom atom) {
@@ -250,7 +322,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         } else {
             return  "    ?x a <" + rule.getMergeClassURI() + "> . \n" +
                     "    ?x <" + atom.getMergeObjectPropertyURI() + "> ?value . \n" +
-                    "    ?y <" + atom.getMergeObjectPropertyURI() + "> ?value . \n" +
+                    "    ?value <" + OWL.sameAs.getURI() + "> ?value1 . \n" +
+                    "    ?y <" + atom.getMergeObjectPropertyURI() + "> ?value1 . \n" +
                     "    ?y a <" + rule.getMergeClassURI()  + "> . \n" ;
         }
     }
@@ -862,7 +935,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             if(xnode.isURIResource()) {
                 String x = xnode.asResource().getURI();
                 log.debug("Processing x= " + x);
-                String query = "CONSTRUCT { <" + x + "> <"+ OWL.sameAs + "> ?y } WHERE { \n" +
+                String query = "CONSTRUCT { ?x1 <"+ OWL.sameAs.getURI() + "> ?y1 } WHERE { \n" +
                         "    <" + x + "> a <" + VIVO + "Relationship> . \n" +
                         "    <" + x + "> <" + VIVO +"relates> ?a . \n" +
                         "    <" + x + "> <" + VIVO +"relates> ?b . \n" +
@@ -870,13 +943,17 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                         " FILTER NOT EXISTS { <" + x + "> <" + VIVO + "dateTimeInterval> ?dti } \n" +
                         " FILTER NOT EXISTS { <" + x + "> <" + RDFS.label + "> ?label } \n" +
                         " FILTER (?a != ?b) \n" +
-                        "    ?y <" + VIVO +"relates> ?b . \n" +
-                        "    ?y <" + VIVO +"relates> ?a . \n" +
+                        "    ?a <" + OWL.sameAs.getURI() + "> ?a1 . \n" +
+                        "    ?b <" + OWL.sameAs.getURI() + "> ?b1 . \n" +
+                        "    ?y <" + VIVO +"relates> ?b1 . \n" +
+                        "    ?y <" + VIVO +"relates> ?a1 . \n" +
                         "    ?y a <" + VIVO + "Relationship> . \n" +
                         "    ?y <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#mostSpecificType> ?mst . \n" +
                         " FILTER NOT EXISTS { ?y <" + VIVO + "dateTimeInterval> ?dti } \n" +
                         " FILTER NOT EXISTS { ?y <" + RDFS.label + "> ?label } \n" +  
                         " FILTER (<" + x + "> != ?y) \n" +  
+                        " <" + x + "> <" + OWL.sameAs.getURI() + "> ?x1 . \n" +
+                        " ?y <" + OWL.sameAs.getURI() + "> ?y1 . \n" +
                         "} \n";
                 m.add(getSparqlEndpoint().construct(query));                     
             }
