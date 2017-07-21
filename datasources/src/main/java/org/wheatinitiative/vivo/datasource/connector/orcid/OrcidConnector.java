@@ -248,7 +248,16 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
 
     @Override
     protected Model filter(Model model) {
-        return model;
+        Model filtered = ModelFactory.createDefaultModel();
+        StmtIterator sit = model.listStatements();
+        while(sit.hasNext()) {
+            Statement stmt = sit.next();
+            if(!stmt.getPredicate().getURI().contains("orcid.org") 
+                    && !stmt.getPredicate().getURI().contains("generalizedXML")) {
+                filtered.add(stmt);
+            }
+        }
+        return filtered;
     }
 
     @Override
