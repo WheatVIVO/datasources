@@ -383,7 +383,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 "    ?x a <" + rule.getMergeClassURI() + "> . \n" +
                 "    ?x <" + ctx.getPropertyURI() + "> ?value . \n" +
                 "    ?value a <" + ctx.getQualifiedBy() + "> . \n" +
-                "    ?y <" + ctx.getPropertyURI() + "> ?value . \n" +
+                "    ?value <" + OWL.sameAs.getURI() + "> ?value2 . \n" +
+                "    ?y <" + ctx.getPropertyURI() + "> ?value2 . \n" +
                 "    ?y a <" + rule.getMergeClassURI()  + "> . \n" ;  
         return pattern;
     }
@@ -427,17 +428,23 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         String pattern =                     
                 "    ?x a <" + rule.getMergeClassURI() + "> . \n" +
                 "    ?x <" + ctx.getPropertyURI() + "> ?relationship1 . \n" +
-                "    ?relationship1 <" + VIVO + "relates> ?value . \n" +                     
-                "    ?relationship2 <" + VIVO + "relates> ?value . \n" +
-                "    FILTER NOT EXISTS { ?value a <" + rule.getMergeClassURI() + "> } . \n" +
-                "    ?relationship1 a <" + ctx.getQualifiedBy() + "> . \n" +
+                "    ?relationship1 a <" + ctx.getQualifiedBy() + "> . \n" +                        
+                "    ?relationship1 <" + VIVO + "relates> ?value . \n" +     
+                "    FILTER NOT EXISTS { ?value a <" + rule.getMergeClassURI() + "> } . \n";
+        if(atom.getMergeDataPropertyURI() != null) {
+            pattern += "    ?relationship1 <" + atom.getMergeDataPropertyURI() + "> ?dataPropertyValue . \n";
+        }
+        pattern +=
+                "    ?value <" + OWL.sameAs.getURI() + "> ?value2 . \n" +
+                "    ?relationship2 <" + VIVO + "relates> ?value2 . \n";
+        if(atom.getMergeDataPropertyURI() != null) {
+            pattern += "    ?relationship2 <" + atom.getMergeDataPropertyURI() + "> ?dataPropertyValue . \n";
+        }        
+        pattern +=
+                "    FILTER(?relationship1 != ?relationship2) \n" +
                 "    ?relationship2 a <" + ctx.getQualifiedBy() + "> . \n" +
                 "    ?y <" + ctx.getPropertyURI() + "> ?relationship2 . \n" +
-                "    ?y a <" + rule.getMergeClassURI()  + "> . \n" ;         
-        if(atom.getMergeDataPropertyURI() != null) {
-            pattern += "    ?relationship1 <" + atom.getMergeDataPropertyURI() + "> ?dataPropertyValue . \n" +
-                    "    ?relationship2 <" + atom.getMergeDataPropertyURI() + "> ?dataPropertyValue . \n";
-        }
+                "    ?y a <" + rule.getMergeClassURI()  + "> . \n" ;                 
         return pattern;
     }
     
