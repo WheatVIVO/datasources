@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wheatinitiative.vivo.datasource.connector.openaire.OpenAire;
 import org.wheatinitiative.vivo.datasource.connector.orcid.OrcidConnector;
 import org.wheatinitiative.vivo.datasource.connector.prodinra.Prodinra;
 import org.wheatinitiative.vivo.datasource.connector.rcuk.Rcuk;
@@ -24,7 +25,7 @@ public class LaunchIngest {
     public static void main(String[] args) {
         if(args.length < 3) {
             System.out.println("Usage: LaunchIngest " 
-                    + "rcuk|prodinra|usda|wheatinitiative outputfile " 
+                    + "rcuk|prodinra|usda|wheatinitiative|openaire outputfile " 
                     + "queryTerm ... [queryTermN] [limit]");
             return;
         } 
@@ -75,6 +76,9 @@ public class LaunchIngest {
             connector = new WheatInitiative();
             connector.getConfiguration().setServiceURI(
                     "http://www.wheatinitiative.org/administration/users/csv");
+        } else if ("openaire".equals(connectorName)) {
+            connector = new OpenAire();
+            connector.getConfiguration().setServiceURI("http://api.openaire.eu/oai_pmh/");
         } else if ("orcid".equals(connectorName)) {
             connector = new OrcidConnector();
         } else {
