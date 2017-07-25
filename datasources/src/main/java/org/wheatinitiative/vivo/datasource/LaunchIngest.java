@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wheatinitiative.vivo.datasource.connector.melbourne.Melbourne;
 import org.wheatinitiative.vivo.datasource.connector.orcid.OrcidConnector;
 import org.wheatinitiative.vivo.datasource.connector.prodinra.Prodinra;
 import org.wheatinitiative.vivo.datasource.connector.rcuk.Rcuk;
@@ -24,7 +25,7 @@ public class LaunchIngest {
     public static void main(String[] args) {
         if(args.length < 3) {
             System.out.println("Usage: LaunchIngest " 
-                    + "rcuk|prodinra|usda|wheatinitiative outputfile " 
+                    + "rcuk|prodinra|usda|wheatinitiative|melbourne outputfile " 
                     + "queryTerm ... [queryTermN] [limit]");
             return;
         } 
@@ -75,6 +76,10 @@ public class LaunchIngest {
             connector = new WheatInitiative();
             connector.getConfiguration().setServiceURI(
                     "http://www.wheatinitiative.org/administration/users/csv");
+        } else if ("melbourne".equals(connectorName)) {
+            connector = new Melbourne();
+            connector.getConfiguration().setServiceURI(
+                    "http://findanexpert.unimelb.edu.au/");
         } else if ("orcid".equals(connectorName)) {
             connector = new OrcidConnector();
         } else {
