@@ -78,7 +78,8 @@ public class LaunchIngest {
                     "http://www.wheatinitiative.org/administration/users/csv");
         } else if ("openaire".equals(connectorName)) {
             connector = new OpenAire();
-            connector.getConfiguration().setServiceURI("http://api.openaire.eu/oai_pmh/");
+            connector.getConfiguration().setServiceURI(
+            		"http://api.openaire.eu/oai_pmh");
         } else if ("orcid".equals(connectorName)) {
             connector = new OrcidConnector();
         } else {
