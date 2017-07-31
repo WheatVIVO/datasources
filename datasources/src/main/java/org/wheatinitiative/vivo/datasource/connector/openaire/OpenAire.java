@@ -307,7 +307,26 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	 */
 	private Model constructForVIVO(Model model) {
 		
-		// TODO - Make construct queries to map the data to VIVO.
+		List<String> queries = Arrays.asList(
+											  "100-project.sparql"
+											 ,"110-project-title_only.sparql"
+											 ,"111-project-title_with_acronym.sparql"
+											 ,"120-project-url.sparql"
+											 ,"130-project-date.sparql"
+										//	 ,"200-publication.sparql"
+										//	 ,"300-authorship.sparql"
+										//	 ,"400-journal.sparql"
+										//	 ,"500-publisher-journal.sparql"
+											 ,"600-keywords.sparql"
+											);
+		
+		for (String query : queries) {
+			log.debug("Executing query " + query);
+			log.debug("Pre-query model size: " + model.size());
+			construct(SPARQL_RESOURCE_DIR + query, model, NAMESPACE_ETC);
+			log.debug("Post-query model size: " + model.size());
+		}
+		
 		return model;
 	}
 	
