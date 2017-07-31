@@ -1,0 +1,31 @@
+PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
+PREFIX vivo:    <http://vivoweb.org/ontology/core#>
+PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
+
+
+
+CONSTRUCT {
+
+    ?proj vivo:dateTimeInterval _:dti .
+    _:dti a vivo:DateTimeInterval .
+    _:dti vivo:start _:start .
+    
+    _:start a vivo:DateTimeValue .
+    _:start vivo:dateTime ?start_date .
+    _:start vivo:dateTimePrecision vivo:yearMonthDayPrecision .
+    
+    _:dti vivo:end _:end .
+    _:end a vivo:DateTimeValue .
+    _:end vivo:dateTime ?end_date .
+    _:end vivo:dateTimePrecision vivo:yearMonthDayPrecision .
+    
+} WHERE {
+
+    ?proj a vivo:Project .
+    
+    ?proj ingest:startdate ?projStart .
+    BIND ( xsd:dateTime( CONCAT ( ?projStart, "T00:00:00Z") ) AS ?start_date)
+    
+    ?proj ingest:enddate ?projEnd .
+    BIND ( xsd:dateTime( CONCAT ( ?projEnd, "T00:00:00Z") ) AS ?end_date)
+}

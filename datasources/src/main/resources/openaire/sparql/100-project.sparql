@@ -1,0 +1,27 @@
+PREFIX oaf:     <http://namespace.openaire.eu/oaf/>
+PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
+PREFIX vivo:    <http://vivoweb.org/ontology/core#>
+PREFIX obo:     <http://purl.obolibrary.org/obo/>
+
+
+
+CONSTRUCT {
+
+    ?proj a vivo:Project .
+    ?proj vivo:identifier ?project_id .
+    
+    # Project "has participant" a Grant.
+    ?proj obo:RO_0000057 _:grant .
+    
+    _:grant a vivo:Grant .
+    _:grant vivo:identifier ?project_id .
+    
+    # Grant "participates in" a Project.
+    _:grant obo:RO_0000056 ?proj .
+    
+} WHERE {
+
+    _:x oaf:project ?proj .
+    
+    ?proj ingest:code ?project_id .
+}
