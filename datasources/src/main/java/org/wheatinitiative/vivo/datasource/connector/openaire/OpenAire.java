@@ -3,9 +3,7 @@ package org.wheatinitiative.vivo.datasource.connector.openaire;
 // Java imports
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 // Apache imports
@@ -80,8 +78,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		
 		private Model cachedResult = null;
 		private Integer totalRecords = null;
-		private String projectsResumptionToken = null;
-		private String pubsResumptionToken = null;
+		private String resumptionToken = null;
 		private boolean projectsDone = false;
 		private boolean pubsDone = false;
 		
@@ -134,14 +131,12 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		}
 		
 		
-		/**
-		 * Fetch the projects' related data.
-		 */
 		private Model fetchNextProject(boolean cacheResult) {
+			
 			URIBuilder uriB = new URIBuilder(repositoryURI);
 			uriB.addParameter("verb", "ListRecords");
-			if (projectsResumptionToken != null) {
-				uriB.addParameter("resumptionToken", projectsResumptionToken);
+			if (resumptionToken != null) {
+				uriB.addParameter("resumptionToken", resumptionToken);
 			} else {
 				uriB.addParameter("set", "projects");
 				uriB.addParameter("metadataPrefix", metadataPrefix);
@@ -151,32 +146,30 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 				log.info(request);
 				String response = httpUtils.getHttpResponse(request);
 				Model model = xmlToRdf.toRDF(response);
-				processResumptionToken(model, "project");
-				if (projectsResumptionToken == null) {
+				processResumptionToken(model);
+				if (resumptionToken == null) {
 					projectsDone = true;
-					log.info("No more projects resumption token -- done.");
+					log.info("No more resumption token -- done.");
 				}
 				if (cacheResult) {
 					cachedResult = model;
 				}
 				return model;
 			} catch (Exception e) {
-				if (this.projectsResumptionToken != null) {
-					this.projectsResumptionToken = guessAtNextResumptionToken(this.projectsResumptionToken);
+				if (this.resumptionToken != null) {
+					this.resumptionToken = guessAtNextResumptionToken(this.resumptionToken);
 				}
 				throw new RuntimeException(e);
 			}
 		}
 		
 		
-		/**
-		 * Fetch the publications' related data.
-		 */
 		private Model fetchNextPublication(boolean cacheResult) {
+			
 			URIBuilder uriB = new URIBuilder(repositoryURI);
 			uriB.addParameter("verb", "ListRecords");
-			if (pubsResumptionToken != null) {
-				uriB.addParameter("resumptionToken", pubsResumptionToken);
+			if (resumptionToken != null) {
+				uriB.addParameter("resumptionToken", resumptionToken);
 			} else {
 				uriB.addParameter("set", "openaire");
 				// "openaire" -> resultSet for all the pubs
@@ -187,18 +180,18 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 				log.info(request);
 				String response = httpUtils.getHttpResponse(request);
 				Model model = xmlToRdf.toRDF(response);
-				processResumptionToken(model, "pub");
-				if (pubsResumptionToken == null) {
+				processResumptionToken(model);
+				if (resumptionToken == null) {
 					pubsDone = true;
-					log.info("No more pubs resumption token -- done.");
+					log.info("No more resumption token -- done.");
 				}
 				if (cacheResult) {
 					cachedResult = model;
 				}
 				return model;
 			} catch (Exception e) {
-				if (this.pubsResumptionToken != null) {
-					this.pubsResumptionToken = guessAtNextResumptionToken(this.pubsResumptionToken);
+				if (this.resumptionToken != null) {
+					this.resumptionToken = guessAtNextResumptionToken(this.resumptionToken);
 				}
 				throw new RuntimeException(e);
 			}
@@ -219,7 +212,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		}
 		
 		
-		private void processResumptionToken(Model model, String dataType) {
+		private void processResumptionToken(Model model) {
 			
 			NodeIterator nit = model.listObjectsOfProperty(RESUMPTION_TOKEN);
 			String token = null;
@@ -250,10 +243,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 				}
 			}
 			log.debug("Token: " + token);
-			if ( dataType == "project" )
-				this.projectsResumptionToken = token;
-			else if ( dataType == "pub" )
-				this.pubsResumptionToken = token;
+			this.resumptionToken = token;
 		}
 		
 		
@@ -302,38 +292,13 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	}
 	
 	
-	/**
-	 * Sparql CONSTRUCT queries to transform the data.
-	 */
 	private Model constructForVIVO(Model model) {
 		
-		List<String> queries = Arrays.asList(
-											  "100-project.sparql"
-											 ,"110-project-title_only.sparql"
-											 ,"111-project-title_with_acronym.sparql"
-											 ,"120-project-url.sparql"
-											 ,"130-project-date.sparql"
-										//	 ,"200-publication.sparql"
-										//	 ,"300-authorship.sparql"
-										//	 ,"400-journal.sparql"
-										//	 ,"500-publisher-journal.sparql"
-											 ,"600-keywords.sparql"
-											);
-		
-		for (String query : queries) {
-			log.debug("Executing query " + query);
-			log.debug("Pre-query model size: " + model.size());
-			construct(SPARQL_RESOURCE_DIR + query, model, NAMESPACE_ETC);
-			log.debug("Post-query model size: " + model.size());
-		}
-		
+		// TODO - Make construct queries to map the data to VIVO.
 		return model;
 	}
 	
 	
-	/**
-	 * Transform raw RDF into VIVO RDF. 
-	 */
 	@Override
 	protected Model mapToVIVO(Model model) {
 		
