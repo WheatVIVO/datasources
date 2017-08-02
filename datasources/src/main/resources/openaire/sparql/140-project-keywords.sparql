@@ -5,9 +5,10 @@ PREFIX vivo:    <http://vivoweb.org/ontology/core#>
 
 CONSTRUCT {
 
-   ?x vivo:freetextKeyword ?keyword .
+    ?proj vivo:freetextKeyword ?keyword .
    
 } WHERE {
 
-    ?x ingest:keywords ?keyword .
+    ?proj a vivo:Project .
+    ?proj ingest:keywords ?keyword .
 }

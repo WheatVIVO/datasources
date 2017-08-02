@@ -1,0 +1,24 @@
+PREFIX vcard:   <http://www.w3.org/2006/vcard/ns#>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
+PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
+PREFIX bibo:    <http://purl.org/ontology/bibo/>
+
+
+CONSTRUCT {
+
+    ?pub vcard:hasURL _:url .
+    _:url a vcard:URL .
+    _:url vcard:url ?pubUrl .
+    _:url rdfs:label ?pubUrlStr .
+
+} WHERE {
+
+    ?pub a bibo:Document .
+    ?pub ingest:children ?child .
+    ?child ingest:instance ?inst .
+    ?inst ingest:webresource ?res .
+    ?res ingest:url ?pubUrlStr .
+    
+    BIND ( xsd:anyURI( ?pubUrlStr ) AS ?pubUrl )
+}

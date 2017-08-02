@@ -14,7 +14,6 @@ CONSTRUCT {
     
     ?proj ingest:title ?title .
     
-    FILTER NOT EXISTS {
-        ?proj ingest:acronym ?acronym .
-    }
+    ?proj ingest:acronym ?acronym .
+    FILTER ( ?acronym = "" ) .
 }

@@ -18,10 +18,12 @@ CONSTRUCT {
     
     # Grant "participates in" a Project.
     _:grant obo:RO_0000056 ?proj .
-    
+
 } WHERE {
 
-    _:x oaf:project ?proj .
-    
+#   With just the "ingest:code" we map also the projects that cannot be retrieved with the verb: projects
+#   but we take them as related projects to the publications.
+#   The "ingest:code" is used only for the project identifier, so, we are sure we take only projects.
+
     ?proj ingest:code ?project_id .
 }

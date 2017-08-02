@@ -1,0 +1,44 @@
+PREFIX vivo:    <http://vivoweb.org/ontology/core#>
+PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
+PREFIX oaf:     <http://namespace.openaire.eu/oaf/>
+PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
+PREFIX vitro:   <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>
+PREFIX bibo:    <http://purl.org/ontology/bibo/>
+PREFIX vcard:   <http://www.w3.org/2006/vcard/ns#>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+
+
+
+CONSTRUCT {
+
+    ?pub a bibo:Document .
+
+    ?pub rdfs:label ?titleStr .
+    
+    ?pub vcard:Language ?langStr .
+    
+    ?pub vivo:description ?descr .
+    ?pub bibo:abstract ?fulltext .
+
+    ?pub bibo:doi ?doiValue .
+    
+} WHERE {
+    
+    _:x oaf:result ?pub .
+    
+    ?pub ingest:title ?title .
+    ?title vitro:value ?titleStr .
+    
+    ?pub ingest:language ?lang .
+    ?lang ingest:classname ?langStr .
+    
+    OPTIONAL { ?pub ingest:description ?descr }
+    OPTIONAL { ?pub ingest:fulltext ?fulltext }
+    
+#   DOI (sometimes it's empty)
+    OPTIONAL {
+        ?pub ingest:pid ?pid .
+        ?pid ingest:classid "doi" .
+        ?pid vitro:value ?doiValue .
+    }
+}

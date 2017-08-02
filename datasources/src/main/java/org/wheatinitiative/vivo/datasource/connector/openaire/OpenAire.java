@@ -310,14 +310,22 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		List<String> queries = Arrays.asList(
 											  "100-project.sparql"
 											 ,"110-project-title_only.sparql"
-											 ,"111-project-title_with_acronym.sparql"
+											 ,"111-project-title_with_empty_acronym.sparql"
+											 ,"112-project-title_with_acronym.sparql"
 											 ,"120-project-url.sparql"
 											 ,"130-project-date.sparql"
-										//	 ,"200-publication.sparql"
-										//	 ,"300-authorship.sparql"
-										//	 ,"400-journal.sparql"
-										//	 ,"500-publisher-journal.sparql"
-											 ,"600-keywords.sparql"
+											 ,"140-project-keywords.sparql"
+											 ,"150-project-organization.sparql"
+											 ,"155-project-organization_address.sparql"
+											 ,"160-project-participant_organization.sparql"
+											 ,"200-publication.sparql"
+											 ,"201-publication_article.sparql"
+											 ,"210-publication-url.sparql"
+											 ,"220-publication-keywords.sparql"
+											 ,"230-publication-authorship.sparql"
+											 ,"235-publication-author_vcard_name.sparql"
+											 ,"300-journal.sparql"
+											 ,"310-journal-publisher.sparql"
 											);
 		
 		for (String query : queries) {
