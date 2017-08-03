@@ -4,9 +4,7 @@ package org.wheatinitiative.vivo.datasource.connector.openaire;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 // Apache imports
 import org.apache.commons.logging.Log;
@@ -27,11 +25,9 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.NodeIterator;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.hp.hpl.jena.util.ResourceUtils;
 
 
 
@@ -267,40 +263,13 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	}
 	
 	
-	@Override
-	protected Model filter(Model model) {
-		
+    @Override
+    protected Model filter(Model model) {
 		// TODO - Filter the retrieved results so that we work only with the
 		// wheat-related data.
-		return model;
-	}
-	
-	
-	protected Model renameByIdentifier(Model model) {
-		
-		model = renameByIdentifier(model, model.getProperty(OPEN_AIRE_TBOX_NS + "identifier"), "id");
-		model = renameByIdentifier(model, model.getProperty(OPEN_AIRE_TBOX_NS + "inraIdentifier"), "in");
-		model = renameByIdentifier(model, model.getProperty(OPEN_AIRE_TBOX_NS + "idCollection"), "ic");
-		return model;
-	}
-	
-	
-	private Model renameByIdentifier(Model model, Property identifier, String localNamePrefix) {
-		
-		Map<Resource, String> idMap = new HashMap<Resource, String>();
-		StmtIterator sit = model.listStatements(null, identifier, (RDFNode) null);
-		while (sit.hasNext()) {
-			Statement stmt = sit.next();
-			if (stmt.getObject().isLiteral()) {
-				idMap.put(stmt.getSubject(), stmt.getObject().asLiteral().getLexicalForm());
-			}
-		}
-		for (Resource res : idMap.keySet()) {
-			ResourceUtils.renameResource(res, OPEN_AIRE_ABOX_NS + localNamePrefix + idMap.get(res));
-		}
-		return model;
-	}
-	
+        return model;
+    }
+    
 	
 	/**
 	 * Sparql CONSTRUCT queries to transform the data.
@@ -346,7 +315,6 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	protected Model mapToVIVO(Model model) {
 		
 		model = rdfUtils.renameBNodes(model, NAMESPACE_ETC, model);
-		model = renameByIdentifier(model);
 		model = constructForVIVO(model);
 		return rdfUtils.smushResources(model, model.getProperty(OPEN_AIRE_TBOX_NS + "identifier"));
 	}
