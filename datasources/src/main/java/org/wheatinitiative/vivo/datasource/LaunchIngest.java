@@ -28,7 +28,7 @@ public class LaunchIngest {
                     + "rcuk|prodinra|usda|wheatinitiative|openaire outputfile " 
                     + "queryTerm ... [queryTermN] [limit]");
             return;
-        } 
+        }
         List<String> queryTerms = new LinkedList<String>(
                 Arrays.asList(args));
         String connectorName  = queryTerms.remove(0);

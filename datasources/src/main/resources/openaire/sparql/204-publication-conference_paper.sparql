@@ -6,15 +6,13 @@ PREFIX bibo:    <http://purl.org/ontology/bibo/>
 
 CONSTRUCT {
 
-    ?proj vivo:supportedInformationResource ?pub .
-    
-    ?pub vivo:informationSourceSupportedBy ?proj .
+    ?pub a vivo:ConferencePaper .
 
 } WHERE {
 
-    ?proj a vivo:Project .
     ?pub a bibo:Document .
-    
-    ?pub ingest:rels ?rels .
-    ?rels ingest:rel ?proj .
+    ?pub ingest:children ?child .
+    ?child ingest:instance ?inst .
+    ?inst ingest:instancetype ?type .
+    ?type ingest:classname "Conference object" .
 }

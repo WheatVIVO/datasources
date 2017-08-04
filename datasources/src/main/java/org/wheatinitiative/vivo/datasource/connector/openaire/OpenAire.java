@@ -183,7 +183,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 				log.info(request);
 				String response = httpUtils.getHttpResponse(request);
 				Model model = xmlToRdf.toRDF(response);
-				processResumptionToken(model, "pub");
+				processResumptionToken(model, "publication");
 				if (pubsResumptionToken == null) {
 					pubsDone = true;
 					log.info("No more pubs resumption token -- done.");
@@ -248,7 +248,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 			log.debug("Token: " + token);
 			if ( dataType == "project" )
 				this.projectsResumptionToken = token;
-			else if ( dataType == "pub" )
+			else if ( dataType == "publication" )
 				this.pubsResumptionToken = token;
 		}
 		
@@ -259,17 +259,9 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 			}
 			return totalRecords;
 		}
-
+		
 	}
 	
-	
-    @Override
-    protected Model filter(Model model) {
-		// TODO - Filter the retrieved results so that we work only with the
-		// wheat-related data.
-        return model;
-    }
-    
 	
 	/**
 	 * Sparql CONSTRUCT queries to transform the data.
@@ -289,6 +281,9 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 											 ,"160-project-participant_organization.sparql"
 											 ,"200-publication.sparql"
 											 ,"201-publication_article.sparql"
+											 ,"202-publication_manuscript.sparql"
+											 ,"203-publication-thesis.sparql"
+											 ,"204-publication-conference_paper.sparql"
 											 ,"210-publication-url.sparql"
 											 ,"220-publication-keywords.sparql"
 											 ,"230-publication-authorship.sparql"
@@ -309,14 +304,22 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	
 	
 	/**
-	 * Transform raw RDF into VIVO RDF. 
+	 * Transform the raw RDF into VIVO RDF. 
 	 */
 	@Override
 	protected Model mapToVIVO(Model model) {
 		
 		model = rdfUtils.renameBNodes(model, NAMESPACE_ETC, model);
 		model = constructForVIVO(model);
-		return rdfUtils.smushResources(model, model.getProperty(OPEN_AIRE_TBOX_NS + "identifier"));
+		return model;
 	}
 	
+	
+    @Override
+    protected Model filter(Model model) {
+    	// TODO - Filter the retrieved results so that we work only with the
+    	// wheat-related data.
+    	return model;
+    }
+    
 }
