@@ -3,8 +3,11 @@ package org.wheatinitiative.vivo.datasource.connector.openaire;
 // Java imports
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 // Apache imports
 import org.apache.commons.logging.Log;
@@ -25,9 +28,14 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.NodeIterator;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
+import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.query.QueryExecutionFactory;
+import com.hp.hpl.jena.query.QuerySolution;
+import com.hp.hpl.jena.query.ResultSet;
 
 
 
@@ -61,12 +69,6 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 			throw new RuntimeException(e);
 		}
 	}
-	
-	
-	/*
-	 * We still have to filter the results, because we can't use a query term at
-	 * the protocol level.
-	 */
 	
 	
 	private class OaiModelIterator implements IteratorWithSize<Model> {
@@ -111,7 +113,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 				if (pubsDone) {
 					log.info("No more pubs.");
 				} else {
-						model.add( fetchNextPublication(!CACHE) );
+					model.add( fetchNextPublication(!CACHE) );
 				}
 				
 				if ( projectsDone && pubsDone ) {
@@ -315,11 +317,98 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	}
 	
 	
+	/**
+	 * Get only the query_term-related general_URIs.
+	 */
+    protected List<Resource> getRelevantResources(Model model, String type) {
+    	
+        String queryStr = loadQuery(
+                SPARQL_RESOURCE_DIR + "get" + type + "s" + "ForSearchTerm.sparql");
+        
+        List<Resource> relevantResources = new ArrayList<Resource>();
+        
+        for (String queryTerm : getConfiguration().getQueryTerms()) {
+        	
+            String query = queryStr.replaceAll("\\$TERM", queryTerm);
+            log.debug(query);
+            QueryExecution qe = QueryExecutionFactory.create(query, model);
+            try {
+                ResultSet rs = qe.execSelect();
+                int count = 0;
+                while(rs.hasNext()) {
+                    count++;
+                    QuerySolution soln = rs.next();
+                    Resource res = soln.getResource(type);
+                    if(res != null) {
+                        relevantResources.add(res);
+                    }
+                }
+                log.info(count + " relevant resources for query term " + queryTerm);
+            } finally {
+                if(qe != null) {
+                    qe.close();
+                }
+            }
+        }
+        return relevantResources;
+    }
+    
+    
+    /**
+     * Construct the subgraph of the given general_URI.
+     * Connect the related organizations' and others' data with each resource's URI.
+     */
+    private Model constructProjectSubgraph(Resource projectRes, Model model) {
+    	// TODO - Construct project's subgraph.
+    	
+        Model subgraph = ModelFactory.createDefaultModel();
+        Map<String, String> substitutions = new HashMap<String, String>();
+        substitutions.put("\\?project", "<" + projectRes.getURI() + ">");
+        
+        subgraph.add(constructQuery(
+                SPARQL_RESOURCE_DIR + "getProjectSubgraph.sparql", model, 
+                NAMESPACE_ETC, substitutions));
+        
+        // TODO Also add any other project-related data.
+        return subgraph;
+    }
+    
+    
+    private Model constructPublicationSubgraph(Resource publicationRes, Model model) {
+    	// TODO - Construct publication's subgraph.
+    	
+        Model subgraph = ModelFactory.createDefaultModel();
+        Map<String, String> substitutions = new HashMap<String, String>();
+        substitutions.put("\\?publication", "<" + publicationRes.getURI() + ">");
+        
+        subgraph.add(constructQuery(
+                SPARQL_RESOURCE_DIR + "getPublicationSubgraph.sparql", model, 
+                NAMESPACE_ETC, substitutions));
+        
+        // Also add any other publication-related data.
+    	return model;
+    }
+    
+	
     @Override
     protected Model filter(Model model) {
-    	// TODO - Filter the retrieved results so that we work only with the
-    	// wheat-related data.
-    	return model;
+    	
+        Model filtered = ModelFactory.createDefaultModel();
+        List<Resource> relevantResources = null;
+        
+        relevantResources = getRelevantResources(model, "Project");
+        log.info(relevantResources.size() + " project-relevant resources");
+        for (Resource res : relevantResources) {
+            filtered.add(constructProjectSubgraph(res, model));
+        }
+        
+        relevantResources = getRelevantResources(model, "Publication");
+        log.info(relevantResources.size() + " publication-relevant resources");
+        for (Resource res : relevantResources) {
+            filtered.add(constructPublicationSubgraph(res, model));
+        }
+        
+        return filtered;
     }
     
 }

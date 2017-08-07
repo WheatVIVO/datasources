@@ -1,0 +1,14 @@
+PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+
+
+
+CONSTRUCT {
+
+    ?project ?p ?o .
+
+} WHERE {
+
+    ?project a vivo:Project .
+    
+    ?project ?p ?o .
+}

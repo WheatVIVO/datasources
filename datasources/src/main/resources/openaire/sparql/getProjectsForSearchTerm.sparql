@@ -1,0 +1,30 @@
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX vivo:    <http://vivoweb.org/ontology/core#>
+PREFIX bibo:    <http://purl.org/ontology/bibo/>
+
+
+
+SELECT DISTINCT ?Project
+
+WHERE {
+
+    ?Project a vivo:Project .
+    ?Publication a bibo:Document .
+    
+    { ?Project rdfs:label ?value }
+    UNION
+    { ?Project vivo:freetextKeyword ?value }
+    UNION
+    { ?Publication rdfs:label ?value }
+    UNION
+    { ?Publication vivo:freetextKeyword ?value }
+    UNION
+    { ?Publication vivo:description ?value }
+    UNION
+    { ?Publication bibo:abstract ?value }
+    
+#    FILTER EXISTS
+#    { ?Project vivo:supportedInformationResource ?Publication }
+    
+    FILTER ( REGEX( STR(?value), "\\b$TERM\\b", "i") )
+}
