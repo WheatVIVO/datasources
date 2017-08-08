@@ -153,6 +153,7 @@ public class DataSourceDao {
         //ds.setLastUpdate(getDateValue(URI, LASTUPDATE, model));
         //ds.setNextUpdate(getDateValue(URI, NEXTUPDATE, model));
         ds.getConfiguration().setPriority(getIntValue(URI, PRIORITY, model));
+        ds.getConfiguration().setResultsGraphURI(getStringValue(URI, GRAPHURI, model)); 
         ds.getConfiguration().setServiceURI(getStringValue(URI, SERVICEURI, model));        
         //ds.setUpdateFrequency(DataSourceUpdateFrequency.WEEKLY);
         StmtIterator endpit = model.listStatements(model.getResource(URI), 
@@ -167,8 +168,7 @@ public class DataSourceDao {
                     endpointParams.setEndpointUpdateURI(getStringValue(endpoint, ENDPOINTUPDATEURI, model));
                     endpointParams.setUsername(getStringValue(endpoint, ENDPOINTUSERNAME, model));
                     endpointParams.setPassword(getStringValue(endpoint, ENDPOINTPASSWORD, model));
-                    ds.getConfiguration().setEndpointParameters(endpointParams);
-                    ds.getConfiguration().setResultsGraphURI(getStringValue(URI, GRAPHURI, model));  
+                    ds.getConfiguration().setEndpointParameters(endpointParams); 
                     break;
                 }                   
             }

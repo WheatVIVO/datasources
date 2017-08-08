@@ -26,9 +26,13 @@ PREFIX rcuko:    <http://gtr.rcuk.ac.uk/gtr/api/organisation/>
 PREFIX rcukpj:   <http://gtr.rcuk.ac.uk/gtr/api/project/>
 
 CONSTRUCT {
-    ?y a vivo:Grant .
+    ?y a vivo:Project .
     ?y rdfs:label ?title .
     ?y vivo:description ?abstractText .
+    _:grant a vivo:Grant .
+    _:grant vivo:fundingVehicleFor ?y .
+    _:grant rdfs:label ?title .
+    _:grant vivo:description ?abstractText .
 } WHERE {
     ?x rcukpj:project ?y .
     ?y rcukpj:title ?title .

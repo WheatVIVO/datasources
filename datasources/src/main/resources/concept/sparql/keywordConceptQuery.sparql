@@ -5,6 +5,7 @@ PREFIX owl:      <http://www.w3.org/2002/07/owl#>
 PREFIX swrl:     <http://www.w3.org/2003/11/swrl#>
 PREFIX swrlb:    <http://www.w3.org/2003/11/swrlb#>
 PREFIX vitro:    <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>
+PREFIX p1:       <http://vivo.wheatinitiative.org/ontology/adminapp/>
 PREFIX bibo:     <http://purl.org/ontology/bibo/>
 PREFIX c4o:      <http://purl.org/spar/c4o/>
 PREFIX cito:     <http://purl.org/spar/cito/>
@@ -20,25 +21,18 @@ PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>
 PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
-PREFIX rcuk:     <http://gtr.rcuk.ac.uk/gtr/api/>
-PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
-PREFIX rcuko:    <http://gtr.rcuk.ac.uk/gtr/api/organisation/>
-PREFIX rcukpj:   <http://gtr.rcuk.ac.uk/gtr/api/project/>
 
 CONSTRUCT {
-    ?grant vivo:relates ?person .
-    ?grant vivo:relates _:role .
-    # not perfect mapping in core: using LeaderRole for now since 
-    # interface assumes AdministratorRole inheres in an organization
-    _:role a vivo:LeaderRole . 
-    _:role obo:RO_0000052 ?person .
-    _:role obo:BFO_0000054 ?project .
-} WHERE {
-    ?link rcuk:rel "PM_PER" .
-    ?links rcuk:link ?link .
-    ?project rcuk:links ?links .
-    ?project a vivo:Project .
-    ?grant vivo:fundingVehicleFor ?project .
-    ?link vivo:relates ?person .
-    FILTER NOT EXISTS { ?person a vivo:Project }
-}
+    ?concept a skos:Concept .  
+    ?concept rdfs:label ?x .
+    ?author vivo:hasResearchArea ?concept 
+} WHERE {  
+    ?y vivo:freetextKeyword ?x
+  BIND(replace(?x, "\\W", "") AS ?keyword)
+  BIND(IRI(concat("http://vivo.wheatinitiative.org/individual/kconcept_", ?keyword)) AS ?concept)
+  FILTER( (strlen(?keyword) < 32) && (strlen(?keyword) > 0) )
+  ?y vivo:relatedBy ?authorship .
+  ?authorship a vivo:Authorship .
+  ?authorship vivo:relates ?author .
+  ?author a foaf:Person 
+} 

@@ -20,25 +20,25 @@ PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>
 PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
-PREFIX rcuk:     <http://gtr.rcuk.ac.uk/gtr/api/>
-PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
-PREFIX rcuko:    <http://gtr.rcuk.ac.uk/gtr/api/organisation/>
-PREFIX rcukpj:   <http://gtr.rcuk.ac.uk/gtr/api/project/>
+PREFIX prodinra: <http://record.prodinra.inra.fr/>
+
+# For each publication, find the lowest integer position where an author 
+# occurs and record it in prodinra:minPosition, so we can remove this
+# offset later and ensure that the first author gets a rank of 1.
+
+# Could be done in the following query as a subquery, but there seems to 
+# be a bug in Jena where this doesn't actually work the way one might expect.  
+# This keeps things a bit simpler anyway.
 
 CONSTRUCT {
-    ?grant vivo:relates ?person .
-    ?grant vivo:relates _:role .
-    # not perfect mapping in core: using LeaderRole for now since 
-    # interface assumes AdministratorRole inheres in an organization
-    _:role a vivo:LeaderRole . 
-    _:role obo:RO_0000052 ?person .
-    _:role obo:BFO_0000054 ?project .
+    ?x prodinra:minPosition ?minPosition
 } WHERE {
-    ?link rcuk:rel "PM_PER" .
-    ?links rcuk:link ?link .
-    ?project rcuk:links ?links .
-    ?project a vivo:Project .
-    ?grant vivo:fundingVehicleFor ?project .
-    ?link vivo:relates ?person .
-    FILTER NOT EXISTS { ?person a vivo:Project }
+    {
+        SELECT ?x (MIN(?positionInt) AS ?minPosition) WHERE {
+	    ?x prodinra:creator ?y .
+            ?y prodinra:author ?z .
+            ?y vitro:position ?position
+            BIND( xsd:int(?position) AS ?positionInt)
+        } GROUP BY ?x 
+    }
 }

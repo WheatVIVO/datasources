@@ -67,6 +67,8 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
         for (Resource res : relevantResources) {
             filtered.add(constructPersonalSubgraph(res, model));
         }
+        filtered.add(model.listStatements(model.getResource(
+                PRODINRA_ABOX_NS + "INRA"), null, (RDFNode) null));
         return filtered;
     }
     
@@ -163,8 +165,10 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
         // TODO dynamically get/sort list from classpath resource directory
         List<String> queries = Arrays.asList("100-documentTypes.sparql",
                 "105-title.sparql",
+                "101-authorshipPositionAdjust.sparql",
                 "102-authorshipPersonTypes.sparql",
                 "107-authorLabel.sparql",
+                "108-authorVcardName.sparql",
                 "110-abstract.sparql",
                 "112-keywords.sparql",
                 "113-year.sparql",
@@ -247,8 +251,24 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
                 }
                 return m;
             } catch (Exception e) {
+                if(this.resumptionToken != null) {
+                    this.resumptionToken = guessAtNextResumptionToken(
+                            this.resumptionToken);
+                }
                 throw new RuntimeException(e);
             }       
+        }
+        
+        private String guessAtNextResumptionToken(String resumptionToken) {
+            try {
+                String[] tokens = resumptionToken.split("!");
+                int cursor = Integer.parseInt(tokens[1], 10);
+                cursor = cursor + 200;
+                return tokens[0] + "!" + cursor + "!" + tokens[2] + "!" + tokens[3] + "!"  + tokens[4];
+            } catch (Exception e) {
+                log.error(e, e);
+                return null;
+            }
         }
 
         private void processResumptionToken(Model m) {

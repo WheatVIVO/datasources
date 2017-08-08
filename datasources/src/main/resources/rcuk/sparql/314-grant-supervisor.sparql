@@ -31,13 +31,13 @@ CONSTRUCT {
     # not perfect mapping in core: using AdvisorRole because no SupervisorRole
     _:role a vivo:AdvisorRole . 
     _:role obo:RO_0000052 ?person .
+    _:role obo:BFO_0000054 ?project .
 } WHERE {
     ?link rcuk:rel "SUPER_PER" .
     ?links rcuk:link ?link .
-    ?grant rcuk:links ?links .
-    # ?link vivo:relates ?grant .
-    ?grant a vivo:Grant .
+    ?project rcuk:links ?links .
+    ?project a vivo:Project .
+    ?grant vivo:fundingVehicleFor ?project .
     ?link vivo:relates ?person .
-#    ?person a foaf:Person .
-    FILTER NOT EXISTS { ?person a vivo:Grant }
+    FILTER NOT EXISTS { ?person a vivo:Project }
 }
