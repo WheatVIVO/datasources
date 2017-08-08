@@ -47,6 +47,9 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	private static final String INGEST_URI = "http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/";
 	
 	
+	/**
+	 * Iterate through this data source.
+	 */
 	@Override
 	protected IteratorWithSize<Model> getSourceModelIterator() {
 		return new OpenAireModelIterator(this.getConfiguration().getServiceURI());
@@ -69,6 +72,10 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		private String currentQueryTerm = null;
 		private int currentResultForQueryTerm = 1;
 		
+		
+		/**
+		 * Iterate through OpenAIRE.
+		 */
 		public OpenAireModelIterator(String serviceURI) {
 			this.service_URI = serviceURI;
 			this.queryTerms = getQueryTerms();
@@ -78,8 +85,8 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		}
 		
 		
-		/*
-		 * A method to retrieve all the VIVO-project's Ids from a model.
+		/**
+		 * A method to retrieve all the VIVO-projects' IDs from a model.
 		 */
 		public List<String> retrieveProjectsIds() {
 			
@@ -87,6 +94,10 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 			
 			
 			/*
+			 * The following code requieres that Cordis
+			 * (or other connectors with project IDs) will be ran before OpenAIRE,
+			 * so that there will actually be some projectIDs to retrieve from the endpoint.
+			
 			String selectQueryStr = loadQuery(SPARQL_RESOURCE_DIR + "SELECT-projects-ids.sparql");
 			
 			ResultSet result = getSparqlEndpoint().getResultSet(selectQueryStr);
@@ -110,20 +121,26 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		}
 		
 		
-		/*
-		 * Use projectIds as query terms. Later we can use a parameter to set
-		 * the wanted querySet.
+		/**
+		 * Use projectIds as query terms.
 		 */
 		private List<String> getQueryTerms() {
 			return retrieveProjectsIds();
 		}
 		
 		
+		/**
+		 * Check if there are still records to retrieve.
+		 */
 		public boolean hasNext() {
 			return ((this.size() > 0) && !done);
 		}
 		
 		
+        /**
+         * Iterate through publications' pages for each query term (projectID)
+         * and retrieve the publications.
+         */
 		public Model next() {
 			if (currentQueryTerm == null) {
 				if (queryTermIterator.hasNext()) {
@@ -152,12 +169,18 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 			return rdfUtils.renameBNodes(searchResultsModel, NAMESPACE_ETC, searchResultsModel);
 		}
 		
-		
+		/**
+		 * The size of the model.
+		 */
 		public Integer size() {
 			return totalResults(initialResultsCache);
 		}
 		
 		
+        /**
+         * Retrieve the first page of results for every query term,
+         * in order to know how many results to expect from each query term.
+         */
 		private Map<String, Model> fetchInitialResults() {
 			Map<String, Model> initialResultsCache = new HashMap<String, Model>();
 			for (String queryTerm : queryTerms) {
@@ -167,6 +190,9 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		}
 		
 		
+        /**
+         * Get the number of the total results that can be retrieved by using all of the query terms.
+         */
 		private Map<String, Integer> getTotalsForQueryTerms(Map<String, Model> initialResultsCache) {
 			Map<String, Integer> totalsForQueryTerms = new HashMap<String, Integer>();
 			for (String queryTerm : initialResultsCache.keySet()) {
@@ -178,6 +204,9 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		}
 		
 		
+        /**
+         * Retrieve a page full of publications related to the current projectID.
+         */
 		private Model fetchPublications(String projId, int startingResult) {
 			try {
 				URIBuilder uriB = new URIBuilder(OPEN_AIRE_API_URL + "search/publications");
@@ -199,9 +228,9 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		}
 		
 		
-		/*
-		 * get total hits for a map of query term to first search result model
-		 */
+        /**
+         * Get total hits for a map of query term to first search result model
+         */
 		private int totalResults(Map<String, Model> initialResultsCache) {
 			int total = 0;
 			for (String queryTerm : initialResultsCache.keySet()) {
@@ -211,15 +240,18 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		}
 		
 		
-		/*
-		 * get total hits for a model representing the first results page of a
-		 * search for a given query term
-		 */
+        /**
+         * Get total hits for a model representing the first results page 
+         * of a search for a given query term 
+         */
 		private int totalResults(Model model) {
 			return getIntValue(INGEST_URI + "total", model);
 		}
 		
 		
+		/**
+		 * Get the integer value from the model.
+		 */
 		private int getIntValue(String predicateURI, Model model) {
 			StmtIterator sit = model.listStatements(null, model.getProperty(predicateURI), (RDFNode) null);
 			try {
@@ -242,32 +274,9 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	}
 	
 	
-	protected Model renameByIdentifier(Model model, Property identifier, String localNamePrefix) {
-		
-		Map<Resource, String> idMap = new HashMap<Resource, String>();
-		StmtIterator sit = model.listStatements(null, identifier, (RDFNode) null);
-		while (sit.hasNext()) {
-			Statement stmt = sit.next();
-			if (stmt.getObject().isLiteral()) {
-				idMap.put(stmt.getSubject(), stmt.getObject().asLiteral().getLexicalForm());
-			}
-		}
-		for (Resource res : idMap.keySet()) {
-			ResourceUtils.renameResource(res, OPEN_AIRE_ABOX_NS + localNamePrefix + idMap.get(res));
-		}
-		
-		return model;
-	}
-	
-	
-	protected Model renameByIdentifier(Model model) {
-		model = renameByIdentifier(model, model.getProperty(OPEN_AIRE_TBOX_NS + "identifier"), "id");
-		model = renameByIdentifier(model, model.getProperty(OPEN_AIRE_TBOX_NS + "inraIdentifier"), "in");
-		
-		return model;
-	}
-	
-	
+	/**
+	 * Makes use of Sparql's CONSTRUCT queries to construct VIVO-RDF data.
+	 */
 	protected Model constructForVIVO(Model model) {
 		
 		List<String> queries = Arrays.asList(
@@ -293,16 +302,21 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	}
 	
 	
+	/**
+	 * Transform raw RDF into VIVO RDF.
+	 */
 	@Override
 	protected Model mapToVIVO(Model model) {
 		
-		model = renameByIdentifier(model);
 		model = constructForVIVO(model);
 		
-		return rdfUtils.smushResources(model, model.getProperty(OPEN_AIRE_TBOX_NS + "identifier"));
+		return model;
 	}
 	
 	
+	/**
+	 * Filter the model so that we keep only data related to the query terms.
+	 */
 	@Override
 	protected Model filter(Model model) {
 		return model;
