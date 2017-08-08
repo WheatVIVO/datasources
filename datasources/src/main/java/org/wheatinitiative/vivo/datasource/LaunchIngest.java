@@ -11,6 +11,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wheatinitiative.vivo.datasource.connector.cordis.Cordis;
 import org.wheatinitiative.vivo.datasource.connector.openaire.OpenAire;
+import org.wheatinitiative.vivo.datasource.connector.orcid.OrcidConnector;
 import org.wheatinitiative.vivo.datasource.connector.prodinra.Prodinra;
 import org.wheatinitiative.vivo.datasource.connector.rcuk.Rcuk;
 import org.wheatinitiative.vivo.datasource.connector.usda.Usda;
@@ -25,7 +26,7 @@ public class LaunchIngest {
     public static void main(String[] args) {
         if(args.length < 3) {
             System.out.println("Usage: LaunchIngest " 
-                    + "cordis|rcuk|prodinra|usda|wheatinitiative outputfile " 
+                    + "cordis|rcuk|prodinra|usda|wheatinitiative|openaire outputfile " 
                     + "queryTerm ... [queryTermN] [limit]");
             return;
         } 
@@ -83,6 +84,8 @@ public class LaunchIngest {
         } else if ("openaire".equals(connectorName)) {
         	connector = new OpenAire();
         	connector.getConfiguration().setServiceURI("http://api.openaire.eu/");
+        } else if ("orcid".equals(connectorName)) {
+            connector = new OrcidConnector();
         } else {
             throw new RuntimeException("Connector not found: " 
                     + connectorName);

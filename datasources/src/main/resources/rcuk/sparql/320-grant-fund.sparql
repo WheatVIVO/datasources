@@ -27,6 +27,7 @@ PREFIX rcukpj:   <http://gtr.rcuk.ac.uk/gtr/api/project/>
 
 CONSTRUCT {
     ?grant vivo:dateTimeInterval _:dti .
+    ?project vivo:dateTimeInterval _:dti .
     _:dti a vivo:DateTimeInterval .
     _:dti vivo:start _:start .
     _:start a vivo:DateTimeValue .
@@ -37,12 +38,13 @@ CONSTRUCT {
     _:end vivo:dateTime ?end .
     _:end vivo:dateTimePrecision vivo:yearMonthDayPrecision .
 } WHERE {
-    ?grant a vivo:Grant .
-    ?grant rcuk:links ?links .
+    ?project a vivo:Project .
+    ?project rcuk:links ?links .
     ?links rcuk:link ?link .
     ?link rcuk:rel "FUND" .
     ?link rcuk:start ?rcukStart .
     BIND(xsd:dateTime(?rcukStart) AS ?start)
     ?link rcuk:end ?rcukEnd .
     BIND(xsd:dateTime(?rcukEnd) AS ?end)
+    ?grant vivo:fundingVehicleFor ?project
 }

@@ -1,0 +1,83 @@
+@prefix ocrer: <http://purl.org/net/OCRe/research.owl#> .
+@prefix scires: <http://vivoweb.org/ontology/scientific-research#> .
+@prefix fabio: <http://purl.org/spar/fabio/> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix ocresd: <http://purl.org/net/OCRe/study_design.owl#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix vitro: <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#> .
+@prefix cito:  <http://purl.org/spar/cito/> .
+@prefix geo:   <http://aims.fao.org/aos/geopolitical.owl#> .
+@prefix vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#> .
+@prefix bibo:  <http://purl.org/ontology/bibo/> .
+@prefix vivo:  <http://vivoweb.org/ontology/core#> .
+@prefix event: <http://purl.org/NET/c4dm/event.owl#> .
+@prefix obo:   <http://purl.obolibrary.org/obo/> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix c4o:   <http://purl.org/spar/c4o/> .
+
+<http://vivo.wheatinitiative.org/individual/dataSource2>
+        a       <http://vivo.wheatinitiative.org/ontology/adminapp/DataSource> ;
+        <http://www.w3.org/2000/01/rdf-schema#label>
+                "Wheat Initiative Website"@en-US ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/graphURI>
+                "http://vitro.mannlib.cornell.edu/a/graph/wheatinitiative"^^<http://www.w3.org/2001/XMLSchema#anyURI> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/priority>
+                2 ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/serviceURI>
+                "http://www.wheatinitiative.org/administration/users/csv"^^<http://www.w3.org/2001/XMLSchema#anyURI> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/usesSparqlEndpoint>
+                <http://vivo.wheatinitiative.org/individual/sparqlEndpoint1> .
+
+<http://vivo.wheatinitiative.org/individual/sparqlEndpoint1>
+        a       <http://vivo.wheatinitiative.org/ontology/adminapp/SparqlEndpoint> ;
+        <http://www.w3.org/2000/01/rdf-schema#label>
+                "Built-in SPARQL Endpoint"@en-US .
+
+<http://vivo.wheatinitiative.org/individual/dataSource3>
+        a       <http://vivo.wheatinitiative.org/ontology/adminapp/DataSource> ;
+        <http://www.w3.org/2000/01/rdf-schema#label>
+                "VIVO USDA"@en-US ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/graphURI>
+                "http://vitro.mannlib.cornell.edu/a/graph/USDA"^^<http://www.w3.org/2001/XMLSchema#anyURI> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/priority>
+                3 ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/serviceURI>
+                "http://vivo.usda.gov"^^<http://www.w3.org/2001/XMLSchema#anyURI> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/usesSparqlEndpoint>
+                <http://vivo.wheatinitiative.org/individual/sparqlEndpoint1> .
+
+<http://vivo.wheatinitiative.org/individual/dataSource1>
+        a       <http://vivo.wheatinitiative.org/ontology/adminapp/DataSource> ;
+        <http://www.w3.org/2000/01/rdf-schema#label>
+                "Prodinra"@en-US ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/graphURI>
+                "http://vitro.mannlib.cornell.edu/a/graph/Prodinra"^^<http://www.w3.org/2001/XMLSchema#anyURI> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/priority>
+                1 ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/serviceURI>
+                "http://oai.prodinra.inra.fr/ft"^^<http://www.w3.org/2001/XMLSchema#anyURI> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/usesSparqlEndpoint>
+                <http://vivo.wheatinitiative.org/individual/sparqlEndpoint1> .
+
+<http://vivo.wheatinitiative.org/individual/dataSource4>
+        a       <http://vivo.wheatinitiative.org/ontology/adminapp/DataSource> ;
+        <http://www.w3.org/2000/01/rdf-schema#label>
+                "RCUK"@en-US ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/graphURI>
+                "http://vitro.mannlib.cornell.edu/a/graph/RCUK"^^<http://www.w3.org/2001/XMLSchema#anyURI> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/priority>
+                4 ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/serviceURI>
+                "http://http://gtr.rcuk.ac.uk/gtr/api/"^^<http://www.w3.org/2001/XMLSchema#anyURI> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/usesSparqlEndpoint>
+                <http://vivo.wheatinitiative.org/individual/sparqlEndpoint1> .
+
+<http://vivo.wheatinitiative.org/individual/n5429>
+        a              <http://vivo.wheatinitiative.org/ontology/adminapp/DataSource> ;
+	<http://www.w3.org/2000/01/rdf-schema#label>  "ORCID"@en-US ;
+	<http://vivo.wheatinitiative.org/ontology/adminapp/deploymentURI>
+	"http://vmi-dev-88.jouy.inra.fr/wheatvivo-adminapp/dataSource/orcid"^^<http://www.w3.org/2001/XMLSchema#anyURI> ;
+	<http://vivo.wheatinitiative.org/ontology/adminapp/graphURI>
+	"http://vitro.mannlib.cornell.edu/a/graph/ORCID"^^<http://www.w3.org/2001/XMLSchema#anyURI> ;
+	<http://vivo.wheatinitiative.org/ontology/adminapp/priority>  5 .
+

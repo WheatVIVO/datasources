@@ -90,6 +90,9 @@ public class Cordis extends ConnectorDataSource implements DataSource {
         }
         
         
+        /**
+         * Iterate through Cordis pages for each query term and retrieve the records.
+         */
         public Model next() {
             if(currentQueryTerm == null){
                 if(queryTermIterator.hasNext()) {
@@ -125,7 +128,12 @@ public class Cordis extends ConnectorDataSource implements DataSource {
         }
         
         
+        /**
+         * Retrieve the first page of results for every query term,
+         * in order to know how many results to expect from each query term.
+         */
         private Map<String, Model> fetchInitialResults() {
+        	
             Map<String, Model> initialResultsCache = new HashMap<String, Model>();
             for (String queryTerm : queryTerms) {
                 initialResultsCache.put(queryTerm, fetchResults(queryTerm, 1));
@@ -134,7 +142,13 @@ public class Cordis extends ConnectorDataSource implements DataSource {
         }
         
         
+        /**
+         * Get the number of the total results that can be retrieved by using all of the query terms.
+         */
+        // Note that the actual number of records used is smaller,
+        // since we only keep the projects from Cordis.
         private Map<String, Integer> getTotalsForQueryTerms(Map<String, Model> initialResultsCache) {
+        	
         	Map<String, Integer> totalsForQueryTerms = new HashMap<String, Integer>();
             for(String queryTerm : initialResultsCache.keySet()) {
                 int total = totalResults(initialResultsCache.get(queryTerm));
@@ -145,6 +159,9 @@ public class Cordis extends ConnectorDataSource implements DataSource {
         }
         
         
+        /**
+         * Retrieve a page full of the query_term-related records.
+         */
         private Model fetchResults(String queryTerm, int startingResult) {
             try {
                 URIBuilder uriB = new URIBuilder(this.service_URI);
@@ -168,7 +185,11 @@ public class Cordis extends ConnectorDataSource implements DataSource {
         }
         
         
+        /**
+         * Get the xml data of every record.
+         */
         private Model getResourcesForSearchResults(Model searchResultsModel) {
+        	
             Model resourcesModel = ModelFactory.createDefaultModel();
             Collection<String> resultURIs = getResultURIs(searchResultsModel);
             for(String resultURI : resultURIs) {
@@ -193,11 +214,11 @@ public class Cordis extends ConnectorDataSource implements DataSource {
             }
             return rdfUtils.renameBNodes(
                     resourcesModel, NAMESPACE_ETC, resourcesModel);
-}
+        }
         
         
-        /*
-         * get total hits for a map of query term to first search result model
+        /**
+         * Get total hits for a map of query term to first search result model
          */
         private int totalResults(Map<String, Model> initialResultsCache) {
             int total = 0;
@@ -208,8 +229,8 @@ public class Cordis extends ConnectorDataSource implements DataSource {
         }
         
         
-        /*
-         * get total hits for a model representing the first results page 
+        /**
+         * Get total hits for a model representing the first results page 
          * of a search for a given query term 
          */
         private int totalResults(Model m) {
@@ -238,19 +259,29 @@ public class Cordis extends ConnectorDataSource implements DataSource {
         }
         
         
-        /*
-         * Due to the lack of scientific publications in Cordis (in xml-retrieved data)
-         * (e.g. academic articles and links to the actual pubs' text).
-         * we will retrieve the project-related pubs from OpenAIRE.
-         * So we just work on the projects' data here in Cordis.
+        /**
+         * Construct a set of the Cordis records' URLs.
+         * We use two methods in order to be easier for other type of data to be added in the future.
          */
         private Collection<String> getResultURIs(Model searchResultsModel) {
+            /*
+             * It seems that we are not getting scientific publications from Cordis.
+             * We only get abstracts describing what the real publications include,
+             * but no link to the real publications.
+             * Also the different types of results that we are getting,
+             * are mostly reports to the EU commission which are not scientific publications.
+             */
+        	
             List<String> resultURIs = new ArrayList<String>();
             resultURIs.addAll(getResultURIs(searchResultsModel, "project"));
             return resultURIs;
         }
         
         
+        /**
+         * Construct a set of the Cordis records' URLs.
+         * That way, we retrieve every record independently.
+         */
         private Collection<String> getResultURIs(Model searchResultsModel, String type) {
             // use set because some values are repeated (e.g. projects)
             Set<String> resultURIs = new HashSet<String>();
@@ -275,42 +306,18 @@ public class Cordis extends ConnectorDataSource implements DataSource {
         }
         
         
+        /**
+         * Construct the individual record's URL in order to retrieve it from Cordis.
+         */
         private String makeResultURI(String rcnValue, String type) {
             return CORDIS_TBOX_NS + type + "/rcn/" + rcnValue + "_en.xml";  
         }
     }
 	
 	
-	protected Model renameByIdentifier(Model model, Property identifier, String localNamePrefix) {
-		
-		Map<Resource, String> idMap = new HashMap<Resource, String>();
-        StmtIterator sit = model.listStatements(null, identifier, (RDFNode) null);
-        while(sit.hasNext()) {
-            Statement stmt = sit.next();
-            if(stmt.getObject().isLiteral()) {
-                idMap.put(stmt.getSubject(), 
-                        stmt.getObject().asLiteral().getLexicalForm());
-            }
-        }
-        for(Resource res : idMap.keySet()) {
-            ResourceUtils.renameResource(
-                    res, CORDIS_ABOX_NS + localNamePrefix + idMap.get(res));
-        }
-		
-		return model;
-	}
-	
-	
-	protected Model renameByIdentifier(Model model) {
-		model = renameByIdentifier(model, model.getProperty(
-					CORDIS_TBOX_NS + "identifier"), "id");
-		model = renameByIdentifier(model, model.getProperty(
-					CORDIS_TBOX_NS + "inraIdentifier"), "in");
-		
-		return model;
-	}
-	
-	
+	/**
+	 * Makes use of Sparql's CONSTRUCT queries to construct VIVO-RDF data.
+	 */
 	protected Model constructForVIVO(Model model) {
 		List<String> queries =  Arrays.asList(
 								"100-project.sparql",
@@ -333,21 +340,24 @@ public class Cordis extends ConnectorDataSource implements DataSource {
 	}
 	
 	
+	/**
+	 * Transforms raw RDF into VIVO RDF.
+	 */
 	@Override
 	protected Model mapToVIVO(Model model) {
 		
-		model = renameByIdentifier(model);
-		
 		model = constructForVIVO(model);
 		
-		return rdfUtils.smushResources(model, model.getProperty(
-					CORDIS_TBOX_NS + "identifier"));
+		return model;
 	}
 	
 	
+	/**
+	 * Filter the model so that we keep only data related to the query terms.
+	 */
 	@Override
 	protected Model filter(Model model) {
-		// TODO Auto-generated method stub
+		// No filtering is needed, since we retrieve already-filtered data.
 		return model;
 	}
 	
