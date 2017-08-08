@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -49,48 +50,13 @@ public class VivoDataSource extends ConnectorDataSource {
 
     private static final String PEOPLE = 
             "http://vivoweb.org/ontology#vitroClassGrouppeople";
-    private final static int MIN_REST = 300; // ms between linked data requests
+    private final static int MIN_REST = 125; // ms between linked data requests
     private static final String RESOURCE_PATH = "/vivo/update15to16/"; 
     
-    private static final int LIMIT = 99999; // max search results to retrieve
+    private Set<String> retrievedURIs = new HashSet<String>();
     
     protected String getRemoteVivoURL() {
         return this.getConfiguration().getServiceURI();
-    }
-    
-    @Override
-    public void runIngest() {
-        Model resultModel = ModelFactory.createDefaultModel();
-        try {
-            Set<String> uris = new HashSet<String>();
-            try {
-                for (String filterTerm : this.getConfiguration().getQueryTerms()) {
-                    uris.addAll(getUrisFromSearchResults(getRemoteVivoURL(), filterTerm, 
-                            PEOPLE));
-                    int limit = this.getConfiguration().getLimit();
-                    for(String uri : uris) {
-                        limit--;
-                        if (limit < 0) {
-                            break;
-                        }
-                        Model m = ModelFactory.createDefaultModel();
-                        log.info("Fetching search result " + uri);
-                        m.read(uri);
-                        resultModel.add(m);
-                    }
-                    Thread.sleep(MIN_REST);
-                }
-            } catch (Exception e) {
-                log.error(e, e);
-                // TODO record error for reporting via service
-            }
-            fetchRelatedURIs(resultModel);
-            resultModel = mapToVIVO(resultModel);
-        } catch (Exception e) {
-            log.error(e, e);
-        } finally {
-            this.result = resultModel;
-        }
     }
     
     protected Model mapToVIVO(Model model) {
@@ -103,29 +69,45 @@ public class VivoDataSource extends ConnectorDataSource {
      * @param model
      * @throws InterruptedException
      */
-    protected void fetchRelatedURIs(Model model) throws InterruptedException {
+    protected void fetchRelatedURIs(Model model) {
         Model tmp = ModelFactory.createDefaultModel();
         NodeIterator nit = model.listObjects();
         while(nit.hasNext()) {
             RDFNode n = nit.next();
             if(n.isURIResource()) {
                 Resource r = n.asResource();
-                if(model.contains(r, RDF.type, (Resource) null)) {
-                    continue;
-                }
+//                if(model.contains(r, RDF.type, (Resource) null)) {
+//                    continue;
+//                }
+                // don't try to retrieve classes
                 if(model.contains(null, RDF.type, r)) {
                     continue;
                 }
                 try {
                     log.info("Fetching related resource " + r.getURI());
-                    tmp.read(r.getURI());
+                    fetch(r.getURI(), tmp);
                 } catch (Exception e) {
                     log.error("Error retreiving " + r.getURI());
                 }
             }
-            Thread.sleep(MIN_REST);
         }
         model.add(tmp);
+    }
+    
+    private void fetch(String uri, Model model) {
+        if(uri == null) {
+            return;
+        }
+        if(!retrievedURIs.contains(uri)) {
+            log.info("Fetching " + uri);
+            retrievedURIs.add(uri);
+            model.read(uri);
+            try {
+                Thread.sleep(MIN_REST);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }        
     }
 
     protected Model updateToOneSix(Model model) {
@@ -166,7 +148,6 @@ public class VivoDataSource extends ConnectorDataSource {
         return getUrisFromSearchResults(vivoUrl, querytext, null);
     }
     
-    //TODO switch to iterator
     protected List<String> getUrisFromSearchResults(String vivoUrl, 
             String querytext, String classgroupURI) throws URISyntaxException, 
                 IOException {
@@ -180,12 +161,27 @@ public class VivoDataSource extends ConnectorDataSource {
         }
         URI nextPageUrl = builder.build();
         while(nextPageUrl != null) {
-            System.out.println("Requesting " + nextPageUrl.toString());
+            log.debug("Requesting " + nextPageUrl.toString());
             String searchResult = httpUtils.getHttpResponse(
                     nextPageUrl.toString());
-            Model resultsModel = xmlToRdf.toRDF(searchResult);
-            resultUris.addAll(getResultUris(resultsModel));
-            String nextPage = getNextPageUrl(resultsModel);
+            String nextPage = null;
+            try {
+                Model resultsModel = xmlToRdf.toRDF(searchResult);
+                resultUris.addAll(getResultUris(resultsModel));
+                nextPage = getNextPageUrl(resultsModel);
+            } catch (RuntimeException e) {
+                if(e.getCause() != null && e.getCause().getMessage() != null 
+                        && e.getCause().getMessage().contains(
+                                "Premature end of file")) {
+                    // (Old) VIVOs seem to respond with empty search results XML
+                    // documents when there are no   
+                    // Logging exception only to allow other searches to continue.
+                    log.info("Empty results document returned by VIVO " +
+                            "for query text " + querytext);
+                } else {                    
+                    throw e;
+                }
+            }
             if(nextPage == null) {
                 nextPageUrl = null;
             } else {
@@ -238,10 +234,6 @@ public class VivoDataSource extends ConnectorDataSource {
         return values;
     }
     
-    public Model getResult() {
-        return this.result;
-    }
-
     @Override
     protected Model filter(Model model) {
         // nothing to do, for now
@@ -250,8 +242,45 @@ public class VivoDataSource extends ConnectorDataSource {
 
     @Override
     protected IteratorWithSize<Model> getSourceModelIterator() {
-        // TODO not yet used; runIngest() itself is still overridden
-        return null;
+        try {
+            return new VivoModelIterator();
+        } catch (Exception e) {
+            log.error(e, e);
+            throw new RuntimeException(e);
+        }
+    }
+    
+    private class VivoModelIterator implements IteratorWithSize<Model> {
+
+        private Set<String> searchResults = new HashSet<String>();
+        private Iterator<String> searchResultIterator;
+        
+        public VivoModelIterator() throws IOException, URISyntaxException {
+            for (String filterTerm : getConfiguration().getQueryTerms()) {
+                searchResults.addAll(getUrisFromSearchResults(
+                        getRemoteVivoURL(), filterTerm, PEOPLE));
+            }
+            searchResultIterator = searchResults.iterator();
+        }
+        
+        public boolean hasNext() {
+            return searchResultIterator.hasNext();
+        }
+
+        public Model next() {
+            Model model = ModelFactory.createDefaultModel();
+            String uri = searchResultIterator.next();
+            Model m = ModelFactory.createDefaultModel();
+            fetch(uri, m);
+            model.add(m);
+            fetchRelatedURIs(model);
+            return model;
+        }
+
+        public Integer size() {
+            return searchResults.size();
+        }
+        
     }
     
 }

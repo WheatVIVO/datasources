@@ -30,8 +30,9 @@ CONSTRUCT {
     ?y vivo:relates ?z .
 } WHERE {
     ?x prodinra:creator ?y .
+    ?x prodinra:minPosition ?minPosition .
     # not available without reasoning: ?x a bibo:Document .
     ?y prodinra:author ?z .
     ?y vitro:position ?position
-    BIND(xsd:int(?position) AS ?rank)
+    BIND( (xsd:int(?position) - ?minPosition + 1) AS ?rank)
 }
