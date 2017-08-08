@@ -284,7 +284,6 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 											 ,"101-publication-article.sparql"
 											 ,"110-publication-url.sparql"
 											 ,"120-publication-keywords.sparql"
-										//	 ,"130-publication-project-connection.sparql"
 											 ,"200-authorship.sparql"
 											 ,"210-author-vcard-name.sparql"
 											 ,"300-journal.sparql"
@@ -309,6 +308,24 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	protected Model mapToVIVO(Model model) {
 		
 		model = constructForVIVO(model);
+		
+		/*
+			Note that the current model contains just the publications retrieved
+			for the various projectIDs that were found in the endpoint.
+			No project-publication connection is done at the moment,
+			as there are no projects in the model!
+			The connection query should be run directly in the endpoint,
+			where the related projects actually are.
+		*/
+		
+		// TODO - Add publication-project connection code.
+		
+		/*
+		 * Untested code follows.
+		
+			String queryStr = loadQuery(SPARQL_RESOURCE_DIR + "Publication-project-connection.sparql");
+			getSparqlEndpoint().construct(queryStr);
+		 */
 		
 		return model;
 	}

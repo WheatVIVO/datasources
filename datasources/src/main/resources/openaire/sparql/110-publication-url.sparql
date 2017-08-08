@@ -5,6 +5,7 @@ PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
 PREFIX bibo:    <http://purl.org/ontology/bibo/>
 
 
+
 CONSTRUCT {
 
     ?pub vcard:hasURL _:url .

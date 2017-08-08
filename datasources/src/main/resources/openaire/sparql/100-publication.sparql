@@ -18,7 +18,6 @@ CONSTRUCT {
     ?pub vcard:Language ?langStr .
     
     ?pub vivo:description ?descr .
-    
     ?pub bibo:abstract ?fulltext .
 
     ?pub bibo:doi ?doiValue .

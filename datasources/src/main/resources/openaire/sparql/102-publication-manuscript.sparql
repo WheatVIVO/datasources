@@ -1,15 +1,12 @@
 PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
 PREFIX bibo:    <http://purl.org/ontology/bibo/>
-PREFIX obo:     <http://purl.obolibrary.org/obo/>
 
 
 
 CONSTRUCT {
 
-    ?pub a bibo:AcademicArticle .
-    
-# Also a JournalArticle.
-    ?pub a obo:IAO_0000013 .
+# A Manuscript. Of course, in the electronic (Preprint) format.
+    ?pub a bibo:Manuscript .
 
 } WHERE {
 
@@ -17,5 +14,5 @@ CONSTRUCT {
     ?pub ingest:children ?child .
     ?child ingest:instance ?inst .
     ?inst ingest:instancetype ?type .
-    ?type ingest:classname "Article" .
+    ?type ingest:classname "Preprint" .
 }

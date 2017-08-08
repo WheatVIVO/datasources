@@ -7,6 +7,7 @@ PREFIX bibo:    <http://purl.org/ontology/bibo/>
 CONSTRUCT {
 
     ?proj vivo:supportedInformationResource ?doc .
+    
     ?doc vivo:informationSourceSupportedBy ?proj .
 
 } WHERE {
@@ -17,10 +18,11 @@ CONSTRUCT {
     ?rels ingest:rel ?rel .
     ?rel ingest:to ?to .
     
-    ?rel ingest:code ?projectId .
+    ?rel ingest:code ?pubProjectId .
     
     ?proj a vivo:Project .
-    ?proj vivo:identifier ?projectId .
+    ?proj vivo:identifier ?projectID .
     
     FILTER EXISTS { ?to ingest:class "isProducedBy" }
+    FILTER ( CONTAINS( ?pubProjectId, ?projectID ) )
 }

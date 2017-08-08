@@ -1,17 +1,18 @@
 PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
 PREFIX vivo:    <http://vivoweb.org/ontology/core#>
 PREFIX bibo:    <http://purl.org/ontology/bibo/>
-PREFIX vitro:   <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>
 
 
 
 CONSTRUCT {
 
-    ?pub vivo:freetextKeyword ?keyPhrase .
+    ?pub a vivo:ConferencePaper .
 
 } WHERE {
 
     ?pub a bibo:Document .
-    ?pub ingest:subject ?sub .
-    ?sub vitro:value ?keyPhrase .
+    ?pub ingest:children ?child .
+    ?child ingest:instance ?inst .
+    ?inst ingest:instancetype ?type .
+    ?type ingest:classname "Conference object" .
 }
