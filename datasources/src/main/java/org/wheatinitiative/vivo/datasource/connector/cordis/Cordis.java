@@ -30,10 +30,8 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.NodeIterator;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.hp.hpl.jena.util.ResourceUtils;
 
 
 
@@ -48,6 +46,9 @@ public class Cordis extends ConnectorDataSource implements DataSource {
     private static final int MIN_REST_AFTER_HTTP_REQUEST = 250; //ms
     
     
+    /**
+     * Iterate through this data source.
+     */
     @Override
     protected IteratorWithSize<Model> getSourceModelIterator() {
         return new CordisModelIterator(
@@ -74,8 +75,10 @@ public class Cordis extends ConnectorDataSource implements DataSource {
         private String currentQueryTerm;
         private int currentResultForQueryTerm = 1;
 	    
-		
-	    // Constructor
+        
+        /**
+         * Iterate through Cordis.
+         */
         public CordisModelIterator(String serviceURI, List<String> queryTerms) {
             this.service_URI = serviceURI;
             this.queryTerms = queryTerms;
@@ -85,6 +88,9 @@ public class Cordis extends ConnectorDataSource implements DataSource {
         }
 		
         
+        /**
+         * Check if there are still records to retrieve.
+         */
         public boolean hasNext() {
             return ((this.size() > 0) && !done);
         }
@@ -123,6 +129,9 @@ public class Cordis extends ConnectorDataSource implements DataSource {
         }
         
         
+        /**
+         * The size of the model.
+         */
         public Integer size() {
             return totalResults(initialResultsCache);
         }
@@ -238,6 +247,9 @@ public class Cordis extends ConnectorDataSource implements DataSource {
         }
         
         
+        /**
+         * Get the integer value from the model.
+         */
         private int getIntValue(String predicateURI, Model m) {
             StmtIterator sit = m.listStatements(
                     null, m.getProperty(predicateURI), (RDFNode) null);
@@ -341,7 +353,7 @@ public class Cordis extends ConnectorDataSource implements DataSource {
 	
 	
 	/**
-	 * Transforms raw RDF into VIVO RDF.
+	 * Transform raw RDF into VIVO RDF.
 	 */
 	@Override
 	protected Model mapToVIVO(Model model) {
