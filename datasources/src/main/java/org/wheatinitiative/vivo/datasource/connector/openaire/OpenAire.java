@@ -316,12 +316,18 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 			as there are no projects in the model!
 			The connection query should be run directly in the endpoint,
 			where the related projects actually are.
+			In order for such thing to be possible,
+			we have to bypass the higher-level code so that we push our model now
+			and construct the connections before leaving the connector's code.
 		*/
 		
 		// TODO - Add publication-project connection code.
 		
 		/*
 		 * Untested code follows.
+		
+			// Push the current model to the endpoint, before trying to construct enything.
+			// Currently the endpoint doesn't have the publications we want to connect.
 		
 			String queryStr = loadQuery(SPARQL_RESOURCE_DIR + "Publication-project-connection.sparql");
 			getSparqlEndpoint().construct(queryStr);
