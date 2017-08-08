@@ -25,7 +25,7 @@ public class LaunchIngest {
     public static void main(String[] args) {
         if(args.length < 3) {
             System.out.println("Usage: LaunchIngest " 
-                    + "rcuk|prodinra|usda|wheatinitiative outputfile " 
+                    + "rcuk|prodinra|usda|wheatinitiative|cornell outputfile " 
                     + "queryTerm ... [queryTermN] [limit]");
             return;
         } 
@@ -63,7 +63,7 @@ public class LaunchIngest {
         if ("cornell".equals(connectorName)) {
         	connector = new Cornell();
         	connector.getConfiguration().setServiceURI(
-        			"http://vivo.cornell.edu");
+        			"http://vivo.cornell.edu/");
         }
         else if ("rcuk".equals(connectorName)) {
             connector = new Rcuk();
