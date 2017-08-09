@@ -84,12 +84,18 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		private boolean pubsDone = false;
 		
 		
+		/**
+		 * Iterate through OpenAIRE's OAI protocol.
+		 */		
 		public OaiModelIterator(String repositoryURL, String metadataPrefix) throws URISyntaxException {
 			this.repositoryURI = new URI(repositoryURL);
 			this.metadataPrefix = metadataPrefix;
 		}
 		
 		
+		/**
+		 * Check if there are still records to retrieve.
+		 */
 		public boolean hasNext() {
 			return (cachedResult != null || !(projectsDone && pubsDone));
 		}
@@ -152,7 +158,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 				processResumptionToken(model, "project");
 				if (projectsResumptionToken == null) {
 					projectsDone = true;
-					log.info("No more projects resumption token -- done.");
+					log.info("No more project's resumption token -- done.");
 				}
 				if (cacheResult) {
 					cachedResult = model;
@@ -188,7 +194,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 				processResumptionToken(model, "publication");
 				if (pubsResumptionToken == null) {
 					pubsDone = true;
-					log.info("No more pubs resumption token -- done.");
+					log.info("No more pub's resumption token -- done.");
 				}
 				if (cacheResult) {
 					cachedResult = model;
@@ -255,6 +261,9 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		}
 		
 		
+        /**
+         * The size of the model.
+         */
 		public Integer size() {
 			if (totalRecords == null) {
 				cacheNext();
@@ -318,7 +327,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	
 	
 	/**
-	 * Get only the query_term-related general_URIs.
+	 * Get only the query_terms-related general_URIs.
 	 */
     protected List<Resource> getRelevantResources(Model model, String type) {
     	
@@ -355,7 +364,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
     
     
     /**
-     * Construct the subgraph of the given general_URI.
+     * Construct the subgraph of the given project's general_URI.
      * Connect the related organizations' and others' data with each resource's URI.
      */
     private Model constructProjectSubgraph(Resource projectRes, Model model) {
@@ -374,6 +383,10 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
     }
     
     
+    /**
+     * Construct the subgraph of the given publication's general_URI.
+     * Connect the related organizations' and others' data with each resource's URI.
+     */
     private Model constructPublicationSubgraph(Resource publicationRes, Model model) {
     	// TODO - Construct publication's subgraph.
     	
@@ -386,10 +399,13 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
                 NAMESPACE_ETC, substitutions));
         
         // Also add any other publication-related data.
-    	return model;
+    	return subgraph;
     }
     
-	
+    
+	/**
+	 * Filter the model so that we keep only data related to the query terms.
+	 */
     @Override
     protected Model filter(Model model) {
     	
