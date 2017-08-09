@@ -299,8 +299,9 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 											 ,"220-publication-keywords.sparql"
 											 ,"230-publication-authorship.sparql"
 											 ,"235-publication-author_vcard_name.sparql"
-											 ,"300-journal.sparql"
-											 ,"310-journal-publisher.sparql"
+											 ,"300-project-publication-connection.sparql"
+											 ,"400-journal.sparql"
+											 ,"410-journal-publisher.sparql"
 											);
 		
 		for (String query : queries) {
@@ -333,7 +334,6 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
     	
         String queryStr = loadQuery(
                 SPARQL_RESOURCE_DIR + "get" + type + "s" + "ForSearchTerm.sparql");
-        
         List<Resource> relevantResources = new ArrayList<Resource>();
         
         for (String queryTerm : getConfiguration().getQueryTerms()) {

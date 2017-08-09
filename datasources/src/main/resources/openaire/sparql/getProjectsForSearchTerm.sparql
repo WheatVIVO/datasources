@@ -23,8 +23,8 @@ WHERE {
     UNION
     { ?Publication bibo:abstract ?value }
     
-#    FILTER EXISTS
-#    { ?Project vivo:supportedInformationResource ?Publication }
+    FILTER EXISTS
+    { ?Project vivo:supportedInformationResource ?Publication }
     
     FILTER ( REGEX( STR(?value), "\\b$TERM\\b", "i") )
 }

@@ -17,4 +17,8 @@ CONSTRUCT {
     
     ?pub ingest:rels ?rels .
     ?rels ingest:rel ?proj .
+    
+    ?proj ingest:to ?to .
+    
+    FILTER EXISTS { ?to ingest:type "project" }
 }

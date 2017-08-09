@@ -15,7 +15,7 @@ CONSTRUCT {
 #   See how to connect the publisher with the Journal.
 
     _:org vivo:publisherOf ?journal .
-#    ?journal publishedIn ??? (is there such a property?)
+#    ?journal publishedBy ??? (is there such a property?)
 
 } WHERE {
 

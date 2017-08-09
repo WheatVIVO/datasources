@@ -1,4 +1,3 @@
-PREFIX oaf:     <http://namespace.openaire.eu/oaf/>
 PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
 PREFIX vivo:    <http://vivoweb.org/ontology/core#>
 PREFIX obo:     <http://purl.obolibrary.org/obo/>
@@ -23,7 +22,7 @@ CONSTRUCT {
 
 #   With just the "ingest:code" we map also the projects that cannot be retrieved with the verb: projects
 #   but we take them as related projects to the publications.
-#   The "ingest:code" is used only for the project identifier, so, we are sure we take only projects.
+#   The "ingest:code" is used only for the project identifier, so, we are sure we take only actual projects.
 
     ?proj ingest:code ?project_id .
 }
