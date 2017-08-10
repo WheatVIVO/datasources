@@ -12,13 +12,10 @@ CONSTRUCT {
 
 } WHERE {
 
-    ?proj a vivo:Project .
     ?pub a bibo:Document .
     
     ?pub ingest:rels ?rels .
     ?rels ingest:rel ?proj .
     
-    ?proj ingest:to ?to .
-    
-    FILTER EXISTS { ?to ingest:type "project" }
+    ?proj a vivo:Project .
 }

@@ -102,6 +102,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		
 		
 		public Model next() {
+			
 			Model model = ModelFactory.createDefaultModel();
 			if (cachedResult != null) {
 				model = cachedResult;
@@ -142,6 +143,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		 * Fetch the projects' related data.
 		 */
 		private Model fetchNextProject(boolean cacheResult) {
+			
 			URIBuilder uriB = new URIBuilder(repositoryURI);
 			uriB.addParameter("verb", "ListRecords");
 			if (projectsResumptionToken != null) {
@@ -177,6 +179,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		 * Fetch the publications' related data.
 		 */
 		private Model fetchNextPublication(boolean cacheResult) {
+			
 			URIBuilder uriB = new URIBuilder(repositoryURI);
 			uriB.addParameter("verb", "ListRecords");
 			if (pubsResumptionToken != null) {
@@ -210,7 +213,6 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		
 		
 		private String guessAtNextResumptionToken(String resumptionToken) {
-			
 			try {
 				String[] tokens = resumptionToken.split("!");
 				int cursor = Integer.parseInt(tokens[1], 10);
@@ -323,6 +325,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		
 		model = rdfUtils.renameBNodes(model, NAMESPACE_ETC, model);
 		model = constructForVIVO(model);
+		
 		return model;
 	}
 	
@@ -334,6 +337,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
     	
         String queryStr = loadQuery(
                 SPARQL_RESOURCE_DIR + "get" + type + "s" + "ForSearchTerm.sparql");
+        
         List<Resource> relevantResources = new ArrayList<Resource>();
         
         for (String queryTerm : getConfiguration().getQueryTerms()) {
@@ -359,6 +363,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
                 }
             }
         }
+        
         return relevantResources;
     }
     
@@ -379,6 +384,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
                 NAMESPACE_ETC, substitutions));
         
         // TODO Also add any other project-related data.
+        
         return subgraph;
     }
     
@@ -398,7 +404,8 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
                 SPARQL_RESOURCE_DIR + "getPublicationSubgraph.sparql", model, 
                 NAMESPACE_ETC, substitutions));
         
-        // Also add any other publication-related data.
+        // TODO Also add any other publication-related data.
+        
     	return subgraph;
     }
     
