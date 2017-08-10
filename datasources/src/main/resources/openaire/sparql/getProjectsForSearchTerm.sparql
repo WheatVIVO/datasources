@@ -11,20 +11,31 @@ WHERE {
     ?Project a vivo:Project .
     ?Publication a bibo:Document .
     
-    { ?Project rdfs:label ?value }
+    {
+        { ?Project rdfs:label ?value }
+        UNION
+        { ?Project vivo:freetextKeyword ?value }
+        
+        FILTER NOT EXISTS
+        { ?Project vivo:supportedInformationResource ?Publication }
+    }
     UNION
-    { ?Project vivo:freetextKeyword ?value }
-    UNION
-    { ?Publication rdfs:label ?value }
-    UNION
-    { ?Publication vivo:freetextKeyword ?value }
-    UNION
-    { ?Publication vivo:description ?value }
-    UNION
-    { ?Publication bibo:abstract ?value }
-    
-    FILTER EXISTS
-    { ?Project vivo:supportedInformationResource ?Publication }
+    {
+        ?Project vivo:supportedInformationResource ?Publication .
+        
+        { ?Project rdfs:label ?value }
+        UNION
+        { ?Project vivo:freetextKeyword ?value }
+        UNION
+        { ?Publication rdfs:label ?value }
+        UNION
+        { ?Publication vivo:freetextKeyword ?value }
+        UNION
+        { ?Publication vivo:description ?value }
+        UNION
+        { ?Publication bibo:abstract ?value }
+        
+    }
     
     FILTER ( REGEX( STR(?value), "\\b$TERM\\b", "i") )
 }
