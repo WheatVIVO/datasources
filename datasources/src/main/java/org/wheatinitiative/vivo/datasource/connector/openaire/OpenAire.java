@@ -104,6 +104,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		public Model next() {
 			
 			Model model = ModelFactory.createDefaultModel();
+			
 			if (cachedResult != null) {
 				model = cachedResult;
 				cachedResult = null;
@@ -118,7 +119,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 				}
 				
 				if (pubsDone) {
-					log.info("No more pubs.");
+					log.info("No more publications.");
 				} else {
 					model.add( fetchNextPublication(!CACHE) );
 				}
@@ -127,12 +128,17 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 					throw new RuntimeException("No more items!");
 				}
 			}
+			
 			return model;
 		}
 		
 		
 		private final static boolean CACHE = true;
 		
+		
+		/**
+		 * Cache the first results in order to retrieve the records number.
+		 */
 		private void cacheNext() {
 			fetchNextProject(CACHE);
 			fetchNextPublication(CACHE);
@@ -212,6 +218,12 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		}
 		
 		
+		/**
+		 * Guess the resumption token when some of the data is wrong/corrupted.
+		 */
+		/* In that case, we will just lose this specific piece of data,
+		 * but we will still be able to retrieve everything else.
+		 */
 		private String guessAtNextResumptionToken(String resumptionToken) {
 			try {
 				String[] tokens = resumptionToken.split("!");
@@ -225,6 +237,16 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		}
 		
 		
+		/**
+		 * Get the resumption token, which, the server is giving us,
+		 * in order to continue to retrieve the different pieces of data.
+		 */
+		/*
+		 * Because the server is making the data available in pieces..
+		 * without an indicator to testify that this exact client is still requesting data..
+		 * the server would sent the first piece over and over again.
+		 * (It would think that every time the request is made by a different client.)
+		 */
 		private void processResumptionToken(Model model, String dataType) {
 			
 			NodeIterator nit = model.listObjectsOfProperty(RESUMPTION_TOKEN);
@@ -286,18 +308,18 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 											 ,"110-project-title_only.sparql"
 											 ,"111-project-title_with_empty_acronym.sparql"
 											 ,"112-project-title_with_acronym.sparql"
-											 ,"120-project-url.sparql"
+											 ,"120-project-vcard_url.sparql"
 											 ,"130-project-date.sparql"
 											 ,"140-project-keywords.sparql"
 											 ,"150-project-organization.sparql"
-											 ,"155-project-organization_address.sparql"
+											 ,"155-project-organization_vcard_address.sparql"
 											 ,"160-project-participant_organization.sparql"
 											 ,"200-publication.sparql"
 											 ,"201-publication_article.sparql"
 											 ,"202-publication_manuscript.sparql"
 											 ,"203-publication-thesis.sparql"
 											 ,"204-publication-conference_paper.sparql"
-											 ,"210-publication-url.sparql"
+											 ,"210-publication-vcard_url.sparql"
 											 ,"220-publication-keywords.sparql"
 											 ,"230-publication-authorship.sparql"
 											 ,"235-publication-author_vcard_name.sparql"

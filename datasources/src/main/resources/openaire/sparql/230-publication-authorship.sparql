@@ -10,13 +10,13 @@ CONSTRUCT {
 
     _:author a foaf:Person .
     _:author rdfs:label ?fullname .
-
+    
     _:authorship a vivo:Authorship .
     
     _:authorship vivo:rank ?rank .
     _:authorship vivo:relates ?pub .
     _:authorship vivo:relates _:author .
-    
+
 } WHERE {
 
     ?pub a bibo:Document .

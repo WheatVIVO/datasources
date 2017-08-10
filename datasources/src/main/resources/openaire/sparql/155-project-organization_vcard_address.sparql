@@ -22,7 +22,7 @@ CONSTRUCT {
     _:url a vcard:URL .
     _:url vcard:url ?org_url .
     _:url rdfs:label ?org_url_str .
-    
+
 } WHERE {
 
     ?proj a vivo:Project .
