@@ -10,10 +10,6 @@ CONSTRUCT {
 
     ?project vcard:hasURL _:url .
     
-    _:url a vcard:URL .
-    _:url vcard:url ?project_url .
-    _:url rdfs:label ?project_url_str .
-    
     ?grant vcard:hasURL _:url .
     
     _:url a vcard:URL .

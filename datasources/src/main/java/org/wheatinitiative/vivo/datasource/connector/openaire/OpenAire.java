@@ -97,7 +97,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		
 		/**
 		 * Iterate through OpenAIRE's OAI protocol.
-		 */		
+		 */
 		public OaiModelIterator(String repositoryURL, String metadataPrefix) throws URISyntaxException {
 			this.repositoryURI = new URI(repositoryURL);
 			this.metadataPrefix = metadataPrefix;
@@ -182,7 +182,13 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 				if (cacheResult) {
 					cachedResult = model;
 				}
+				
+				// TODO - Check for already-retrieved projects and discard them from the model.
+					// These projects were retrieved through the API,
+					// because each one of them is related with some publications.
+				
 				return model;
+				
 			} catch (Exception e) {
 				if (this.projectsResumptionToken != null) {
 					this.projectsResumptionToken = guessAtNextResumptionToken(this.projectsResumptionToken);
@@ -289,6 +295,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 				model.add( getRelatedProjects( model ) );
 				
 				return model;
+				
 			} catch (Exception e) {
 				if (this.pubsResumptionToken != null) {
 					this.pubsResumptionToken = guessAtNextResumptionToken(this.pubsResumptionToken);
@@ -521,16 +528,16 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
         Model filtered = ModelFactory.createDefaultModel();
         List<Resource> relevantResources = null;
         
-        relevantResources = getRelevantResources(model, "Project");
-        log.info(relevantResources.size() + " project-relevant resources");
-        for (Resource res : relevantResources) {
-            filtered.add(constructProjectSubgraph(res, model));
-        }
-        
         relevantResources = getRelevantResources(model, "Publication");
         log.info(relevantResources.size() + " publication-relevant resources");
         for (Resource res : relevantResources) {
             filtered.add(constructPublicationSubgraph(res, model));
+        }
+        
+        relevantResources = getRelevantResources(model, "Project");
+        log.info(relevantResources.size() + " project-relevant resources");
+        for (Resource res : relevantResources) {
+            filtered.add(constructProjectSubgraph(res, model));
         }
         
         return filtered;
