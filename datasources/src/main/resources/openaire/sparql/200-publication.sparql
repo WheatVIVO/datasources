@@ -23,7 +23,7 @@ CONSTRUCT {
     ?pub bibo:doi ?doiValue .
     
 } WHERE {
-    
+
     _:x oaf:result ?pub .
     
     ?pub ingest:title ?title .

@@ -1,0 +1,16 @@
+PREFIX oaf:     <http://namespace.openaire.eu/oaf/>
+PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
+
+
+
+SELECT DISTINCT ?projectId
+
+WHERE {
+
+    _:x oaf:result ?pub .
+    
+    ?pub ingest:rels ?rels .
+    ?rels ingest:rel ?rel .
+    
+    ?rel ingest:code ?projectId. 
+}

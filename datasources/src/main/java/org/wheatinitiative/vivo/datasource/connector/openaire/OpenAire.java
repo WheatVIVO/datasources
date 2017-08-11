@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
 // Apache imports
@@ -43,10 +44,15 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	
 	public static final Log log = LogFactory.getLog(OpenAire.class);
 	
-	private static final String METADATA_PREFIX = "oaf";
-	private static final String OPEN_AIRE_TBOX_NS = "http://api.openaire.eu/oai_pmh/";
+	private static final String OPEN_AIRE_API_URL = "http://api.openaire.eu/";
+	private static final String OPEN_AIRE_OAI_PMH = OPEN_AIRE_API_URL + "oai_pmh/";
+	private static final String OPEN_AIRE_TBOX_NS = OPEN_AIRE_OAI_PMH;
 	private static final String OPEN_AIRE_ABOX_NS = OPEN_AIRE_TBOX_NS + "individual/";
+	
 	private static final String NAMESPACE_ETC = OPEN_AIRE_ABOX_NS + "n";
+	
+	private static final String METADATA_PREFIX = "oaf";
+	
 	private static final String SPARQL_RESOURCE_DIR = "/openaire/sparql/";
 	
 	private static final Property RESUMPTION_TOKEN = ResourceFactory
@@ -55,6 +61,8 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 			.createProperty("http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/completeListSize");
 	private static final Property VITRO_VALUE = ResourceFactory
 			.createProperty("http://vitro.mannlib.cornell.edu/ns/vitro/0.7#value");
+	
+	 private static final int MIN_REST_AFTER_HTTP_REQUEST = 250; //ms
 	
 	private HttpUtils httpUtils = new HttpUtils();
 	private XmlToRdf xmlToRdf = new XmlToRdf();
@@ -74,7 +82,10 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	private class OaiModelIterator implements IteratorWithSize<Model> {
 		
 		private URI repositoryURI;
+		
 		private String metadataPrefix;
+		
+		private List<String> allPubRelatedProjectIds = new ArrayList<String>();
 		
 		private Model cachedResult = null;
 		private Integer totalRecords = null;
@@ -112,16 +123,16 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 			} else {
 				// Do multiple fetches depending on the different kind of data.
 				
-				if (projectsDone) {
-					log.info("No more projects.");
-				} else {
-					model.add( fetchNextProject(!CACHE) );
-				}
-				
 				if (pubsDone) {
 					log.info("No more publications.");
 				} else {
 					model.add( fetchNextPublication(!CACHE) );
+				}
+				
+				if (projectsDone) {
+					log.info("No more projects.");
+				} else {
+					model.add( fetchNextProject(!CACHE) );
 				}
 				
 				if ( projectsDone && pubsDone ) {
@@ -182,6 +193,72 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		
 		
 		/**
+		 * A method to retrieve all the projects' IDs from a model.
+		 */ 
+	    public List<String> retrieveProjectsIds( Model currentModel ) {
+	    	
+			String selectQueryStr = loadQuery(SPARQL_RESOURCE_DIR + "SELECT-project-id.sparql");
+			QueryExecution selectExec = QueryExecutionFactory.create(selectQueryStr, currentModel);
+			List<String> tempProjectIds = new ArrayList<String>();
+			ResultSet result = selectExec.execSelect();
+			QuerySolution qsol;
+			RDFNode node;
+			
+			while ( result.hasNext() )
+			{
+				qsol = result.next();
+				
+				node = qsol.get("projectId");
+				
+				if ( node != null && node.isLiteral())
+				{
+					String value = node.asLiteral().getLexicalForm();
+					tempProjectIds.add(value);
+					allPubRelatedProjectIds.add(value);
+				}
+			}
+			
+			selectExec.close();
+			
+			return tempProjectIds;
+	    }
+	    
+	    
+	    /**
+	     * Retrieve the pub-related projects for the current iteration.
+	     */
+	    Model getRelatedProjects( Model currentModel ) {
+	    	
+	    	Model relatedProjectsModel = ModelFactory.createDefaultModel();
+	    	
+	    	List<String> tempProjectIds = retrieveProjectsIds( currentModel );
+	    	
+	    	ListIterator<String> listIt = tempProjectIds.listIterator();
+	    	
+	    	while ( listIt.hasNext() ) {
+	    		
+				try {
+					URIBuilder uriB = new URIBuilder( OPEN_AIRE_API_URL + "search/projects" );
+					uriB.addParameter( "keywords", listIt.next().toString() );
+					uriB.addParameter( "format", "xml" );
+					
+					String request = uriB.build().toString();
+					log.info(request);
+					String response = httpUtils.getHttpResponse(request);
+					relatedProjectsModel = xmlToRdf.toRDF(response);
+					
+					Thread.sleep(MIN_REST_AFTER_HTTP_REQUEST);
+					
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+	    	}
+	    	
+	    	return relatedProjectsModel;
+	    }
+	    
+		
+		/**
 		 * Fetch the publications' related data.
 		 */
 		private Model fetchNextPublication(boolean cacheResult) {
@@ -208,6 +285,9 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 				if (cacheResult) {
 					cachedResult = model;
 				}
+				
+				model.add( getRelatedProjects( model ) );
+				
 				return model;
 			} catch (Exception e) {
 				if (this.pubsResumptionToken != null) {

@@ -4,7 +4,7 @@ PREFIX bibo:    <http://purl.org/ontology/bibo/>
 
 CONSTRUCT {
 
-    ?puplication ?p ?o .
+    ?publication ?p ?o .
 
 } WHERE {
 
