@@ -15,7 +15,12 @@ CONSTRUCT {
     ?pub a bibo:Document .
     
     ?pub ingest:rels ?rels .
-    ?rels ingest:rel ?proj .
+    ?rels ingest:rel ?rel .
+    
+    ?rel ingest:code ?code. 
     
     ?proj a vivo:Project .
+    ?proj vivo:identifier ?projectId .
+    
+    FILTER ( ?projectId = ?code )
 }

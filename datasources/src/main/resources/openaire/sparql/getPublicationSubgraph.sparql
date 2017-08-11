@@ -1,4 +1,4 @@
-PREFIX bibo:     <http://purl.org/ontology/bibo/>
+PREFIX bibo:    <http://purl.org/ontology/bibo/>
 
 
 
@@ -7,8 +7,6 @@ CONSTRUCT {
     ?puplication ?p ?o .
 
 } WHERE {
-
-    ?publication a bibo:Document .
 
     ?publication ?p ?o .
 }

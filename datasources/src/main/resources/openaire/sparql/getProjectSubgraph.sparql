@@ -8,7 +8,5 @@ CONSTRUCT {
 
 } WHERE {
 
-    ?project a vivo:Project .
-    
     ?project ?p ?o .
 }
