@@ -21,7 +21,6 @@ CONSTRUCT {
 	
 } WHERE {
 	
-	?proj a acti:ImpactProject .
-	?proj acti:otherFedResearchFunding ?title .
+	?project a acti:ImpactProject .
+	?project acti:otherFedResearchFunding ?title .
 }
-

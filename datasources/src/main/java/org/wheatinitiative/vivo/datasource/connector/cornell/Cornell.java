@@ -31,6 +31,9 @@ public class Cornell extends VivoDataSource implements DataSource {
     }
     
     
+    /**
+     * Transform the Cornell extention's RDF into VIVO RDF.
+     */
     protected Model constructForVIVO(Model model) {
     	List<String> queries =  Arrays.asList("100-acti-organizations.sparql");
     	
