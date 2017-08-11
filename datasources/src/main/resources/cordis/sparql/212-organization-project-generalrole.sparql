@@ -13,13 +13,16 @@ CONSTRUCT {
 	_:role a obo:BFO_0000023 .
 	# That role is a _23 (top level) role
 	
-	_:role obo:BFO_0000054 ?proj .
+	_:role obo:BFO_0000054 ?project .
 	# This role gets realized (_54) in the project
 	
 } WHERE {
 	
-	?proj a vivo:Project .
-	?proj cordis:relations ?rel .
+	?project a vivo:Project .
+	
+    ?grant vivo:fundingVehicleFor ?project .
+	
+	?project cordis:relations ?rel .
 	?rel cordis:associations ?asc .
 	?asc cordis:organization ?org .
 	

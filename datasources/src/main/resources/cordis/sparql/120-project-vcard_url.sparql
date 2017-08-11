@@ -1,0 +1,27 @@
+PREFIX cordis:  <http://cordis.europa.eu/>
+PREFIX vcard:   <http://www.w3.org/2006/vcard/ns#>
+PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
+PREFIX vivo:    <http://vivoweb.org/ontology/core#>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+
+
+
+CONSTRUCT {
+
+    ?project vcard:hasURL _:url .
+    ?grant vcard:hasURL _:url .
+    
+    _:url a vcard:URL .
+    _:url vcard:url ?project_url .
+    _:url rdfs:label ?project_url_str .
+    
+} WHERE {
+
+    ?project a vivo:Project .
+    
+    ?grant vivo:fundingVehicleFor ?project .
+    
+    ?project cordis:url ?project_url_str .
+    
+    BIND ( xsd:anyURI( ?project_url_str ) AS ?project_url )   
+}

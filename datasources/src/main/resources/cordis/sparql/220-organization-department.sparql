@@ -6,7 +6,9 @@ PREFIX obo:		<http://purl.obolibrary.org/obo/>
 
 
 CONSTRUCT {
+
     _:department a foaf:AcademicDepartment .
+    
     _:department rdfs:label ?org_dep_name .
     
     _:department obo:BFO_0000050 ?y .

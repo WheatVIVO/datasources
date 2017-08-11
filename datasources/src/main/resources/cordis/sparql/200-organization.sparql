@@ -4,7 +4,9 @@ PREFIX foaf:	<http://xmlns.com/foaf/0.1/>
 PREFIX vivo:	<http://vivoweb.org/ontology/core#>
 
 
+
 CONSTRUCT {
+
     ?z a foaf:Organization .
     ?z rdfs:label ?legal_name .
 	?z foaf:alternativeTerm ?short_name .

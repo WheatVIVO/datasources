@@ -25,7 +25,6 @@ CONSTRUCT {
 	_:url vcard:url ?org_url .
 	_:url rdfs:label ?org_url_str .
 	
-	
 } WHERE {
 
 	?x a foaf:Organization .

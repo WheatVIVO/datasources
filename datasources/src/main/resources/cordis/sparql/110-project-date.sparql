@@ -3,8 +3,10 @@ PREFIX vivo:	<http://vivoweb.org/ontology/core#>
 PREFIX xsd:		<http://www.w3.org/2001/XMLSchema#>
 
 
+
 CONSTRUCT {
-    ?proj vivo:dateTimeInterval _:dti .
+
+    ?project vivo:dateTimeInterval _:dti .
     _:dti a vivo:DateTimeInterval .
     _:dti vivo:start _:start .
     
@@ -18,11 +20,11 @@ CONSTRUCT {
     _:end vivo:dateTimePrecision vivo:yearMonthDayPrecision .
     
 } WHERE {
-    ?proj a vivo:Project .
+    ?project a vivo:Project .
     
-    ?proj cordis:startDate ?cordisStart .
+    ?project cordis:startDate ?cordisStart .
     BIND ( xsd:dateTime( CONCAT ( ?cordisStart, "T00:00:00Z") ) AS ?start_date)
     
-    ?proj cordis:endDate ?cordisEnd .
+    ?project cordis:endDate ?cordisEnd .
     BIND ( xsd:dateTime( CONCAT ( ?cordisEnd, "T00:00:00Z") ) AS ?end_date)
 }
