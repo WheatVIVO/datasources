@@ -13,8 +13,8 @@ CONSTRUCT {
     
 } WHERE {
 
-    ?proj a vivo:Project .
-    ?proj ingest:rels ?rels .
+    ?project a vivo:Project .
+    ?project ingest:rels ?rels .
     ?rels ingest:rel ?org .
     
     ?org ingest:legalname ?legal_name .

@@ -6,7 +6,9 @@ PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
 
 CONSTRUCT {
 
-    ?proj vivo:dateTimeInterval _:dti .
+    ?project vivo:dateTimeInterval _:dti .
+    ?grant vivo:dateTimeInterval _:dti .
+    
     _:dti a vivo:DateTimeInterval .
     _:dti vivo:start _:start .
     
@@ -21,11 +23,13 @@ CONSTRUCT {
     
 } WHERE {
 
-    ?proj a vivo:Project .
+    ?project a vivo:Project .
     
-    ?proj ingest:startdate ?projStart .
+    ?grant vivo:fundingVehicleFor ?project .
+    
+    ?project ingest:startdate ?projStart .
     BIND ( xsd:dateTime( CONCAT ( ?projStart, "T00:00:00Z") ) AS ?start_date)
     
-    ?proj ingest:enddate ?projEnd .
+    ?project ingest:enddate ?projEnd .
     BIND ( xsd:dateTime( CONCAT ( ?projEnd, "T00:00:00Z") ) AS ?end_date)
 }

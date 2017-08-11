@@ -8,7 +8,7 @@ PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
 
 CONSTRUCT {
 
-    ?proj vcard:hasURL _:url .
+    ?project vcard:hasURL _:url .
     
     _:url a vcard:URL .
     _:url vcard:url ?project_url .
@@ -22,10 +22,11 @@ CONSTRUCT {
 
 } WHERE {
 
-    ?proj a vivo:Project .
-    ?grant a vivo:Grant .
+    ?project a vivo:Project .
     
-    ?proj ingest:websiteurl ?project_url_str .
+    ?grant vivo:fundingVehicleFor ?project .
+    
+    ?project ingest:websiteurl ?project_url_str .
     
     BIND ( xsd:anyURI( ?project_url_str ) AS ?project_url )
 }

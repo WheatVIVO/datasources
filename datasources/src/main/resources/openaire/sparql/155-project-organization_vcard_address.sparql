@@ -25,8 +25,8 @@ CONSTRUCT {
 
 } WHERE {
 
-    ?proj a vivo:Project .
-    ?proj ingest:rels ?rels .
+    ?project a vivo:Project .
+    ?project ingest:rels ?rels .
     ?rels ingest:rel ?rel .
     
     ?rel ingest:country ?country .

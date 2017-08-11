@@ -6,17 +6,12 @@ PREFIX obo:     <http://purl.obolibrary.org/obo/>
 
 CONSTRUCT {
 
-    ?proj a vivo:Project .
-    ?proj vivo:identifier ?project_id .
-    
-    # Project "has participant" a Grant.
-    ?proj obo:RO_0000057 _:grant .
+    ?project a vivo:Project .
+    ?project vivo:identifier ?project_id .
     
     _:grant a vivo:Grant .
     _:grant vivo:identifier ?project_id .
-    
-    # Grant "participates in" a Project.
-    _:grant obo:RO_0000056 ?proj .
+    _:grant vivo:fundingVehicleFor ?project .
 
 } WHERE {
 
@@ -24,5 +19,5 @@ CONSTRUCT {
 #   but we take them as related projects to the publications.
 #   The "ingest:code" is used only for the project identifier, so, we are sure we take only actual projects.
 
-    ?proj ingest:code ?project_id .
+    ?project ingest:code ?project_id .
 }

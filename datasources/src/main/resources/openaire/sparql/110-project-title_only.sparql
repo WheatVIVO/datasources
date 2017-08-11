@@ -6,15 +6,19 @@ PREFIX vivo:    <http://vivoweb.org/ontology/core#>
 
 CONSTRUCT {
 
-    ?proj rdfs:label ?title .
+    ?project rdfs:label ?title .
+    
+    ?grant rdfs:label ?title .
 
 } WHERE {
 
-    ?proj a vivo:Project .
+    ?project a vivo:Project .
     
-    ?proj ingest:title ?title .
+    ?grant vivo:fundingVehicleFor ?project .
+    
+    ?project ingest:title ?title .
     
     FILTER NOT EXISTS {
-        ?proj ingest:acronym ?acronym .
+        ?project ingest:acronym ?acronym .
     }
 }
