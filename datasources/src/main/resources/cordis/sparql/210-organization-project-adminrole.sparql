@@ -9,19 +9,20 @@ PREFIX vitro:    <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>
 
 CONSTRUCT {
 
-    ?proj vivo:relates ?org .
-    ?proj vivo:relates _:role .
+    ?grant vivo:relates ?org .
+    ?grant vivo:relates _:role .
     
     _:role a vivo:AdministratorRole . 
     _:role obo:RO_0000052 ?org .
-    _:role obo:BFO_0000054 ?proj .
-    
-    ?org vitro:position 0 .
+    _:role obo:BFO_0000054 ?project .
 
 } WHERE {
 
-    ?proj a vivo:Project .
-    ?proj cordis:relations ?rel .
+    ?project a vivo:Project .
+    
+    ?grant vivo:fundingVehicleFor ?project .
+    
+    ?project cordis:relations ?rel .
     ?rel cordis:associations ?asc .
     ?asc cordis:organization ?org .
     

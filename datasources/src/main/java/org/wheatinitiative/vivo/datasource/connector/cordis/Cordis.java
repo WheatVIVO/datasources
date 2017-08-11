@@ -334,12 +334,13 @@ public class Cordis extends ConnectorDataSource implements DataSource {
 		List<String> queries =  Arrays.asList(
 								"100-project.sparql",
 								"110-project-date.sparql",
+								"120-project-vcard_url.sparql",
 								"200-organization.sparql",
 								"210-organization-project-adminrole.sparql",
 								"211-orgaization-project-participantrole.sparql",
 								"212-organization-project-generalrole.sparql",
 								"220-organization-department.sparql",
-								"230-organization-address.sparql"
+								"230-organization-vcard_address.sparql"
 								);
 		
         for(String query : queries) {
