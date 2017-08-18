@@ -8,8 +8,8 @@ import com.hp.hpl.jena.rdf.model.Model;
 
 
 /**
- * Currently there is an issue with the Certificate Authority that Upenn uses.
- * It seems that "InCommon RSA Server CA" requires the use of an intermediate certificate,
+ * Please note that the "InCommon Certificate Service" that VIVO Upenn is using,
+ * requires that an intermediate certificate is installed in the client's machine,
  * in order for the authentication process to be successful.
  */
 public class Upenn extends VivoDataSource implements DataSource {
