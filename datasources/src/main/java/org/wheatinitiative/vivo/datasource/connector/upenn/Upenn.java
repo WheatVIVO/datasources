@@ -6,6 +6,7 @@ import org.wheatinitiative.vivo.datasource.connector.VivoDataSource;
 import com.hp.hpl.jena.rdf.model.Model;
 
 
+
 /**
  * Currently there is an issue with the Certificate Authority that Upenn uses.
  * It seems that "InCommon RSA Server CA" requires the use of an intermediate certificate,
@@ -15,10 +16,12 @@ public class Upenn extends VivoDataSource implements DataSource {
 
     private static final String UPENN_VIVO_URL = "http://vivo.upenn.edu/vivo";
     
+    
     @Override 
     protected String getRemoteVivoURL() {
         return UPENN_VIVO_URL;
     }
+    
     
     @Override
     protected Model mapToVIVO(Model model) {
