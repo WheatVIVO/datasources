@@ -10,8 +10,8 @@ PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
 
 CONSTRUCT {
 
-	# x "has contact info" 
-    ?x obo:ARG_2000028 _:vcard .
+	# org "has contact info" 
+    ?org obo:ARG_2000028 _:vcard .
     
     _:vcard a vcard:Organization .
     _:vcard vcard:hasAddress _:address .
@@ -27,9 +27,10 @@ CONSTRUCT {
 	
 } WHERE {
 
-	?x a foaf:Organization .
+	?org a foaf:Organization .
 
-	?x cordis:address ?adr .
+	?org cordis:address ?adr .
+	
 	?adr cordis:street ?org_street .
 	?adr cordis:city ?org_city .
 	?adr cordis:postalCode ?org_post .
@@ -37,7 +38,7 @@ CONSTRUCT {
 	
 	BIND ( xsd:anyURI( ?org_url_str ) AS ?org_url )
 	
-	?x cordis:relations ?rel .
+	?org cordis:relations ?rel .
 	?rel cordis:regions ?reg_pl .
 	?reg_pl cordis:region ?reg .
 	?reg cordis:name ?org_country_name .
