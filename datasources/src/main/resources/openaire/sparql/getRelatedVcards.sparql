@@ -1,0 +1,16 @@
+PREFIX obo:		<http://purl.obolibrary.org/obo/>
+
+
+
+CONSTRUCT {
+
+	?vcard ?vcardP ?vcardO .
+	?vcardO ?vcardPP ?vcardOO .
+
+} WHERE {
+
+    ?entity obo:ARG_2000028 ?vcard .
+    
+	?vcard ?vcardP ?vcardO .
+	?vcardO ?vcardPP ?vcardOO .
+}

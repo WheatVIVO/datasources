@@ -1,0 +1,21 @@
+PREFIX bibo:	<http://purl.org/ontology/bibo/>
+
+
+
+CONSTRUCT {
+
+    ?journal ?journalP ?journalO .
+    
+    ?publisher ?publisherP ?publisherO .
+
+} WHERE {
+
+    ?journal a bibo:Journal .
+    ?journal ?journalP ?journalO .
+    
+    OPTIONAL {
+    # make it optional just to be sure.
+        ?publisher vivo:publisherOf ?journal .
+        ?publisher ?publisherP ?publisherO .
+    }
+}

@@ -112,6 +112,9 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		}
 		
 		
+		/**
+		 * Iterate over different chunks of data.
+		 */
 		public Model next() {
 			
 			Model model = ModelFactory.createDefaultModel();
@@ -495,7 +498,6 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
      * Connect the related organizations' and others' data with each resource's URI.
      */
     private Model constructPublicationSubgraph(Resource publicationRes, Model model) {
-    	// TODO - Construct publication's subgraph.
     	
         Model subgraph = ModelFactory.createDefaultModel();
         Map<String, String> substitutions = new HashMap<String, String>();
@@ -505,7 +507,17 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
                 SPARQL_RESOURCE_DIR + "getEntitySubgraph.sparql", model, 
                 NAMESPACE_ETC, substitutions));
         
-        // TODO Also add any other publication-related data.
+		subgraph.add(constructQuery(
+                SPARQL_RESOURCE_DIR + "getRelatedVcards.sparql", model, 
+                NAMESPACE_ETC, substitutions));
+                
+		subgraph.add(constructQuery(
+                SPARQL_RESOURCE_DIR + "getRelatedAuthorships.sparql", model, 
+                NAMESPACE_ETC, substitutions));
+                
+		subgraph.add(constructQuery(
+                SPARQL_RESOURCE_DIR + "getRelatedJournals.sparql", model, 
+                NAMESPACE_ETC, substitutions));
         
     	return subgraph;
     }
@@ -516,7 +528,6 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
      * Connect the related organizations' and others' data with each resource's URI.
      */
     private Model constructProjectSubgraph(Resource projectRes, Model model) {
-    	// TODO - Construct project's subgraph.
     	
         Model subgraph = ModelFactory.createDefaultModel();
         Map<String, String> substitutions = new HashMap<String, String>();
@@ -526,7 +537,17 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
                 SPARQL_RESOURCE_DIR + "getEntitySubgraph.sparql", model, 
                 NAMESPACE_ETC, substitutions));
         
-        // TODO Also add any other project-related data.
+        subgraph.add(constructQuery(
+                SPARQL_RESOURCE_DIR + "getRelatedDateTimeGraphs.sparql", model, 
+                NAMESPACE_ETC, substitutions));
+        
+		subgraph.add(constructQuery(
+                SPARQL_RESOURCE_DIR + "getRelatedVcards.sparql", model, 
+                NAMESPACE_ETC, substitutions));
+        
+		subgraph.add(constructQuery(
+                SPARQL_RESOURCE_DIR + "getRelatedOrganizations.sparql", model, 
+                NAMESPACE_ETC, substitutions));
         
         return subgraph;
     }
