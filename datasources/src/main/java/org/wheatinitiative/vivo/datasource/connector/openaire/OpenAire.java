@@ -62,7 +62,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	private static final Property VITRO_VALUE = ResourceFactory
 			.createProperty("http://vitro.mannlib.cornell.edu/ns/vitro/0.7#value");
 	
-	 private static final int MIN_REST_AFTER_HTTP_REQUEST = 250; //ms
+	private static final int MIN_REST_AFTER_HTTP_REQUEST = 250; //ms
 	
 	private HttpUtils httpUtils = new HttpUtils();
 	private XmlToRdf xmlToRdf = new XmlToRdf();
@@ -85,7 +85,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		
 		private String metadataPrefix;
 		
-		private List<String> allPubRelatedProjectIds = new ArrayList<String>();
+	//	private List<String> allPubRelatedProjectIds = new ArrayList<String>();
 		
 		private Model cachedResult = null;
 		private Integer totalRecords = null;
@@ -151,8 +151,8 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		 * Cache the first results in order to retrieve the records number.
 		 */
 		private void cacheNext() {
-			fetchNextProject(CACHE);
 			fetchNextPublication(CACHE);
+			fetchNextProject(CACHE);
 		}
 		
 		
@@ -205,6 +205,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	    	
 			String selectQueryStr = loadQuery(SPARQL_RESOURCE_DIR + "SELECT-project-id.sparql");
 			QueryExecution selectExec = QueryExecutionFactory.create(selectQueryStr, currentModel);
+			
 			List<String> tempProjectIds = new ArrayList<String>();
 			ResultSet result = selectExec.execSelect();
 			QuerySolution qsol;
@@ -213,14 +214,13 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 			while ( result.hasNext() )
 			{
 				qsol = result.next();
-				
 				node = qsol.get("projectId");
 				
 				if ( node != null && node.isLiteral())
 				{
 					String value = node.asLiteral().getLexicalForm();
 					tempProjectIds.add(value);
-					allPubRelatedProjectIds.add(value);
+				//	allPubRelatedProjectIds.add(value);
 				}
 			}
 			
@@ -369,6 +369,12 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 				this.projectsResumptionToken = token;
 			else if ( dataType == "publication" )
 				this.pubsResumptionToken = token;
+			else {
+				log.debug("The method: processResumptionToken(Model, String)"
+						+ "recieved an invalid value for its \"dataType\" parameter.");
+				// In case of an addition of a new dataType, the existing "if-else" statement should get enlarged.
+				throw new RuntimeException();
+			}
 		}
 		
 		
@@ -440,7 +446,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	
 	
 	/**
-	 * Get only the query_terms-related general_URIs.
+	 * Get only the query_terms-related entities' URIs.
 	 */
     protected List<Resource> getRelevantResources(Model model, String type) {
     	
@@ -460,7 +466,14 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
                 while(rs.hasNext()) {
                     count++;
                     QuerySolution soln = rs.next();
+
                     Resource res = soln.getResource(type);
+                    
+                //	If we are retrieving projects, then we should also retrieve the related grants.
+                    if( type == "Project" ) {
+                    	res = soln.getResource("Grant");
+                    }
+                    
                     if(res != null) {
                         relevantResources.add(res);
                     }
@@ -478,28 +491,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
     
     
     /**
-     * Construct the subgraph of the given project's general_URI.
-     * Connect the related organizations' and others' data with each resource's URI.
-     */
-    private Model constructProjectSubgraph(Resource projectRes, Model model) {
-    	// TODO - Construct project's subgraph.
-    	
-        Model subgraph = ModelFactory.createDefaultModel();
-        Map<String, String> substitutions = new HashMap<String, String>();
-        substitutions.put("\\?project", "<" + projectRes.getURI() + ">");
-        
-        subgraph.add(constructQuery(
-                SPARQL_RESOURCE_DIR + "getProjectSubgraph.sparql", model, 
-                NAMESPACE_ETC, substitutions));
-        
-        // TODO Also add any other project-related data.
-        
-        return subgraph;
-    }
-    
-    
-    /**
-     * Construct the subgraph of the given publication's general_URI.
+     * Construct the subgraph of the given publication's URI.
      * Connect the related organizations' and others' data with each resource's URI.
      */
     private Model constructPublicationSubgraph(Resource publicationRes, Model model) {
@@ -510,12 +502,33 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
         substitutions.put("\\?publication", "<" + publicationRes.getURI() + ">");
         
         subgraph.add(constructQuery(
-                SPARQL_RESOURCE_DIR + "getPublicationSubgraph.sparql", model, 
+                SPARQL_RESOURCE_DIR + "getEntitySubgraph.sparql", model, 
                 NAMESPACE_ETC, substitutions));
         
         // TODO Also add any other publication-related data.
         
     	return subgraph;
+    }
+    
+    
+    /**
+     * Construct the subgraph of the given project's URI.
+     * Connect the related organizations' and others' data with each resource's URI.
+     */
+    private Model constructProjectSubgraph(Resource projectRes, Model model) {
+    	// TODO - Construct project's subgraph.
+    	
+        Model subgraph = ModelFactory.createDefaultModel();
+        Map<String, String> substitutions = new HashMap<String, String>();
+        substitutions.put("\\?project", "<" + projectRes.getURI() + ">");
+        
+        subgraph.add(constructQuery(
+                SPARQL_RESOURCE_DIR + "getEntitySubgraph.sparql", model, 
+                NAMESPACE_ETC, substitutions));
+        
+        // TODO Also add any other project-related data.
+        
+        return subgraph;
     }
     
     

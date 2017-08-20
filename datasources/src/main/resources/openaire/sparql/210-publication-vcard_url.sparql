@@ -3,12 +3,16 @@ PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
 PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
 PREFIX bibo:    <http://purl.org/ontology/bibo/>
+PREFIX obo:		<http://purl.obolibrary.org/obo/>
 
 
 
 CONSTRUCT {
 
-    ?pub vcard:hasURL _:url .
+	# entity "has contact info" 
+    ?pub obo:ARG_2000028 _:vcard .
+
+    _:vcard vcard:hasURL _:url .
     _:url a vcard:URL .
     _:url vcard:url ?pubUrl .
     _:url rdfs:label ?pubUrlStr .

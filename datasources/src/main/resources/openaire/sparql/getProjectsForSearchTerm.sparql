@@ -4,11 +4,14 @@ PREFIX bibo:    <http://purl.org/ontology/bibo/>
 
 
 
-SELECT DISTINCT ?Project
+SELECT DISTINCT ?Project ?Grant
 
 WHERE {
 
     ?Project a vivo:Project .
+    
+    ?Grant vivo:fundingVehicleFor ?Project .
+    
     ?Publication a bibo:Document .
     
     {

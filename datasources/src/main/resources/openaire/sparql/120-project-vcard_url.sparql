@@ -3,14 +3,17 @@ PREFIX vcard:   <http://www.w3.org/2006/vcard/ns#>
 PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
 PREFIX vivo:    <http://vivoweb.org/ontology/core#>
 PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX obo:		<http://purl.obolibrary.org/obo/>
 
 
 
 CONSTRUCT {
 
-    ?project vcard:hasURL _:url .
+	# entity "has contact info" 
+    ?project obo:ARG_2000028 _:vcard .
+    ?grant obo:ARG_2000028 _:vcard .
     
-    ?grant vcard:hasURL _:url .
+    _:vcard vcard:hasURL _:url .
     
     _:url a vcard:URL .
     _:url vcard:url ?project_url .
