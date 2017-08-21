@@ -16,5 +16,8 @@ CONSTRUCT {
     
     ?authorship a vivo:Authorship .
     ?authorship vivo:relates ?author .
+	
 	?authorship ?authorshipP ?authorshipO .
+	
+	?authorship vivo:relates ?entity .
 }

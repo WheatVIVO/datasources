@@ -515,7 +515,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
     	
         Model subgraph = ModelFactory.createDefaultModel();
         Map<String, String> substitutions = new HashMap<String, String>();
-        substitutions.put("\\?publication", "<" + publicationRes.getURI() + ">");
+        substitutions.put("\\?entity", "<" + publicationRes.getURI() + ">");
         
         subgraph.add(constructQuery(
                 SPARQL_RESOURCE_DIR + "getEntitySubgraph.sparql", model, 
@@ -545,7 +545,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
     	
         Model subgraph = ModelFactory.createDefaultModel();
         Map<String, String> substitutions = new HashMap<String, String>();
-        substitutions.put("\\?project", "<" + projectRes.getURI() + ">");
+        substitutions.put("\\?entity", "<" + projectRes.getURI() + ">");
         
         subgraph.add(constructQuery(
                 SPARQL_RESOURCE_DIR + "getEntitySubgraph.sparql", model, 

@@ -5,17 +5,17 @@ PREFIX vivo:    <http://vivoweb.org/ontology/core#>
 
 CONSTRUCT {
 
-	?grant vivo:relates ?org .
+	?entity vivo:relates ?org .
 	?org ?orgP ?orgO .
 	?orgO ?orgPP ?prgOO .
 	?orgOO ?orgPPP ?orgOOO .
 	
-	?grant vivo:relates ?role .
+	?entity vivo:relates ?role .
 	?role ?roleP ?roleO .
 	
 } WHERE {
 
-	?grant vivo:relates ?org .
+	?entity vivo:relates ?org .
 	
 	?org a foaf:Organization .
 	?org ?orgP ?orgO .
@@ -26,7 +26,7 @@ CONSTRUCT {
 	# That is, because the individual sparql query for vcards, can only be used for high-level entities,
 	# which are retrieved by our java code, as wheat-related.
 	
-	?grant vivo:relates ?role .
+	?entity vivo:relates ?role .
 
 	FILTER NOT EXIST { ?role a foaf:Organization }
 	?role ?roleP ?roleO .

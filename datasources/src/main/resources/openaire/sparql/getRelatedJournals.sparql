@@ -19,4 +19,6 @@ CONSTRUCT {
         ?publisher vivo:publisherOf ?journal .
         ?publisher ?publisherP ?publisherO .
     }
+    
+	?journal vivo:publicationVenueFor ?entity .
 }
