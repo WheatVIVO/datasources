@@ -85,8 +85,6 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		
 		private String metadataPrefix;
 		
-	//	private List<String> allPubRelatedProjectIds = new ArrayList<String>();
-		
 		private Model cachedResult = null;
 		private Integer totalRecords = null;
 		private String projectsResumptionToken = null;
@@ -160,119 +158,6 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		
 		
 		/**
-		 * Fetch the projects' related data.
-		 */
-		private Model fetchNextProject(boolean cacheResult) {
-			
-			URIBuilder uriB = new URIBuilder(repositoryURI);
-			uriB.addParameter("verb", "ListRecords");
-			if (projectsResumptionToken != null) {
-				uriB.addParameter("resumptionToken", projectsResumptionToken);
-			} else {
-				uriB.addParameter("set", "projects");
-				uriB.addParameter("metadataPrefix", metadataPrefix);
-			}
-			try {
-				String request = uriB.build().toString();
-				log.info(request);
-				String response = httpUtils.getHttpResponse(request);
-				Model model = xmlToRdf.toRDF(response);
-				processResumptionToken(model, "project");
-				if (projectsResumptionToken == null) {
-					projectsDone = true;
-					log.info("No more project's resumption token -- done.");
-				}
-				if (cacheResult) {
-					cachedResult = model;
-				}
-				
-				return model;
-				
-			} catch (Exception e) {
-				if (this.projectsResumptionToken != null) {
-					this.projectsResumptionToken = guessAtNextResumptionToken(this.projectsResumptionToken);
-				}
-				throw new RuntimeException(e);
-			}
-		}
-		
-		
-		/**
-		 * A method to retrieve all the projects' IDs from a model.
-		 */ 
-	    public List<String> retrieveProjectsIds( Model currentModel ) {
-	    	
-			String selectQueryStr = loadQuery(SPARQL_RESOURCE_DIR + "SELECT-project-id.sparql");
-			QueryExecution selectExec = QueryExecutionFactory.create(selectQueryStr, currentModel);
-			
-			List<String> tempProjectIds = new ArrayList<String>();
-			
-			try {
-				ResultSet result = selectExec.execSelect();
-				
-				QuerySolution qsol;
-				RDFNode node;
-				
-				while ( result.hasNext() )
-				{
-					qsol = result.next();
-					node = qsol.get("projectId");
-					
-					if ( node != null && node.isLiteral())
-					{
-						String value = node.asLiteral().getLexicalForm();
-						tempProjectIds.add(value);
-					//	allPubRelatedProjectIds.add(value);
-					}
-				}
-				
-				return tempProjectIds;
-				
-			} catch (Exception e) {
-	    		log.error(e, e);
-				throw new RuntimeException(e);
-	    	} finally {
-	    		if ( selectExec != null )
-	    			selectExec.close();
-	    	}
-	    }
-	    
-	    
-	    /**
-	     * Retrieve the pub-related projects for the current iteration.
-	     */
-	    Model getRelatedProjects( Model currentModel ) {
-	    	
-	    	Model relatedProjectsModel = ModelFactory.createDefaultModel();
-	    	
-	    	List<String> tempProjectIds = retrieveProjectsIds( currentModel );
-	    	ListIterator<String> listIt = tempProjectIds.listIterator();
-	    	
-	    	while ( listIt.hasNext() ) {
-	    		
-				try {
-					URIBuilder uriB = new URIBuilder( OPEN_AIRE_API_URL + "search/projects" );
-					uriB.addParameter( "keywords", listIt.next().toString() );
-					uriB.addParameter( "format", "xml" );
-					
-					String request = uriB.build().toString();
-					log.info(request);
-					String response = httpUtils.getHttpResponse(request);
-					relatedProjectsModel = xmlToRdf.toRDF(response);
-					
-					Thread.sleep(MIN_REST_AFTER_HTTP_REQUEST);
-					
-				} catch (Exception e) {
-					log.error(e, e);
-					throw new RuntimeException(e);
-				}
-	    	}
-	    	
-	    	return relatedProjectsModel;
-	    }
-	    
-		
-		/**
 		 * Fetch the publications' related data.
 		 */
 		private Model fetchNextPublication(boolean cacheResult) {
@@ -317,20 +202,107 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		
 		
 		/**
-		 * Guess the resumption token when some of the data is wrong/corrupted.
-		 */
-		/* In that case, we will just lose this specific piece of data,
-		 * but we will still be able to retrieve everything else.
-		 */
-		private String guessAtNextResumptionToken(String resumptionToken) {
+		 * A method to retrieve all the projects' IDs from a model.
+		 */ 
+	    public List<String> retrieveProjectsIds( Model currentModel ) {
+	    	
+			String selectQueryStr = loadQuery(SPARQL_RESOURCE_DIR + "SELECT-project-id.sparql");
+			QueryExecution selectExec = QueryExecutionFactory.create(selectQueryStr, currentModel);
+			
+			List<String> tempProjectIds = new ArrayList<String>();
 			try {
-				String[] tokens = resumptionToken.split("!");
-				int cursor = Integer.parseInt(tokens[1], 10);
-				cursor = cursor + 200;
-				return tokens[0] + "!" + cursor + "!" + tokens[2] + "!" + tokens[3] + "!" + tokens[4];
+				ResultSet result = selectExec.execSelect();
+				QuerySolution qsol;
+				RDFNode node;
+				
+				while ( result.hasNext() ) {
+					qsol = result.next();
+					node = qsol.get("projectId");
+					
+					if ( node != null && node.isLiteral()) {
+						String value = node.asLiteral().getLexicalForm();
+						tempProjectIds.add(value);
+					}
+				}
+				return tempProjectIds;
+				
 			} catch (Exception e) {
-				log.error(e, e);
-				return null;
+	    		log.error(e, e);
+				throw new RuntimeException(e);
+	    	} finally {
+	    		if ( selectExec != null )
+	    			selectExec.close();
+	    	}
+	    }
+	    
+	    
+	    /**
+	     * Retrieve the pub-related projects for the current iteration.
+	     */
+	    Model getRelatedProjects( Model currentModel ) {
+	    	
+	    	Model relatedProjectsModel = ModelFactory.createDefaultModel();
+	    	
+	    	List<String> tempProjectIds = retrieveProjectsIds( currentModel );
+	    	ListIterator<String> listIt = tempProjectIds.listIterator();
+	    	
+	    	while ( listIt.hasNext() ) {
+				try {
+					URIBuilder uriB = new URIBuilder( OPEN_AIRE_API_URL + "search/projects" );
+					uriB.addParameter( "keywords", listIt.next().toString() );
+					uriB.addParameter( "format", "xml" );
+					
+					String request = uriB.build().toString();
+					log.info(request);
+					String response = httpUtils.getHttpResponse(request);
+					relatedProjectsModel = xmlToRdf.toRDF(response);
+					
+					Thread.sleep(MIN_REST_AFTER_HTTP_REQUEST);
+					
+				} catch (Exception e) {
+					log.error(e, e);
+					throw new RuntimeException(e);
+				}
+	    	}
+	    	
+	    	return relatedProjectsModel;
+	    }
+	    
+	    
+	    /**
+		 * Fetch the projects' related data.
+		 */
+		private Model fetchNextProject(boolean cacheResult) {
+			
+			URIBuilder uriB = new URIBuilder(repositoryURI);
+			uriB.addParameter("verb", "ListRecords");
+			if (projectsResumptionToken != null) {
+				uriB.addParameter("resumptionToken", projectsResumptionToken);
+			} else {
+				uriB.addParameter("set", "projects");
+				uriB.addParameter("metadataPrefix", metadataPrefix);
+			}
+			try {
+				String request = uriB.build().toString();
+				log.info(request);
+				String response = httpUtils.getHttpResponse(request);
+				Model model = xmlToRdf.toRDF(response);
+				processResumptionToken(model, "project");
+				if (projectsResumptionToken == null) {
+					projectsDone = true;
+					log.info("No more project's resumption token -- done.");
+				}
+				if (cacheResult) {
+					cachedResult = model;
+				}
+				
+				return model;
+				
+			} catch (Exception e) {
+				if (this.projectsResumptionToken != null) {
+					this.projectsResumptionToken = guessAtNextResumptionToken(this.projectsResumptionToken);
+				}
+				throw new RuntimeException(e);
 			}
 		}
 		
@@ -339,14 +311,13 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		 * Get the resumption token, which, the server is giving us,
 		 * in order to continue to retrieve the different pieces of data.
 		 */
-		/*
-		 * Because the server is making the data available in pieces..
-		 * without an indicator to testify that this exact client is still requesting data..
-		 * the server would sent the first piece over and over again.
-		 * (It would think that every time the request is made by a different client.)
-		 */
 		private void processResumptionToken(Model model, String dataType) {
-			
+			/*
+			 * Because the server is making the data available in pieces..
+			 * without an indicator to testify that this exact client is still requesting data..
+			 * the server would sent the first piece over and over again.
+			 * (It would think that every time the request is made by a different client.)
+			 */
 			NodeIterator nit = model.listObjectsOfProperty(RESUMPTION_TOKEN);
 			String token = null;
 			while (nit.hasNext()) {
@@ -379,6 +350,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 				}
 			}
 			log.debug("Token: " + token);
+			
 			if ( dataType == "project" )
 				this.projectsResumptionToken = token;
 			else if ( dataType == "publication" )
@@ -388,6 +360,26 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 						+ "recieved an invalid value for its \"dataType\" parameter.");
 				// In case of an addition of a new dataType, the existing "if-else" statement should get enlarged.
 				throw new RuntimeException();
+			}
+		}
+		
+		
+		/**
+		 * Guess the resumption token when some of the data is wrong/corrupted.
+		 */
+		private String guessAtNextResumptionToken(String resumptionToken) {
+			/*
+			 * In this case, we will just lose this specific piece of data,
+			 * but we will still be able to retrieve everything else.
+			 */
+			try {
+				String[] tokens = resumptionToken.split("!");
+				int cursor = Integer.parseInt(tokens[1], 10);
+				cursor = cursor + 200;
+				return tokens[0] + "!" + cursor + "!" + tokens[2] + "!" + tokens[3] + "!" + tokens[4];
+			} catch (Exception e) {
+				log.error(e, e);
+				return null;
 			}
 		}
 		
@@ -402,6 +394,19 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 			return totalRecords;
 		}
 		
+	}
+	
+	
+	/**
+	 * Transform the raw RDF into VIVO RDF. 
+	 */
+	@Override
+	protected Model mapToVIVO(Model model) {
+		
+		model = rdfUtils.renameBNodes(model, NAMESPACE_ETC, model);
+		model = constructForVIVO(model);
+		
+		return model;
 	}
 	
 	
@@ -447,18 +452,30 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	
 	
 	/**
-	 * Transform the raw RDF into VIVO RDF. 
+	 * Filter the model so that we keep only data related to the query terms.
 	 */
-	@Override
-	protected Model mapToVIVO(Model model) {
-		
-		model = rdfUtils.renameBNodes(model, NAMESPACE_ETC, model);
-		model = constructForVIVO(model);
-		
-		return model;
-	}
+    @Override
+    protected Model filter(Model model) {
+    	
+        Model filtered = ModelFactory.createDefaultModel();
+        List<Resource> relevantResources = null;
+        
+        relevantResources = getRelevantResources(model, "Publication");
+        log.info(relevantResources.size() + " publication-relevant resources");
+        for (Resource res : relevantResources) {
+            filtered.add(constructPublicationSubgraph(res, model));
+        }
+        
+        relevantResources = getRelevantResources(model, "Project");
+        log.info(relevantResources.size() + " project-relevant resources");
+        for (Resource res : relevantResources) {
+            filtered.add(constructProjectSubgraph(res, model));
+        }
+        
+        return filtered;
+    }
 	
-	
+    
 	/**
 	 * Get only the query_terms-related entities' URIs.
 	 */
@@ -493,6 +510,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
                     }
                 }
                 log.info(count + " relevant resources for query term " + queryTerm);
+                
             } catch (Exception e) {
             	log.error(e, e);
             	throw new RuntimeException(e);
@@ -564,31 +582,6 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
                 NAMESPACE_ETC, substitutions));
         
         return subgraph;
-    }
-    
-    
-	/**
-	 * Filter the model so that we keep only data related to the query terms.
-	 */
-    @Override
-    protected Model filter(Model model) {
-    	
-        Model filtered = ModelFactory.createDefaultModel();
-        List<Resource> relevantResources = null;
-        
-        relevantResources = getRelevantResources(model, "Publication");
-        log.info(relevantResources.size() + " publication-relevant resources");
-        for (Resource res : relevantResources) {
-            filtered.add(constructPublicationSubgraph(res, model));
-        }
-        
-        relevantResources = getRelevantResources(model, "Project");
-        log.info(relevantResources.size() + " project-relevant resources");
-        for (Resource res : relevantResources) {
-            filtered.add(constructProjectSubgraph(res, model));
-        }
-        
-        return filtered;
     }
     
 }

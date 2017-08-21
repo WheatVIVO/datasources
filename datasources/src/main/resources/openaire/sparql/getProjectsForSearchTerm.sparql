@@ -14,6 +14,8 @@ WHERE {
     
     ?Publication a bibo:Document .
     
+# The project itself or its related publications have to be query_terms-related.
+# Note that a project might doesn't have any query_terms-keywords in its data.
     {
         { ?Project rdfs:label ?value }
         UNION
