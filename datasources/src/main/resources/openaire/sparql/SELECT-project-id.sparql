@@ -12,5 +12,7 @@ WHERE {
     ?pub ingest:rels ?rels .
     ?rels ingest:rel ?rel .
     
-    ?rel ingest:code ?projectId. 
+    ?rel ingest:code ?projectId.
+    
+    FILTER ( ?projectId != "unidentified" )
 }
