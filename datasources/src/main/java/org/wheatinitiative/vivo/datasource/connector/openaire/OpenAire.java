@@ -186,10 +186,6 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 					cachedResult = model;
 				}
 				
-				// TODO - Check for already-retrieved projects and discard them from the model.
-					// These projects were retrieved through the API,
-					// because each one of them is related with some publications.
-				
 				return model;
 				
 			} catch (Exception e) {
@@ -210,26 +206,35 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 			QueryExecution selectExec = QueryExecutionFactory.create(selectQueryStr, currentModel);
 			
 			List<String> tempProjectIds = new ArrayList<String>();
-			ResultSet result = selectExec.execSelect();
-			QuerySolution qsol;
-			RDFNode node;
 			
-			while ( result.hasNext() )
-			{
-				qsol = result.next();
-				node = qsol.get("projectId");
+			try {
+				ResultSet result = selectExec.execSelect();
 				
-				if ( node != null && node.isLiteral())
+				QuerySolution qsol;
+				RDFNode node;
+				
+				while ( result.hasNext() )
 				{
-					String value = node.asLiteral().getLexicalForm();
-					tempProjectIds.add(value);
-				//	allPubRelatedProjectIds.add(value);
+					qsol = result.next();
+					node = qsol.get("projectId");
+					
+					if ( node != null && node.isLiteral())
+					{
+						String value = node.asLiteral().getLexicalForm();
+						tempProjectIds.add(value);
+					//	allPubRelatedProjectIds.add(value);
+					}
 				}
-			}
-			
-			selectExec.close();
-			
-			return tempProjectIds;
+				
+				return tempProjectIds;
+				
+			} catch (Exception e) {
+	    		log.error(e, e);
+				throw new RuntimeException(e);
+	    	} finally {
+	    		if ( selectExec != null )
+	    			selectExec.close();
+	    	}
 	    }
 	    
 	    
@@ -241,7 +246,6 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	    	Model relatedProjectsModel = ModelFactory.createDefaultModel();
 	    	
 	    	List<String> tempProjectIds = retrieveProjectsIds( currentModel );
-	    	
 	    	ListIterator<String> listIt = tempProjectIds.listIterator();
 	    	
 	    	while ( listIt.hasNext() ) {
@@ -259,6 +263,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 					Thread.sleep(MIN_REST_AFTER_HTTP_REQUEST);
 					
 				} catch (Exception e) {
+					log.error(e, e);
 					throw new RuntimeException(e);
 				}
 	    	}
@@ -302,6 +307,9 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 			} catch (Exception e) {
 				if (this.pubsResumptionToken != null) {
 					this.pubsResumptionToken = guessAtNextResumptionToken(this.pubsResumptionToken);
+				}
+				else {
+					log.error(e, e);
 				}
 				throw new RuntimeException(e);
 			}
@@ -362,6 +370,9 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 								token = stmt.getObject().asLiteral().getLexicalForm();
 							}
 						}
+					} catch (Exception e) {
+						log.error(e, e);
+						throw new RuntimeException(e);
 					} finally {
 						sit.close();
 					}
@@ -373,7 +384,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 			else if ( dataType == "publication" )
 				this.pubsResumptionToken = token;
 			else {
-				log.debug("The method: processResumptionToken(Model, String)"
+				log.info("The method: processResumptionToken(Model, String)"
 						+ "recieved an invalid value for its \"dataType\" parameter.");
 				// In case of an addition of a new dataType, the existing "if-else" statement should get enlarged.
 				throw new RuntimeException();
@@ -482,6 +493,9 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
                     }
                 }
                 log.info(count + " relevant resources for query term " + queryTerm);
+            } catch (Exception e) {
+            	log.error(e, e);
+            	throw new RuntimeException(e);
             } finally {
                 if(qe != null) {
                     qe.close();

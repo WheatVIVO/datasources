@@ -1,4 +1,5 @@
 PREFIX bibo:	<http://purl.org/ontology/bibo/>
+PREFIX vivo:	<http://vivoweb.org/ontology/core#>
 
 
 
