@@ -29,8 +29,11 @@ CONSTRUCT {
     ?pub ingest:title ?title .
     ?title vitro:value ?titleStr .
     
-    ?pub ingest:language ?lang .
-    ?lang ingest:classname ?langStr .
+    OPTIONAL {
+    	?pub ingest:language ?lang .
+    	?lang ingest:classname ?langStr .
+		FILTER ( ?langStr != "Undetermined" )
+    }
     
     OPTIONAL { ?pub ingest:description ?descr }
     OPTIONAL { ?pub ingest:fulltext ?fulltext }
