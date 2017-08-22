@@ -130,14 +130,6 @@ public class Cordis extends ConnectorDataSource implements DataSource {
         
         
         /**
-         * The size of the model.
-         */
-        public Integer size() {
-            return totalResults(initialResultsCache);
-        }
-        
-        
-        /**
          * Retrieve the first page of results for every query term,
          * in order to know how many results to expect from each query term.
          */
@@ -148,23 +140,6 @@ public class Cordis extends ConnectorDataSource implements DataSource {
                 initialResultsCache.put(queryTerm, fetchResults(queryTerm, 1));
             }
             return initialResultsCache;
-        }
-        
-        
-        /**
-         * Get the number of the total results that can be retrieved by using all of the query terms.
-         */
-        // Note that the actual number of records used is smaller,
-        // since we only keep the projects from Cordis.
-        private Map<String, Integer> getTotalsForQueryTerms(Map<String, Model> initialResultsCache) {
-        	
-        	Map<String, Integer> totalsForQueryTerms = new HashMap<String, Integer>();
-            for(String queryTerm : initialResultsCache.keySet()) {
-                int total = totalResults(initialResultsCache.get(queryTerm));
-                totalsForQueryTerms.put(queryTerm, total);
-                log.info(total + " results for query term " + queryTerm);
-            }
-            return totalsForQueryTerms;
         }
         
         
@@ -227,51 +202,6 @@ public class Cordis extends ConnectorDataSource implements DataSource {
         
         
         /**
-         * Get total hits for a map of query term to first search result model
-         */
-        private int totalResults(Map<String, Model> initialResultsCache) {
-            int total = 0;
-            for(String queryTerm : initialResultsCache.keySet()) {
-                total += totalResults(initialResultsCache.get(queryTerm));
-            }
-            return total;
-        }
-        
-        
-        /**
-         * Get total hits for a model representing the first results page 
-         * of a search for a given query term 
-         */
-        private int totalResults(Model m) {
-            return getIntValue(CORDIS_TBOX_NS + "totalHits", m);
-        }
-        
-        
-        /**
-         * Get the integer value from the model.
-         */
-        private int getIntValue(String predicateURI, Model m) {
-            StmtIterator sit = m.listStatements(
-                    null, m.getProperty(predicateURI), (RDFNode) null);
-            try {
-                while(sit.hasNext()) {
-                    Statement stmt = sit.next();
-                    if(stmt.getObject().isLiteral()) {
-                        try {
-                            return stmt.getObject().asLiteral().getInt();
-                        } catch (Exception e) {
-                            // not an int, apparently
-                        }
-                    }
-                }
-            } finally {
-                sit.close();
-            }
-            return -1;
-        }
-        
-        
-        /**
          * Construct a set of the Cordis records' URLs.
          * We use two methods in order to be easier for other type of data to be added in the future.
          */
@@ -296,6 +226,7 @@ public class Cordis extends ConnectorDataSource implements DataSource {
          */
         private Collection<String> getResultURIs(Model searchResultsModel, String type) {
             // use set because some values are repeated (e.g. projects)
+        	
             Set<String> resultURIs = new HashSet<String>();
             Property rcn = searchResultsModel.getProperty(CORDIS_TBOX_NS + "rcn");
             NodeIterator nit = searchResultsModel.listObjectsOfProperty(
@@ -324,7 +255,91 @@ public class Cordis extends ConnectorDataSource implements DataSource {
         private String makeResultURI(String rcnValue, String type) {
             return CORDIS_TBOX_NS + type + "/rcn/" + rcnValue + "_en.xml";  
         }
+        
+        
+        /**
+         * Get the number of the total results that can be retrieved by using all of the query terms.
+         */
+        private Map<String, Integer> getTotalsForQueryTerms(Map<String, Model> initialResultsCache) {
+        	/*
+        	 * Note that the actual number of records used is smaller,
+        	 * since we only keep the projects from Cordis.
+        	 */
+        	Map<String, Integer> totalsForQueryTerms = new HashMap<String, Integer>();
+            for(String queryTerm : initialResultsCache.keySet()) {
+                int total = totalResults(initialResultsCache.get(queryTerm));
+                totalsForQueryTerms.put(queryTerm, total);
+                log.info(total + " results for query term " + queryTerm);
+            }
+            return totalsForQueryTerms;
+        }
+        
+        
+        /**
+         * Get total hits for a map of query term to first search result model
+         */
+        private int totalResults(Map<String, Model> initialResultsCache) {
+            int total = 0;
+            for(String queryTerm : initialResultsCache.keySet()) {
+                total += totalResults(initialResultsCache.get(queryTerm));
+            }
+            return total;
+        }
+        
+        
+        /**
+         * Get total hits for a model representing the first results page 
+         * of a search for a given query term 
+         */
+        private int totalResults(Model model) {
+            return getIntValue(CORDIS_TBOX_NS + "totalHits", model);
+        }
+        
+        
+        /**
+         * Get the integer value from the model.
+         */
+        private int getIntValue(String predicateURI, Model model) {
+            StmtIterator sit = model.listStatements(
+                    null, model.getProperty(predicateURI), (RDFNode) null);
+            try {
+                while(sit.hasNext()) {
+                    Statement stmt = sit.next();
+                    if(stmt.getObject().isLiteral()) {
+                        try {
+                            return stmt.getObject().asLiteral().getInt();
+                        } catch (Exception e) {
+                            // not an int, apparently
+                        }
+                    }
+                }
+            } finally {
+                sit.close();
+            }
+            return -1;
+        }
+        
+        
+        /**
+         * The size of the model.
+         */
+        public Integer size() {
+            return totalResults(initialResultsCache);
+        }
+        
     }
+	
+	
+	/**
+	 * Transform raw RDF into VIVO RDF.
+	 */
+	@Override
+	protected Model mapToVIVO(Model model) {
+		
+		model = constructForVIVO(model);
+		
+		return model;
+	}
 	
 	
 	/**
@@ -354,19 +369,7 @@ public class Cordis extends ConnectorDataSource implements DataSource {
 	
 	
 	/**
-	 * Transform raw RDF into VIVO RDF.
-	 */
-	@Override
-	protected Model mapToVIVO(Model model) {
-		
-		model = constructForVIVO(model);
-		
-		return model;
-	}
-	
-	
-	/**
-	 * Filter the model so that we keep only data related to the query terms.
+	 * Filter the model so that we keep only the query_terms-related data.
 	 */
 	@Override
 	protected Model filter(Model model) {
