@@ -14,6 +14,7 @@ import org.wheatinitiative.vivo.datasource.connector.cordis.Cordis;
 import org.wheatinitiative.vivo.datasource.connector.orcid.OrcidConnector;
 import org.wheatinitiative.vivo.datasource.connector.prodinra.Prodinra;
 import org.wheatinitiative.vivo.datasource.connector.rcuk.Rcuk;
+import org.wheatinitiative.vivo.datasource.connector.upenn.Upenn;
 import org.wheatinitiative.vivo.datasource.connector.tamu.Tamu;
 import org.wheatinitiative.vivo.datasource.connector.usda.Usda;
 import org.wheatinitiative.vivo.datasource.connector.wheatinitiative.WheatInitiative;
@@ -27,7 +28,7 @@ public class LaunchIngest {
     public static void main(String[] args) {
         if(args.length < 3) {
             System.out.println("Usage: LaunchIngest " 
-                    + "cordis|rcuk|prodinra|usda|wheatinitiative|cornell|tamu outputfile " 
+                    + "cordis|rcuk|prodinra|usda|wheatinitiative|cornell|tamu|upenn outputfile " 
                     + "queryTerm ... [queryTermN] [limit]");
             return;
         } 
@@ -73,7 +74,7 @@ public class LaunchIngest {
         } else if("rcuk".equals(connectorName)) {
             connector = new Rcuk();
             connector.getConfiguration().setServiceURI(
-                    "http://http://gtr.rcuk.ac.uk/gtr/api/");
+                    "http://gtr.rcuk.ac.uk/gtr/api/");
         } else if ("prodinra".equals(connectorName)) {
             connector = new Prodinra();
             connector.getConfiguration().setServiceURI(
@@ -88,6 +89,10 @@ public class LaunchIngest {
                     "http://www.wheatinitiative.org/administration/users/csv");
         } else if ("orcid".equals(connectorName)) {
             connector = new OrcidConnector();
+        } else if ("upenn".equals(connectorName)) {
+        	connector = new Upenn();
+        	connector.getConfiguration().setServiceURI(
+                    "http://vivo.upenn.edu/vivo/");
         } else if ("tamu".equals(connectorName)) {
         	connector = new Tamu();
             connector.getConfiguration().setServiceURI(
