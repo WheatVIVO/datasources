@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wheatinitiative.vivo.datasource.connector.cornell.Cornell;
 import org.wheatinitiative.vivo.datasource.connector.cordis.Cordis;
 import org.wheatinitiative.vivo.datasource.connector.orcid.OrcidConnector;
 import org.wheatinitiative.vivo.datasource.connector.prodinra.Prodinra;
@@ -25,7 +26,7 @@ public class LaunchIngest {
     public static void main(String[] args) {
         if(args.length < 3) {
             System.out.println("Usage: LaunchIngest " 
-                    + "cordis|rcuk|prodinra|usda|wheatinitiative outputfile " 
+                    + "cordis|rcuk|prodinra|usda|wheatinitiative|cornell outputfile " 
                     + "queryTerm ... [queryTermN] [limit]");
             return;
         } 
@@ -60,7 +61,11 @@ public class LaunchIngest {
     
     private static DataSource getConnector(String connectorName) {
         DataSource connector = null;
-        if ("cordis".equals(connectorName)) {
+        if ("cornell".equals(connectorName)) {
+        	connector = new Cornell();
+        	connector.getConfiguration().setServiceURI(
+        			"http://vivo.cornell.edu/");
+        } else if ("cordis".equals(connectorName)) {
         	connector = new Cordis();
         	connector.getConfiguration().setServiceURI(
         			"http://cordis.europa.eu/search/result_en");

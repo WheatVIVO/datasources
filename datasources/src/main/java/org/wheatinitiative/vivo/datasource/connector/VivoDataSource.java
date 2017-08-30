@@ -87,7 +87,7 @@ public class VivoDataSource extends ConnectorDataSource {
                     log.info("Fetching related resource " + r.getURI());
                     fetch(r.getURI(), tmp);
                 } catch (Exception e) {
-                    log.error("Error retreiving " + r.getURI());
+                    log.error("Error retrieving " + r.getURI(), e);
                 }
             }
         }
