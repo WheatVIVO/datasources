@@ -1,0 +1,24 @@
+PREFIX bibo:	<http://purl.org/ontology/bibo/>
+PREFIX vivo:	<http://vivoweb.org/ontology/core#>
+
+
+
+CONSTRUCT {
+
+    ?journal ?journalP ?journalO .
+    
+    ?publisher ?publisherP ?publisherO .
+
+} WHERE {
+
+    ?journal a bibo:Journal .
+    ?journal ?journalP ?journalO .
+    
+    OPTIONAL {
+    # make it optional just to be sure.
+        ?publisher vivo:publisherOf ?journal .
+        ?publisher ?publisherP ?publisherO .
+    }
+    
+	?journal vivo:publicationVenueFor ?entity .
+}

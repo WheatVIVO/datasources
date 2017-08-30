@@ -1,0 +1,46 @@
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX vivo:    <http://vivoweb.org/ontology/core#>
+PREFIX bibo:    <http://purl.org/ontology/bibo/>
+
+
+
+SELECT DISTINCT ?Project ?Grant
+
+WHERE {
+
+    ?Project a vivo:Project .
+    
+    ?Grant vivo:fundingVehicleFor ?Project .
+    
+    ?Publication a bibo:Document .
+    
+# The project itself or its related publications have to be query_terms-related.
+# Note that a project might doesn't have any query_terms-keywords in its data.
+    {
+        { ?Project rdfs:label ?value }
+        UNION
+        { ?Project vivo:freetextKeyword ?value }
+        
+        FILTER NOT EXISTS
+        { ?Project vivo:supportedInformationResource ?Publication }
+    }
+    UNION
+    {
+        ?Project vivo:supportedInformationResource ?Publication .
+        
+        { ?Project rdfs:label ?value }
+        UNION
+        { ?Project vivo:freetextKeyword ?value }
+        UNION
+        { ?Publication rdfs:label ?value }
+        UNION
+        { ?Publication vivo:freetextKeyword ?value }
+        UNION
+        { ?Publication vivo:description ?value }
+        UNION
+        { ?Publication bibo:abstract ?value }
+        
+    }
+    
+    FILTER ( REGEX( STR(?value), "\\b$TERM\\b", "i") )
+}

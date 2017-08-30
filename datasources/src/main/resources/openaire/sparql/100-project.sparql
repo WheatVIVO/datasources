@@ -1,0 +1,26 @@
+PREFIX oaf:     <http://namespace.openaire.eu/oaf/>
+PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
+PREFIX vivo:    <http://vivoweb.org/ontology/core#>
+PREFIX obo:     <http://purl.obolibrary.org/obo/>
+
+
+
+CONSTRUCT {
+
+    ?project a vivo:Project .
+    ?project vivo:identifier ?project_id .
+    
+    _:grant a vivo:Grant .
+    _:grant vivo:identifier ?project_id .
+    _:grant vivo:fundingVehicleFor ?project .
+
+} WHERE {
+
+    _:x oaf:project ?project .
+    
+    OPTIONAL {
+	# Not all projects are guaranteed to have an identifier.
+		?project ingest:code ?project_id .
+		FILTER ( ?projectId != "unidentified" )
+    }
+}

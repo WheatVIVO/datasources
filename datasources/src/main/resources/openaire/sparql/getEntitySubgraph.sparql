@@ -1,0 +1,9 @@
+CONSTRUCT {
+
+    ?entity ?entityP ?entityO .
+    # Here we cover publications, projects and grants.
+
+} WHERE {
+
+    ?entity ?entityP ?entityO .
+}

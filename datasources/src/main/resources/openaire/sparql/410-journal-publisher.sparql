@@ -1,0 +1,30 @@
+PREFIX foaf:    <http://xmlns.com/foaf/0.1/>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX bibo:    <http://purl.org/ontology/bibo/>
+PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
+PREFIX vivo:    <http://vivoweb.org/ontology/core#>
+
+
+
+CONSTRUCT {
+
+    _:org a foaf:Publisher .
+    
+    _:org rdfs:label ?publisherLegalName .
+	
+    _:org vivo:publisherOf ?journal .
+
+} WHERE {
+
+    ?pub a bibo:AcademicArticle .
+    
+    ?pub ingest:publisher ?publisherLegalName .
+    
+#   There might be more than one publishers in the same string, seperated with " / "
+#   See how to distinguish them.
+#   An example would be:    "MAIK NAUKA/INTERPERIODICA/SPRINGER"
+#   There might be also some weird ones like:   "QUITO / PUCE/ 2012"
+    
+    ?pub vivo:hasPublicationVenue ?journal .
+    ?journal a bibo:Journal .
+}

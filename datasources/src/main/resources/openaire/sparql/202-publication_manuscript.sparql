@@ -1,0 +1,18 @@
+PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
+PREFIX bibo:    <http://purl.org/ontology/bibo/>
+
+
+
+CONSTRUCT {
+
+# A Manuscript. Of course, in the electronic (Preprint) format.
+    ?pub a bibo:Manuscript .
+
+} WHERE {
+
+    ?pub a bibo:Document .
+    ?pub ingest:children ?child .
+    ?child ingest:instance ?inst .
+    ?inst ingest:instancetype ?type .
+    ?type ingest:classname "Preprint" .
+}

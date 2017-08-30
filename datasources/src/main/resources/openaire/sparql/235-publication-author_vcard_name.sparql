@@ -1,0 +1,26 @@
+PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
+PREFIX foaf:    <http://xmlns.com/foaf/0.1/>
+PREFIX obo:     <http://purl.obolibrary.org/obo/>
+PREFIX vcard:   <http://www.w3.org/2006/vcard/ns#>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+
+
+
+CONSTRUCT {
+
+    ?pers obo:ARG_2000028 _:vcard .
+    
+    _:vcard a vcard:Individual .
+    _:vcard vcard:hasName _:name .
+    _:name a vcard:Name .
+    _:name vcard:familyName ?lastName .
+    _:name vcard:givenName ?firstName .
+    
+} WHERE {
+
+    ?pers a foaf:Person .
+    ?pers rdfs:label ?fullname .
+
+    BIND( STRBEFORE( ?fullname, "," ) as ?lastName )
+    BIND( STRAFTER( ?fullname, ", " ) as ?firstName )
+}

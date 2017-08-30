@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wheatinitiative.vivo.datasource.connector.openaire.OpenAire;
 import org.wheatinitiative.vivo.datasource.connector.florida.Florida;
 import org.wheatinitiative.vivo.datasource.connector.cornell.Cornell;
 import org.wheatinitiative.vivo.datasource.connector.cordis.Cordis;
@@ -29,11 +30,10 @@ public class LaunchIngest {
     public static void main(String[] args) {
         if(args.length < 3) {
             System.out.println("Usage: LaunchIngest " 
-                    + "rcuk|prodinra|usda|wheatinitiative|florida outputfile " 
-                    + "cordis|rcuk|prodinra|usda|wheatinitiative|cornell|tamu|upenn|florida outputfile " 
+                    + "openaire|cordis|rcuk|prodinra|usda|wheatinitiative|cornell|tamu|upenn|florida outputfile " 
                     + "queryTerm ... [queryTermN] [limit]");
             return;
-        } 
+        }
         List<String> queryTerms = new LinkedList<String>(
                 Arrays.asList(args));
         String connectorName  = queryTerms.remove(0);
@@ -89,6 +89,10 @@ public class LaunchIngest {
             connector = new WheatInitiative();
             connector.getConfiguration().setServiceURI(
                     "http://www.wheatinitiative.org/administration/users/csv");
+        } else if ("openaire".equals(connectorName)) {
+            connector = new OpenAire();
+            connector.getConfiguration().setServiceURI(
+            		"http://api.openaire.eu/oai_pmh");
         } else if ("florida".equals(connectorName)) {
                 connector = new Florida();
                 connector.getConfiguration().setServiceURI(

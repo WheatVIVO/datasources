@@ -1,0 +1,23 @@
+PREFIX foaf:    <http://xmlns.com/foaf/0.1/>
+PREFIX vivo:    <http://vivoweb.org/ontology/core#>
+
+
+
+CONSTRUCT {
+
+	?author ?authorP ?authorO .
+	
+	?authorship ?authorshipP ?authorshipO .
+
+} WHERE {
+
+	?author a foaf:Person .
+	?author ?authorP ?authorO .
+    
+    ?authorship a vivo:Authorship .
+    ?authorship vivo:relates ?author .
+	
+	?authorship ?authorshipP ?authorshipO .
+	
+	?authorship vivo:relates ?entity .
+}

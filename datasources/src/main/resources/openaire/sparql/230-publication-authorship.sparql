@@ -1,0 +1,29 @@
+PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX foaf:    <http://xmlns.com/foaf/0.1/>
+PREFIX bibo:    <http://purl.org/ontology/bibo/>
+PREFIX vivo:    <http://vivoweb.org/ontology/core#>
+
+
+
+CONSTRUCT {
+
+    _:author a foaf:Person .
+    _:author rdfs:label ?fullname .
+    
+    _:authorship a vivo:Authorship .
+    
+    _:authorship vivo:rank ?rank .
+    _:authorship vivo:relates ?pub .
+    _:authorship vivo:relates _:author .
+
+} WHERE {
+
+    ?pub a bibo:Document .
+    
+    ?pub ingest:rels ?rels .
+    ?rels ingest:rel ?rel .
+    
+    ?rel ingest:ranking ?rank.
+    ?rel ingest:fullname ?fullname .
+}

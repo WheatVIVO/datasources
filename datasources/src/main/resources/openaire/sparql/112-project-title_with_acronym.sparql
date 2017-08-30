@@ -1,0 +1,25 @@
+PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX vivo:    <http://vivoweb.org/ontology/core#>
+
+
+
+CONSTRUCT {
+
+    ?project rdfs:label ?proj_title .
+    
+    ?grant rdfs:label ?title .
+
+} WHERE {
+
+    ?project a vivo:Project .
+    
+    ?grant vivo:fundingVehicleFor ?project .
+    
+    ?project ingest:title ?title .
+    
+    ?project ingest:acronym ?acronym .
+    FILTER ( ?acronym != "" ) .
+    
+    BIND( CONCAT( ?acronym, " - ", ?title ) AS ?proj_title )
+}

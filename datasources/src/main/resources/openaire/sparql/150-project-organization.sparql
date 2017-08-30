@@ -1,0 +1,22 @@
+PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX foaf:    <http://xmlns.com/foaf/0.1/>
+PREFIX vivo:    <http://vivoweb.org/ontology/core#>
+
+
+
+CONSTRUCT {
+
+    ?org a foaf:Organization .
+    ?org rdfs:label ?legal_name .
+    ?org foaf:alternativeTerm ?legal_short_name .
+    
+} WHERE {
+
+    ?project a vivo:Project .
+    ?project ingest:rels ?rels .
+    ?rels ingest:rel ?org .
+    
+    ?org ingest:legalname ?legal_name .
+    ?org ingest:legalshortname ?legal_short_name .
+}

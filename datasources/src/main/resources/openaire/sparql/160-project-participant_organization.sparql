@@ -1,0 +1,29 @@
+PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
+PREFIX vivo:    <http://vivoweb.org/ontology/core#>
+PREFIX obo:     <http://purl.obolibrary.org/obo/>
+PREFIX foaf:    <http://xmlns.com/foaf/0.1/>
+
+
+
+CONSTRUCT {
+
+    ?grant vivo:relates ?org .
+    ?grant vivo:relates _:role .
+    
+    _:role a vivo:InvestigatorRole .
+    _:role obo:RO_0000052 ?org .
+    _:role obo:BFO_0000054 ?project .
+    
+} WHERE {
+
+    ?project a vivo:Project .
+    
+    ?grant vivo:fundingVehicleFor ?project .
+        
+    ?project ingest:rels ?rels .
+    ?rels ingest:rel ?org .
+    
+    ?org a foaf:Organization .
+    ?org ingest:to ?to .
+    ?to ingest:class "hasParticipant" .
+}

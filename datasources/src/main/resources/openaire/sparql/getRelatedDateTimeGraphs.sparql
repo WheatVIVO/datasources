@@ -1,0 +1,16 @@
+PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+
+
+
+CONSTRUCT {
+
+	?dti ?dtiP ?dtiO .
+	?dtiO ?dtiPP ?dtiOO .
+
+} WHERE {
+
+	?entity vivo:dateTimeInterval ?dti .
+	
+	?dti ?dtiP ?dtiO .
+	?dtiO ?dtiPP ?dtiOO .
+}

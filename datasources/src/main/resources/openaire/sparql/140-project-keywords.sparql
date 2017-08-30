@@ -1,0 +1,19 @@
+PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
+PREFIX vivo:    <http://vivoweb.org/ontology/core#>
+
+
+
+CONSTRUCT {
+
+    ?project vivo:freetextKeyword ?keyword .
+    
+    ?grant vivo:freetextKeyword ?keyword .
+    
+} WHERE {
+
+    ?project a vivo:Project .
+    
+    ?grant vivo:fundingVehicleFor ?project .
+    
+    ?project ingest:keywords ?keyword .
+}
