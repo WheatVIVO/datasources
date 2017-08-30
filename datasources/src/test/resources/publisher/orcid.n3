@@ -1,0 +1,30 @@
+<http://vivo.wheatinitiative.org/individual/orcid-345056>
+        a       <http://xmlns.com/foaf/0.1/Person> ;
+        <http://www.w3.org/2000/01/rdf-schema#label>
+                "Lucas, Hélène" ;
+        <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/path>
+                "/0000-0002-1469-0212/person" ;
+        <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#position>
+                "5" ;
+        <http://vivoweb.org/ontology/core#orcidId>
+                <http://orcid.org/0000-0002-1469-0212> ;
+        <http://vivoweb.org/ontology/core#relatedBy>
+                <http://vivo.wheatinitiative.org/individual/orcid-1468006> , <http://vivo.wheatinitiative.org/individual/orcid-5253665> , <http://vivo.wheatinitiative.org/individual/orcid-8435409> , <http://vivo.wheatinitiative.org/individual/orcid-2120319> , <http://vivo.wheatinitiative.org/individual/orcid-6166730> , <http://vivo.wheatinitiative.org/individual/orcid-9965062> , <http://vivo.wheatinitiative.org/individual/orcid-3866943> , <http://vivo.wheatinitiative.org/individual/orcid-2759869> , <http://vivo.wheatinitiative.org/individual/orcid-4301526> , <http://vivo.wheatinitiative.org/individual/orcid-90255> , <http://vivo.wheatinitiative.org/individual/orcid-2807545> , <http://vivo.wheatinitiative.org/individual/orcid-5926973> , <http://vivo.wheatinitiative.org/individual/orcid-319394> , <http://vivo.wheatinitiative.org/individual/orcid-2441277> , <http://vivo.wheatinitiative.org/individual/orcid-7335517> , <http://vivo.wheatinitiative.org/individual/orcid-4653094> , <http://vivo.wheatinitiative.org/individual/orcid-8569642> , <http://vivo.wheatinitiative.org/individual/orcid-984826> ;
+        <http://www.orcid.org/ns/address/addresses>
+                <http://vivo.wheatinitiative.org/individual/orcid-1091063> ;
+        <http://www.orcid.org/ns/common/last-modified-date>
+                "2016-05-03T09:12:45.793Z" ;
+        <http://www.orcid.org/ns/email/emails>
+                <http://vivo.wheatinitiative.org/individual/orcid-4889781> ;
+        <http://www.orcid.org/ns/external-identifier/external-identifiers>
+                <http://vivo.wheatinitiative.org/individual/orcid-6588516> ;
+        <http://www.orcid.org/ns/keyword/keywords>
+                <http://vivo.wheatinitiative.org/individual/orcid-1828417> ;
+        <http://www.orcid.org/ns/other-name/other-names>
+                <http://vivo.wheatinitiative.org/individual/orcid-8273869> ;
+        <http://www.orcid.org/ns/person/biography>
+                <http://vivo.wheatinitiative.org/individual/orcid-9750587> ;
+        <http://www.orcid.org/ns/person/name>
+                <http://vivo.wheatinitiative.org/individual/orcid-412383> ;
+        <http://www.orcid.org/ns/researcher-url/researcher-urls>
+                <http://vivo.wheatinitiative.org/individual/orcid-168378> .

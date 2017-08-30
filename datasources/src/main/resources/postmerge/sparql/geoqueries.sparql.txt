@@ -5,6 +5,7 @@ PREFIX owl:      <http://www.w3.org/2002/07/owl#>
 PREFIX swrl:     <http://www.w3.org/2003/11/swrl#>
 PREFIX swrlb:    <http://www.w3.org/2003/11/swrlb#>
 PREFIX vitro:    <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>
+PREFIX p1:       <http://vivo.wheatinitiative.org/ontology/adminapp/>
 PREFIX bibo:     <http://purl.org/ontology/bibo/>
 PREFIX c4o:      <http://purl.org/spar/c4o/>
 PREFIX cito:     <http://purl.org/spar/cito/>
@@ -20,19 +21,27 @@ PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>
 PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
-PREFIX prodinra: <http://record.prodinra.inra.fr/>
 
 CONSTRUCT {
-    ?y a vivo:Authorship .
-    ?z a foaf:Person .
-    ?y vivo:rank ?rank .
-    ?y vivo:relates ?x .
-    ?y vivo:relates ?z .
+    ?y obo:RO_0001015 ?entity # locationOf
 } WHERE {
-    ?x prodinra:creator ?y .
-    ?x prodinra:minPosition ?minPosition .
-    # not available without reasoning: ?x a bibo:Document .
-    ?y prodinra:author ?z .
-    ?y vitro:position ?position
-    BIND( (xsd:int(?position) - ?minPosition + 1) AS ?rank)
-}
+  {
+    ?s <http://www.w3.org/2006/vcard/ns#country> ?x .
+    ?vcard vcard:hasAddress ?s .
+    ?entity <http://purl.obolibrary.org/obo/ARG_2000028> ?vcard .
+    BIND(xsd:string(concat(str(?x), "")) AS ?countryName)
+    ?y rdfs:label ?countryName 
+  } UNION {
+    ?s <http://www.w3.org/2006/vcard/ns#country> ?x .
+    ?vcard vcard:hasAddress ?s .
+    ?entity <http://purl.obolibrary.org/obo/ARG_2000028> ?vcard .
+    BIND(xsd:string(concat(str(?x), " of America")) AS ?countryName)
+    ?y rdfs:label ?countryName 
+  } UNION {
+    ?s <http://www.w3.org/2006/vcard/ns#country> ?x .
+    ?vcard vcard:hasAddress ?s .
+    ?entity <http://purl.obolibrary.org/obo/ARG_2000028> ?vcard .
+    BIND(xsd:string(concat(str(?x), " (Islamic Republic of)")) AS ?countryName)
+    ?y rdfs:label ?countryName 
+  }
+}  

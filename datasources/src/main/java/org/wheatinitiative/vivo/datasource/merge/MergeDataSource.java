@@ -1,8 +1,12 @@
 package org.wheatinitiative.vivo.datasource.merge;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -11,12 +15,15 @@ import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.DataSourceBase;
 import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
 
+import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.ResIterator;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
@@ -29,6 +36,11 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
 
     private static final Log log = LogFactory.getLog(MergeDataSource.class);
     private static final String VIVO = "http://vivoweb.org/ontology/core#";
+    private static final String RELATIONSHIP = VIVO + "Relationship";
+    private static final String ROLE = "http://purl.obolibrary.org/obo/BFO_0000023";
+    private static final String PROCESS = "http://purl.obolibrary.org/obo/BFO_0000015";
+    private static final String REALIZED_IN = "http://purl.obolibrary.org/obo/BFO_0000054";
+    private static final String INHERES_IN = "http://purl.obolibrary.org/obo/RO_0000052";    
     private static final String APPLICATION_CONTEXT_NS = "http://vitro.mannlib.cornell.edu/ns/vitro/ApplicationConfiguration#";
     private static final String CONFIG_CONTEXT_FOR = APPLICATION_CONTEXT_NS + "configContextFor"; 
     private static final String QUALIFIED_BY = APPLICATION_CONTEXT_NS + "qualifiedBy";            
@@ -46,7 +58,13 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     private static final String MERGEATOMOBJECTPROPERTY = ADMIN_APP_TBOX + "mergeAtomObjectProperty";
     private static final String HASCONTACTINFO = "http://purl.obolibrary.org/obo/ARG_2000028";
     private static final String VCARD = "http://www.w3.org/2006/vcard/ns#";
-    
+    private static final String FOAF_PERSON = "http://xmlns.com/foaf/0.1/Person";
+    private static final String FOAF_ORGANIZATION = "http://xmlns.com/foaf/0.1/Organization";
+    private static final String BIBO_COLLECTION = "http://purl.org/ontology/bibo/Collection";
+    private static final String BIBO_DOCUMENT = "http://purl.org/ontology/bibo/Document";
+    private static final String COAUTHOR = ADMIN_APP_TBOX + "coauthor";
+    private static final String BASIC_SAMEAS_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/basicSameAs";
+        
     private Model result = ModelFactory.createDefaultModel();
     protected LevenshteinDistance ld = LevenshteinDistance.getDefaultInstance();
     
@@ -61,134 +79,415 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         log.info("Retrieving faux property contexts from " + fauxPropertyModelURI);
         fauxPropertyContextModel.read(fauxPropertyModelURI);
         log.info(fauxPropertyContextModel.size() + " faux property context statements.");
+        addBasicSameAsAssertions(this.getSparqlEndpoint());
+        log.info("Clearing previous merge state");
+        List<MergeRule> mergeRules = new ArrayList<MergeRule>();
+        for(String mergeRuleURI : getMergeRuleURIs(dataSourceURI)) {
+            getSparqlEndpoint().clearGraph(mergeRuleURI); 
+            mergeRules.add(getMergeRule(mergeRuleURI, rulesModel));
+        }
+        Collections.sort(mergeRules, new AffectedClassRuleComparator(getSparqlEndpoint()));        
+        Map<String, Long> statistics = new HashMap<String, Long>();
+        for(MergeRule rule : mergeRules) {
+            String mergeRuleURI = rule.getURI();
+            // TODO flush to endpoint and repeat rules until quiescent?
+            log.info("Processing rule " + mergeRuleURI);                         
+            Model ruleResult = getSameAs(rule, fauxPropertyContextModel, sparqlEndpoint);
+            if(isSuspicious(ruleResult)) {
+                log.warn(mergeRuleURI + " produced a suspiciously large number (" + 
+                        ruleResult.size() + ") of triples." );
+            }
+            filterObviousResults(ruleResult);
+            //result.add(ruleResult);
+            statistics.put(mergeRuleURI, ruleResult.size());
+            log.info("Rule results size: " + ruleResult.size());            
+            getSparqlEndpoint().writeModel(ruleResult, mergeRuleURI); 
+        }
+        getSparqlEndpoint().clearGraph(getConfiguration().getResultsGraphURI()); 
         log.info("Merging relationships");
         result.add(getRelationshipSameAs());
         log.info(result.size() + " after merged relationships");
-        for(String mergeRuleURI : getMergeRuleURIs(dataSourceURI)) {
-            // TODO flush to endpoint and repeat rules until quiescent?
-            log.info("Processing rule " + mergeRuleURI);            
-            MergeRule rule = getMergeRule(mergeRuleURI, rulesModel); 
-            String query = getSameAsQuery(rule, fauxPropertyContextModel);
-            Model fuzzySameAs = getFuzzySameAs(rule, fauxPropertyContextModel);
-            if(query == null) {
-                result.add(fuzzySameAs);
-            } else if(fuzzySameAs.size() > 0) {
-                result.add(constructQueryWithBoundFuzzyResults(query, fuzzySameAs));
-            } else {
-                log.debug(query);
-                result.add(this.getSparqlEndpoint().construct(query));                
-            }
-            log.info("Results size: " + this.getResult().size());
+        log.info("======== Final Results ========");
+        for(String ruleURI : statistics.keySet()) {            
+            log.info("Rule " + ruleURI + " added " + statistics.get(ruleURI));
         }
     }
     
-    protected Model constructQueryWithBoundFuzzyResults(String queryStr, Model fuzzyResults) {
-        Model m = ModelFactory.createDefaultModel();
-        StmtIterator sit = fuzzyResults.listStatements();
+    /**
+     * Materialize inferences of type sameAs(x,x) for query support
+     */
+    protected void addBasicSameAsAssertions(SparqlEndpoint endpoint) {
+        log.info("Clearing " + BASIC_SAMEAS_GRAPH);
+        endpoint.clearGraph(BASIC_SAMEAS_GRAPH);
+        String queryStr = "CONSTRUCT { ?x <" + OWL.sameAs.getURI() + "> ?x } WHERE { \n" +
+                "    ?x a ?thing \n" +
+                "} \n";
+        Model m = endpoint.construct(queryStr);
+        log.info("Writing " + m.size() + " triples to " + BASIC_SAMEAS_GRAPH);
+        endpoint.writeModel(m, BASIC_SAMEAS_GRAPH);        
+    }
+    
+    /**
+     * Check if a result model is likely to contain an unwanted Cartesian product
+     * @param m 
+     * @return true if the number of triples in the model is greater than
+     * one half the square of the number of distinct URIs
+     */
+    protected boolean isSuspicious(Model m) {
+        if(m.size() < 128) {
+            return false;
+        }
+        String distinctURIs = "SELECT (COUNT(DISTINCT ?x) AS ?count) WHERE { \n" +
+                "    { ?x ?p ?o } UNION { ?s ?p ?x } \n" +
+                "} \n";
+        QueryExecution qe = QueryExecutionFactory.create(distinctURIs, m);
+        try {
+            ResultSet rs = qe.execSelect();
+            while(rs.hasNext()) {
+                QuerySolution qsoln = rs.next();
+                RDFNode node = qsoln.get("count");
+                if(node.isLiteral()) {
+                    int distinctURICount = Integer.parseInt(
+                            node.asLiteral().getLexicalForm(), 10);
+                    boolean suspicious = m.size() >= ((distinctURICount * distinctURICount) / 2);
+                    log.info("Distinct URIs: " + distinctURICount + "; result size: " + m.size());
+                    log.info(suspicious ? "suspicious!" : "not suspicious");
+                    return suspicious;
+                }
+            }
+            return false;
+        } finally {
+            qe.close();
+        }
+    }
+    
+    private void filterObviousResults(Model m) {
+        Model delete = ModelFactory.createDefaultModel();
+        StmtIterator sit = m.listStatements();
         while(sit.hasNext()) {
             Statement stmt = sit.next();
-            Resource x = stmt.getSubject();
-            if(!x.isURIResource()) {
-                continue;
+            if(stmt.getObject().isURIResource() 
+                    && stmt.getObject().asResource().getURI().equals(stmt.getSubject().getURI())) {
+                delete.add(stmt);
             }
-            RDFNode yNode = stmt.getObject();
-            if(!yNode.isURIResource()) {
-                continue;
-            }
-            Resource y = yNode.asResource();
-            String boundQueryStr = queryStr.replaceAll("\\?x", "<" + x.getURI() + ">");
-            boundQueryStr = boundQueryStr.replaceAll("\\?y", "<" + y.getURI() + ">");
-            log.debug("Query with substitutions: " + boundQueryStr);
-            m.add(getSparqlEndpoint().construct(boundQueryStr));
         }
-        log.info(m.size() + " results found with bound fuzzy matches");
+        m.remove(delete);
+    }
+    
+    private Model getSameAs(MergeRule rule, Model fauxPropertyContextModel, 
+            SparqlEndpoint sparqlEndpoint) {
+        Model sameAsModel = null;
+        for (MergeRuleAtom atom : rule.getAtoms()) {
+            log.debug("Processing atom " + atom.getMergeDataPropertyURI() + " ; " 
+                    + atom.getMergeObjectPropertyURI() + " ; " 
+                    + atom.getMatchDegree());
+            if(atom.getMatchDegree() < 100) {
+                sameAsModel = join(sameAsModel, getFuzzySameAs(
+                        rule, atom, fauxPropertyContextModel));
+                sameAsModel = supplementFuzzySameAs(sameAsModel, sparqlEndpoint);
+            } else {
+                String queryStr = null;
+                if (atom.getMergeObjectPropertyURI() != null) {
+                    queryStr = getObjectPropertySameAs(
+                            rule, atom, fauxPropertyContextModel, sparqlEndpoint);                
+                } else if(atom.getMergeDataPropertyURI() != null) {
+                    log.info("data property: " + atom.getMergeDataPropertyURI());
+                    if(atom.getMergeDataPropertyURI().startsWith(VCARD) 
+                            && atom.getMergeDataPropertyURI().endsWith("Name")) {
+                        queryStr = getVcardNameSameAs(rule, atom);                    
+                    } else {
+                        queryStr = getDataPropertySameAs(rule, atom);    
+                    }
+                } 
+                if(queryStr == null) {
+                    log.info("Incomplete atoms; no query string generated."); 
+                    continue;
+                } else {
+                    queryStr = "CONSTRUCT { \n " +
+                            "    ?x1 <" + OWL.sameAs.getURI() + "> ?y1 . \n" +
+                            "    ?y1 <" + OWL.sameAs.getURI() + "> ?x1  \n" +
+                            "} WHERE { \n"
+//                            + "  FILTER NOT EXISTS { ?x <" + OWL.sameAs + "> ?y } \n" 
+                            + queryStr +
+                            "    ?x <" + OWL.sameAs.getURI() + "> ?x1 . \n" +
+                            "    ?y <" + OWL.sameAs.getURI() + "> ?y1 . \n" +
+                            "    FILTER NOT EXISTS { ?x <" + OWL.differentFrom.getURI() + "> ?y } \n" +
+                            "    FILTER NOT EXISTS { ?y <" + OWL.differentFrom.getURI() + "> ?x } \n" +
+                            "} \n";
+                    log.info("Generated sameAs query: \n" + queryStr);                    
+                    sameAsModel = join(sameAsModel, sparqlEndpoint.construct(
+                            queryStr));
+                }
+            }
+        }         
+        return sameAsModel;
+    } 
+    
+    private Model join(Model sameAsModel, Model atomModel) {
+        if(sameAsModel == null) {
+            return atomModel;
+        } else {
+            Model intersection = sameAsModel.intersection(atomModel);
+            log.info("Intersection=" + intersection.size() + "; previous=" 
+                    + sameAsModel.size() + "; atom=" + atomModel.size());
+            return intersection;
+        }
+    }
+    
+    /**
+     * Add additional sameAs matches (based on existing sameAs statements)
+     * as if we had a reasoned model
+     */
+    protected Model supplementFuzzySameAs(Model m, SparqlEndpoint endpoint) {
+        String inverse = "CONSTRUCT { ?y <" + OWL.sameAs.getURI() + "> ?x }" +
+                " WHERE { ?x <" + OWL.sameAs.getURI() + "> ?y }";
+        QueryExecution qe = QueryExecutionFactory.create(inverse, m);
+        try {
+            m.add(qe.execConstruct());
+        } finally {
+            qe.close();
+        }
+        Model supplement = ModelFactory.createDefaultModel();
+        ResIterator rit = m.listSubjects();
+        while(rit.hasNext()) {
+            Resource r = rit.next();
+            supplement.add(getSupplement(r, m, endpoint));
+        }
+        m.add(supplement);
         return m;
     }
     
-    private String getSameAsQuery(MergeRule rule, Model fauxPropertyContextModel) {
-        String query = "";
-        for (MergeRuleAtom atom : rule.getAtoms()) {
-            log.debug("Processing atom " + atom.getMergeDataPropertyURI() + " ; " + atom.getMergeObjectPropertyURI() + " ; " + atom.getMatchDegree());
-            // fuzzy matches are handled separately
-            if(atom.getMergeDataPropertyURI() != null && atom.getMatchDegree() == 100) {
-                if(atom.getMergeDataPropertyURI().startsWith(VCARD) && atom.getMergeDataPropertyURI().endsWith("Name")) {
-                    query +=
-                            "    ?x a <" + rule.getMergeClassURI() + "> . \n" +
-                            "    ?x <" + HASCONTACTINFO + "> ?vcard . \n" +
-                            "    ?card <" + VCARD + "hasName> ?name . \n" +
-                            "    ?name <" + atom.getMergeDataPropertyURI() + "> ?value . \n" +
-                            "    ?y <" + HASCONTACTINFO + "> ?vcard . \n" +
-                            "    ?card <" + VCARD + "hasName> ?name . \n" +
-                            "    ?name <" + atom.getMergeDataPropertyURI() + "> ?value . \n" +
-                            "    ?y a <" + rule.getMergeClassURI()  + "> . \n";
-                } else {
-                    query +=
-                            "    ?x a <" + rule.getMergeClassURI() + "> . \n" +
-                            "    ?x <" + atom.getMergeDataPropertyURI() + "> ?value . \n" +
-                            "    ?y <" + atom.getMergeDataPropertyURI() + "> ?value . \n" +
-                            "    ?y a <" + rule.getMergeClassURI()  + "> . \n";
-                }
-            } else if (atom.getMergeObjectPropertyURI() != null) {
-                if(isFauxPropertyContext(atom.getMergeObjectPropertyURI(), fauxPropertyContextModel)) {
-                    FauxPropertyContext ctx = getFauxPropertyContext(
-                            atom.getMergeObjectPropertyURI(), fauxPropertyContextModel);
-                    if(ctx != null) {
-                        query += getFauxPropertyPattern(rule, ctx);    
-                    }                    
-                } else {
-                    query +=
-                            "{" +
-                            "    ?x a <" + rule.getMergeClassURI() + "> . \n" +
-                            "    ?x <" + atom.getMergeObjectPropertyURI() + "> ?value . \n" +
-                            "    ?y <" + atom.getMergeObjectPropertyURI() + "> ?value . \n" +
-                            "    ?y a <" + rule.getMergeClassURI()  + "> . \n" +
-                            "} UNION { \n" +
-                            "    ?x a <" + rule.getMergeClassURI() + "> . \n" +
-                            "    ?x <" + atom.getMergeObjectPropertyURI() + "> ?value1  . \n" +
-                            "    ?value1 <" + OWL.sameAs + "> ?value2 . \n" +
-                            "    ?y <" + atom.getMergeObjectPropertyURI() + "> ?value2 . \n" +
-                            "    ?y a <" + rule.getMergeClassURI()  + "> . \n" +
-                            "} \n";    
-                }                
+    private Model getSupplement(Resource r, Model m, SparqlEndpoint endpoint) {
+        Model supplement = ModelFactory.createDefaultModel();
+        List<Resource> peers = new ArrayList<Resource>();
+        ResultSet resultSet = endpoint.getResultSet(
+                "SELECT ?y WHERE { <" + r.getURI() + ">" + 
+                " <" + OWL.sameAs.getURI() + "> ?y }");
+        while(resultSet.hasNext()) {
+            QuerySolution qsoln = resultSet.next();
+            RDFNode node = qsoln.get("y");
+            if(!node.isURIResource()) {
+                continue;
+            }
+            peers.add(node.asResource());
+        }
+        StmtIterator sit = m.listStatements(r, null, (RDFNode) null);
+        while(sit.hasNext()) {
+            Statement stmt = sit.next();
+            for(Resource peer : peers) {
+                supplement.add(peer, stmt.getPredicate(), stmt.getObject());
             }
         }
-        if(query.length() == 0) {
-            log.debug("No non-fuzzy patterns added to sameAs query; returning null.");
-            return null;
+        return supplement;
+    }
+          
+    private String getVcardNameSameAs(MergeRule rule, MergeRuleAtom atom) {
+        return  "    ?x a <" + rule.getMergeClassURI() + "> . \n" +
+                "    ?x <" + HASCONTACTINFO + "> ?vcard . \n" +
+                "    ?vcard <" + VCARD + "hasName> ?name . \n" +
+                "    ?name <" + atom.getMergeDataPropertyURI() + "> ?value . \n" +
+                "    ?y <" + HASCONTACTINFO + "> ?vcard . \n" +
+                "    ?vcard <" + VCARD + "hasName> ?name . \n" +
+                "    ?name <" + atom.getMergeDataPropertyURI() + "> ?value . \n" +
+                "    ?y a <" + rule.getMergeClassURI()  + "> . \n";
+    }
+    
+    private String getSingleEndedVcardNameQuery(MergeRule rule, MergeRuleAtom atom) {
+        return  "SELECT ?x ?value WHERE { \n" +
+                "    ?x a <" + rule.getMergeClassURI() + "> . \n" +
+                "    ?x <" + HASCONTACTINFO + "> ?vcard . \n" +
+                "    ?vcard <" + VCARD + "hasName> ?name . \n" +
+                "    ?name <" + atom.getMergeDataPropertyURI() + "> ?value . \n" +
+                "} ORDER BY ?value \n" ;
+    }
+    
+    private String getDataPropertySameAs(MergeRule rule, MergeRuleAtom atom) {
+        return  "    ?x a <" + rule.getMergeClassURI() + "> . \n" +
+                "    ?x <" + atom.getMergeDataPropertyURI() + "> ?value . \n" +
+                "    ?y <" + atom.getMergeDataPropertyURI() + "> ?value . \n" +
+                "    ?y a <" + rule.getMergeClassURI()  + "> . \n";
+    }
+        
+    private String getObjectPropertySameAs(MergeRule rule, MergeRuleAtom atom, 
+            Model fauxPropertyContextModel, SparqlEndpoint sparqlEndpoint) {
+        if(isFauxPropertyContext(atom.getMergeObjectPropertyURI(), 
+                fauxPropertyContextModel)) {
+            FauxPropertyContext ctx = getFauxPropertyContext(
+                    atom.getMergeObjectPropertyURI(), fauxPropertyContextModel);
+            if(ctx == null) {
+                return null;
+            } else {
+                return getFauxPropertyPattern(rule, atom, ctx, sparqlEndpoint);    
+            }                    
         } else {
-            query = "CONSTRUCT { \n " +
-                    "    ?x <" + OWL.sameAs.getURI() + "> ?y \n" +
-                    "} WHERE { \n"
-                    + query + "} \n";
-            log.debug("Generated sameAs query: \n" + query);
-            return query;
-        } 
-    } 
+            return  "    ?x a <" + rule.getMergeClassURI() + "> . \n" +
+                    "    ?x <" + atom.getMergeObjectPropertyURI() + "> ?value . \n" +
+                    "    ?value <" + OWL.sameAs.getURI() + "> ?value1 . \n" +
+                    "    ?y <" + atom.getMergeObjectPropertyURI() + "> ?value1 . \n" +
+                    "    ?y a <" + rule.getMergeClassURI()  + "> . \n" ;
+        }
+    }
+    
+    protected boolean isSubclass(String classURI, String superclassURI, SparqlEndpoint sparqlEndpoint) {
+        if(classURI == null || superclassURI == null) {
+            return false;
+        }
+        if(superclassURI.equals(classURI)) {
+            return true;
+        }
+        Model ask =  sparqlEndpoint.construct(
+                "CONSTRUCT { <" + classURI + "> <" + RDFS.subClassOf + "> <" + superclassURI + "> } WHERE " +
+                        "{ <" + classURI + "> <" + RDFS.subClassOf + "> <" + superclassURI + "> }");
+        return (ask.size() > 0);
+    }
+    
+    protected boolean isProcess(String classURI, SparqlEndpoint sparqlEndpoint) {
+        return isSubclass(classURI, PROCESS, sparqlEndpoint);
+    }
+    
+    protected boolean isRole(String classURI, SparqlEndpoint sparqlEndpoint) {
+        return isSubclass(classURI, ROLE, sparqlEndpoint);
+    }
+    
+    protected boolean isRelationship(String classURI, SparqlEndpoint sparqlEndpoint) {
+        return isSubclass(classURI, RELATIONSHIP, sparqlEndpoint);
+    }
     
     protected String getFauxPropertyPattern(MergeRule rule, 
-            FauxPropertyContext ctx) {
+            MergeRuleAtom atom, FauxPropertyContext ctx, 
+            SparqlEndpoint sparqlEndpoint) {
         if(ctx.getQualifiedBy().startsWith(VCARD)) {
             String vCardPattern = vCardPattern(rule, ctx);
             if (vCardPattern != null) {
                 return vCardPattern;
             }
-        } 
-        return 
-                "{" +
+        } else if (isRole(ctx.getQualifiedBy(), sparqlEndpoint)) {
+            if(isProcess(rule.getMergeClassURI(), sparqlEndpoint)) {
+                return rolePatternForProcess(rule, atom, ctx);   
+            } else {
+                return rolePattern(rule, atom, ctx);
+            }
+        } else if (isRelationship(ctx.getQualifiedBy(), sparqlEndpoint)) {
+            return relationshipPattern(rule, atom, ctx);
+        } else if ((VIVO + "DateTimeValue").equals(ctx.getQualifiedBy())) {
+            return dateTimeValuePattern(rule, atom, ctx);
+        } else if ((VIVO + "DateTimeInterval").equals(ctx.getQualifiedBy())) {
+            return dateTimeIntervalPattern(rule, atom, ctx);
+        }
+        return standardFauxPropertyPattern(rule, atom, ctx);        
+    }
+ 
+    protected String standardFauxPropertyPattern(MergeRule rule, 
+            MergeRuleAtom atom, FauxPropertyContext ctx) {
+        String pattern = //  "{" +
                 "    ?x a <" + rule.getMergeClassURI() + "> . \n" +
                 "    ?x <" + ctx.getPropertyURI() + "> ?value . \n" +
                 "    ?value a <" + ctx.getQualifiedBy() + "> . \n" +
-                "    ?y <" + ctx.getPropertyURI() + "> ?value . \n" +
-                "    ?y a <" + rule.getMergeClassURI()  + "> . \n" +
-                "} UNION { \n" +
-                "    ?x a <" + rule.getMergeClassURI() + "> . \n" +
-                "    ?x <" + ctx.getPropertyURI() + "> ?value1  . \n" +
-                "    ?value1 <" + OWL.sameAs + "> ?value2 . \n" +
-                "    ?value1 a <" + ctx.getQualifiedBy() + "> . \n" +
-                "    ?value2 a <" + ctx.getQualifiedBy() + "> . \n" +
+                "    ?value <" + OWL.sameAs.getURI() + "> ?value2 . \n" +
                 "    ?y <" + ctx.getPropertyURI() + "> ?value2 . \n" +
+                "    ?y a <" + rule.getMergeClassURI()  + "> . \n" ;  
+        return pattern;
+    }
+    
+    protected String rolePattern(MergeRule rule, MergeRuleAtom atom, 
+            FauxPropertyContext ctx) {
+        String pattern = "    ?role1 <" + REALIZED_IN + "> ?value . \n" +
+                "    ?role2 <" + REALIZED_IN + "> ?value . \n" +
+                "    ?role1 a <" + ctx.getQualifiedBy() + "> . \n" +
+                "    ?x <" + ctx.getPropertyURI() + "> ?role1 . \n" +
+                "    ?x a <" + rule.getMergeClassURI() + "> . \n" +
+                "    ?role2 a <" + ctx.getQualifiedBy() + "> . \n" +
+                "    ?y <" + ctx.getPropertyURI() + "> ?role2 . \n" +
+                "    ?y a <" + rule.getMergeClassURI()  + "> . \n" ;
+        if(atom.getMergeDataPropertyURI() != null) {
+            pattern += "    ?role1 <" + atom.getMergeDataPropertyURI() + "> ?dataPropertyValue . \n" +
+                    "    ?role2 <" + atom.getMergeDataPropertyURI() + "> ?dataPropertyValue . \n";
+        }
+        return pattern;
+    }
+    
+    protected String rolePatternForProcess(MergeRule rule, MergeRuleAtom atom, 
+            FauxPropertyContext ctx) {
+        String pattern = "    ?role1 <" + INHERES_IN + "> ?value . \n" +
+                "    ?role2 <" + INHERES_IN + "> ?value . \n" +
+                "    ?role1 a <" + ctx.getQualifiedBy() + "> . \n" +
+                "    ?x <" + ctx.getPropertyURI() + "> ?role1 . \n" +
+                "    ?x a <" + rule.getMergeClassURI() + "> . \n" +
+                "    ?role2 a <" + ctx.getQualifiedBy() + "> . \n" +
+                "    ?y <" + ctx.getPropertyURI() + "> ?role2 . \n" +
+                "    ?y a <" + rule.getMergeClassURI()  + "> . \n" ;
+        if(atom.getMergeDataPropertyURI() != null) {
+            pattern += "    ?role1 <" + atom.getMergeDataPropertyURI() + "> ?dataPropertyValue . \n" +
+                    "    ?role2 <" + atom.getMergeDataPropertyURI() + "> ?dataPropertyValue . \n";
+        }
+        return pattern;
+    }
+    
+    protected String relationshipPattern(MergeRule rule, MergeRuleAtom atom, 
+            FauxPropertyContext ctx) {
+        String pattern =                     
+                "    ?x a <" + rule.getMergeClassURI() + "> . \n" +
+                "    ?x <" + ctx.getPropertyURI() + "> ?relationship1 . \n" +
+                "    ?relationship1 a <" + ctx.getQualifiedBy() + "> . \n" +                        
+                "    ?relationship1 <" + VIVO + "relates> ?value . \n" +     
+                "    FILTER NOT EXISTS { ?value a <" + rule.getMergeClassURI() + "> } . \n";
+        if(atom.getMergeDataPropertyURI() != null) {
+            pattern += "    ?relationship1 <" + atom.getMergeDataPropertyURI() + "> ?dataPropertyValue . \n";
+        }
+        pattern +=
+                "    ?value <" + OWL.sameAs.getURI() + "> ?value2 . \n" +
+                "    ?relationship2 <" + VIVO + "relates> ?value2 . \n";
+        if(atom.getMergeDataPropertyURI() != null) {
+            pattern += "    ?relationship2 <" + atom.getMergeDataPropertyURI() + "> ?dataPropertyValue . \n";
+        }        
+        pattern +=
+                "    FILTER(?relationship1 != ?relationship2) \n" +
+                "    ?relationship2 a <" + ctx.getQualifiedBy() + "> . \n" +
+                "    ?y <" + ctx.getPropertyURI() + "> ?relationship2 . \n" +
+                "    ?y a <" + rule.getMergeClassURI()  + "> . \n" ;                 
+        return pattern;
+    }
+    
+    protected String dateTimeValuePattern(MergeRule rule, MergeRuleAtom atom, 
+            FauxPropertyContext ctx) {
+        String pattern = 
+                "    ?x a <" + rule.getMergeClassURI() + "> . \n" +
+                "    ?x <" + ctx.getPropertyURI() + "> ?dtv1 . \n" +
+                "    ?dtv1 <" + VIVO + "dateTime> ?dateTime . \n" +
+                "    ?dtv2 <" + VIVO + "dateTime> ?dateTime . \n" +
+                "    ?dtv1 <" + VIVO + "dateTimePrecision> ?dateTimePrecision . \n" +
+                "    ?dtv2 <" + VIVO + "dateTimePrecision> ?dateTimePrecision . \n" +                
+                "    ?y <" + ctx.getPropertyURI() + "> ?dtv2 . \n" +
                 "    ?y a <" + rule.getMergeClassURI()  + "> . \n" +
-                "} \n";  
+                "    ?dtv1 a <" + ctx.getQualifiedBy() + "> . \n" +
+                "    ?dtv2 a <" + ctx.getQualifiedBy() + "> . \n" +
+                "    FILTER(?dtv1 != ?dtv2) \n" ;
+        return pattern;
+    }
+    
+    protected String dateTimeIntervalPattern(MergeRule rule, MergeRuleAtom atom, 
+            FauxPropertyContext ctx) {
+        String pattern = 
+                "    ?x a <" + rule.getMergeClassURI() + "> . \n" +
+                "    ?x <" + ctx.getPropertyURI() + "> ?dti1 . \n" +
+                "    ?dti1 <" + VIVO + "start> ?start1 . \n" +
+                "    ?start1 <" + VIVO + "dateTime> ?startDateTime . \n" +
+                "    ?start2 <" + VIVO + "dateTime> ?startDateTime . \n" +
+                "    ?start1 <" + VIVO + "dateTimePrecision> ?startDateTimePrecision . \n" +
+                "    ?start2 <" + VIVO + "dateTimePrecision> ?startTimePrecision . \n" +
+                "    ?dti1 <" + VIVO + "end> ?end1 . \n" +
+                "    ?end1 <" + VIVO + "dateTime> ?endDateTime . \n" +
+                "    ?end2 <" + VIVO + "dateTime> ?endDateTime . \n" +
+                "    ?end1 <" + VIVO + "dateTimePrecision> ?endDateTimePrecision . \n" +
+                "    ?end2 <" + VIVO + "dateTimePrecision> ?endTimePrecision . \n" +
+                "    ?dti2 <" + VIVO + "start> ?start2 . \n" +
+                "    ?dti2 <" + VIVO + "end> ?end2 . \n" +
+                "    ?y <" + ctx.getPropertyURI() + "> ?dti2 . \n" +
+                "    ?y a <" + rule.getMergeClassURI()  + "> . \n" +
+                "    ?dti1 a <" + ctx.getQualifiedBy() + "> . \n" +
+                "    ?dti2 a <" + ctx.getQualifiedBy() + "> . \n" +
+                "    FILTER(?dti1 != ?dti2) \n" ;
+        return pattern;
     }
     
     protected String vCardPattern(MergeRule rule, FauxPropertyContext ctx) {
@@ -270,8 +569,10 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         String dataPropertyURI = getString(atomURI, MERGEATOMDATAPROPERTY, model);
         if(dataPropertyURI != null) {
             atom.setMergeDataPropertyURI(dataPropertyURI);
-        } else {
-            atom.setMergeObjectPropertyURI(getString(atomURI, MERGEATOMOBJECTPROPERTY, model));                
+        }
+        String objectPropertyURI = getString(atomURI, MERGEATOMOBJECTPROPERTY, model);
+        if(objectPropertyURI != null){
+            atom.setMergeObjectPropertyURI(objectPropertyURI);                
         }
         Integer matchDegree = getInteger(atomURI, MATCHDEGREE, model);
         if(matchDegree == null) {
@@ -437,39 +738,32 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     
     private static final int WINDOW_SIZE = 11;
     
-    protected Model getFuzzySameAs(MergeRule rule, Model fauxPropertyContextModel) {
+    protected Model getFuzzySameAs(MergeRule rule, MergeRuleAtom atom, 
+            Model fauxPropertyContextModel) {
         Model fuzzySameAs = ModelFactory.createDefaultModel();
-        boolean fuzzyUsed  = false;
-        for(MergeRuleAtom atom : rule.getAtoms()) {
-            if(atom.getMatchDegree() < 100) {
-                fuzzyUsed = true;
-                String fuzzyQueryStr = getFuzzyQueryStr(
-                        rule, atom, fauxPropertyContextModel);
-                log.debug("Processing fuzzy query " + fuzzyQueryStr);
-                ResultSet rs = getSparqlEndpoint().getResultSet(fuzzyQueryStr);
-                log.debug("Processing matches");
-                LinkedList<QuerySolution> window = new LinkedList<QuerySolution>();
-                window = prepopulate(window, rs);
-                log.debug("Window prepopulated.");
-                fuzzySameAs.add(getMatches(window, atom.getMatchDegree()));
-                log.debug("Initial window processed");
-                if(!rs.hasNext()) {
-                    return fuzzySameAs;
-                }
-                int pos = WINDOW_SIZE / 2;
-                while(rs.hasNext()) {
-                    window.add(rs.next()); // add one
-                    window.poll(); // drop one
-                    fuzzySameAs.add(getMatches(window, atom.getMatchDegree(), pos));
-                }
-                log.debug("Result set processed.");
-                fuzzySameAs.add(getMatches(window, atom.getMatchDegree()));
-                log.debug("Final window processed.");
-            } 
+        String fuzzyQueryStr = getFuzzyQueryStr(
+                rule, atom, fauxPropertyContextModel);
+        log.info("Processing fuzzy query " + fuzzyQueryStr);
+        ResultSet rs = getSparqlEndpoint().getResultSet(fuzzyQueryStr);
+        log.debug("Processing matches");
+        LinkedList<QuerySolution> window = new LinkedList<QuerySolution>();
+        window = prepopulate(window, rs);
+        log.debug("Window prepopulated.");
+        fuzzySameAs.add(getMatches(window, atom.getMatchDegree()));
+        log.debug("Initial window processed");
+        if(!rs.hasNext()) {
+            return fuzzySameAs;
         }
-        if(fuzzyUsed) {
-            log.info(fuzzySameAs.size() + " fuzzy sameAs results");
+        int pos = WINDOW_SIZE / 2;
+        while(rs.hasNext()) {
+            window.add(rs.next()); // add one
+            window.poll(); // drop one
+            fuzzySameAs.add(getMatches(window, atom.getMatchDegree(), pos));
         }
+        log.debug("Result set processed.");
+        fuzzySameAs.add(getMatches(window, atom.getMatchDegree()));
+        log.debug("Final window processed.");
+        log.debug(fuzzySameAs.size() + " fuzzy sameAs results");
         return fuzzySameAs;
     }
     
@@ -527,6 +821,11 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             RDFNode n2 = qsoln2.get("value");
             if(n2.isLiteral()) {
                 String string2 = n2.asLiteral().getString();
+                // TODO express some other way
+                // matchDegree 19 is magic value for initial-only match
+                if(matchDegree == 19) {
+                    return initialsMatch(string1, string2);
+                }
                 int distance = distance(string1, string2);
                 if(distance == 0) {
                     return true;
@@ -539,13 +838,21 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                     return false;
                 } 
                 float score = ((1 - (distance / avglen))  * 100);
-                log.info("Match score: " + score);
+                log.debug("Match score: " + score);
                 boolean match = (score >= matchDegree);
-                log.info("Required score " + matchDegree + " (" + (match ? "PASS" : "FAIL") + ")");
+                log.debug("Required score " + matchDegree + " (" + (match ? "PASS" : "FAIL") + ")");
                 return match;
             }
         }
         return false;
+    }
+    
+    private boolean initialsMatch(String string1, String string2) {
+        if(string1.isEmpty() || string2.isEmpty()) {
+            return false;
+        } else {
+            return (string1.charAt(0) == string2.charAt(0));
+        }
     }
     
     private LinkedList<QuerySolution> prepopulate(
@@ -573,10 +880,16 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 return fuzzyVCardQueryStr;
             }
         } 
-        String queryStr = "SELECT ?x ?value WHERE { \n" +
+        String queryStr;
+        if(atom.getMergeDataPropertyURI().startsWith(VCARD) 
+                && atom.getMergeDataPropertyURI().endsWith("Name")) {
+            queryStr = getSingleEndedVcardNameQuery(rule, atom);
+        } else {
+            queryStr = "SELECT ?x ?value WHERE { \n" +
                 "    ?x a <" + rule.getMergeClassURI() + "> ." +
                 "    ?x <" + atom.getMergeDataPropertyURI() + "> ?value \n" +
                 "} ORDER BY ?value \n";
+        }
         return queryStr;
     }
     
@@ -610,7 +923,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     
     private int distance(String string1, String string2) {     
         int distance = ld.apply(string1, string2);
-        log.info("Levenshtein distance " + distance + " for " + string1 + " , " + string2);
+        log.debug("Levenshtein distance " + distance + " for " + string1 + " , " + string2);
         return distance;
     }
     
@@ -629,7 +942,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             if(xnode.isURIResource()) {
                 String x = xnode.asResource().getURI();
                 log.debug("Processing x= " + x);
-                String query = "CONSTRUCT { <" + x + "> <"+ OWL.sameAs + "> ?y } WHERE { \n" +
+                String query = "CONSTRUCT { ?x1 <"+ OWL.sameAs.getURI() + "> ?y1 } WHERE { \n" +
                         "    <" + x + "> a <" + VIVO + "Relationship> . \n" +
                         "    <" + x + "> <" + VIVO +"relates> ?a . \n" +
                         "    <" + x + "> <" + VIVO +"relates> ?b . \n" +
@@ -637,13 +950,17 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                         " FILTER NOT EXISTS { <" + x + "> <" + VIVO + "dateTimeInterval> ?dti } \n" +
                         " FILTER NOT EXISTS { <" + x + "> <" + RDFS.label + "> ?label } \n" +
                         " FILTER (?a != ?b) \n" +
-                        "    ?y <" + VIVO +"relates> ?b . \n" +
-                        "    ?y <" + VIVO +"relates> ?a . \n" +
+                        "    ?a <" + OWL.sameAs.getURI() + "> ?a1 . \n" +
+                        "    ?b <" + OWL.sameAs.getURI() + "> ?b1 . \n" +
+                        "    ?y <" + VIVO +"relates> ?b1 . \n" +
+                        "    ?y <" + VIVO +"relates> ?a1 . \n" +
                         "    ?y a <" + VIVO + "Relationship> . \n" +
                         "    ?y <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#mostSpecificType> ?mst . \n" +
                         " FILTER NOT EXISTS { ?y <" + VIVO + "dateTimeInterval> ?dti } \n" +
                         " FILTER NOT EXISTS { ?y <" + RDFS.label + "> ?label } \n" +  
                         " FILTER (<" + x + "> != ?y) \n" +  
+                        " <" + x + "> <" + OWL.sameAs.getURI() + "> ?x1 . \n" +
+                        " ?y <" + OWL.sameAs.getURI() + "> ?y1 . \n" +
                         "} \n";
                 m.add(getSparqlEndpoint().construct(query));                     
             }
@@ -653,6 +970,51 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             }
         }
         return m;
+    }
+    
+    private class AffectedClassRuleComparator implements Comparator<MergeRule> {
+
+        private SparqlEndpoint sparqlEndpoint;
+        
+        public AffectedClassRuleComparator(SparqlEndpoint sparqlEndpoint) {
+            this.sparqlEndpoint = sparqlEndpoint;
+        }
+        
+        public int compare(MergeRule a, MergeRule b) {
+            // TODO Auto-generated method stub
+            int aRank = rankAffectedClass(a.getMergeClassURI());
+            int bRank = rankAffectedClass(b.getMergeClassURI());
+            if(aRank != bRank) {
+                return aRank - bRank;
+            } else {
+                if(a.getMergeClassURI() == null) {
+                    return -1;
+                } else if (b.getMergeClassURI() == null) {
+                    return 1;
+                } else {
+                    return a.getMergeClassURI().compareTo(b.getMergeClassURI());
+                }
+            }
+        }
+        
+        private int rankAffectedClass(String classURI) {
+            if(classURI == null) {
+                return 0;
+            } else {
+                if(isSubclass(classURI, BIBO_COLLECTION, this.sparqlEndpoint)) {
+                    return -2;
+                } else if (isSubclass(classURI, BIBO_DOCUMENT, this.sparqlEndpoint)) {
+                    return -1;
+                } else if (isSubclass(classURI, FOAF_ORGANIZATION, this.sparqlEndpoint)) {
+                    return 1;
+                } else if (isSubclass(classURI, FOAF_PERSON, this.sparqlEndpoint)) {
+                    return 2;
+                } else {
+                    return 0;
+                }
+            }
+        }
+        
     }
     
 }

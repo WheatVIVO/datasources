@@ -1,0 +1,37 @@
+PREFIX cordis:	<http://cordis.europa.eu/>
+PREFIX vivo:	<http://vivoweb.org/ontology/core#>
+PREFIX obo:		<http://purl.obolibrary.org/obo/>
+PREFIX foaf:    <http://xmlns.com/foaf/0.1/>
+
+
+
+CONSTRUCT {
+	
+	?org obo:RO_0000053 _:role .
+	# An organization has a (_53) role
+	
+	_:role a obo:BFO_0000023 .
+	# That role is a _23 (top level) role
+	
+	_:role obo:BFO_0000054 ?project .
+	# This role gets realized (_54) in the project
+	
+} WHERE {
+	
+	?project a vivo:Project .
+	
+    ?grant vivo:fundingVehicleFor ?project .
+	
+	?project cordis:relations ?rel .
+	?rel cordis:associations ?asc .
+	?asc cordis:organization ?org .
+	
+	FILTER NOT EXISTS {
+# If the following path doesn't exist, it means that this organization has no mapped role.
+        ?proj vivo:relates ?org .
+        ?proj vivo:relates _:role .
+        
+        _:role obo:RO_0000052 ?org .
+        _:role obo:BFO_0000054 ?proj .
+	 }
+}
