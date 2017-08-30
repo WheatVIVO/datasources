@@ -1,0 +1,1289 @@
+@prefix ocrer: <http://purl.org/net/OCRe/research.owl#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix scires: <http://vivoweb.org/ontology/scientific-research#> .
+@prefix fabio: <http://purl.org/spar/fabio/> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ocresd: <http://purl.org/net/OCRe/study_design.owl#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix vitro: <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#> .
+@prefix cito:  <http://purl.org/spar/cito/> .
+@prefix geo:   <http://aims.fao.org/aos/geopolitical.owl#> .
+@prefix vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix bibo:  <http://purl.org/ontology/bibo/> .
+@prefix vivo:  <http://vivoweb.org/ontology/core#> .
+@prefix event: <http://purl.org/NET/c4dm/event.owl#> .
+@prefix obo:   <http://purl.obolibrary.org/obo/> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix c4o:   <http://purl.org/spar/c4o/> .
+
+geo:Tunisia  rdfs:label  "Tunisia"^^xsd:string .
+
+geo:AMU  rdfs:label  "Arab Maghreb Union "^^xsd:string .
+
+geo:LIFDC_2009  rdfs:label  "low income and food deficit countries"^^xsd:string .
+
+geo:Melanesia  rdfs:label  "Melanesia"^^xsd:string .
+
+geo:New_Zealand  rdfs:label  "New Zealand"^^xsd:string .
+
+geo:American_Samoa  rdfs:label  "American Samoa"^^xsd:string .
+
+geo:Spain  rdfs:label  "Spain"^^xsd:string .
+
+geo:Malaysia  rdfs:label  "Malaysia"^^xsd:string .
+
+geo:Africa  rdfs:label  "Africa"^^xsd:string .
+
+geo:Guinea-Bissau  rdfs:label  "Guinea-Bissau"^^xsd:string .
+
+geo:ECOWAS_1985  rdfs:label  "Economic Community of West African States"^^xsd:string .
+
+geo:Democratic_Republic_of_the_Congo
+        rdfs:label  "Democratic Republic of the Congo"^^xsd:string .
+
+geo:western_Asia  rdfs:label  "western Asia"^^xsd:string .
+
+geo:Poland  rdfs:label  "Poland"^^xsd:string .
+
+geo:Colombia  rdfs:label  "Colombia"^^xsd:string .
+
+geo:southern_Europe  rdfs:label  "southern Europe"^^xsd:string .
+
+geo:Haiti  rdfs:label  "Haiti"^^xsd:string .
+
+geo:Tajikistan  rdfs:label  "Tajikistan"^^xsd:string .
+
+geo:LDC  rdfs:label  "least developed countries "^^xsd:string .
+
+geo:Bulgaria  rdfs:label  "Bulgaria"^^xsd:string .
+
+geo:Yugoslavia  rdfs:label  "Yugoslavia"^^xsd:string .
+
+geo:United_Republic_of_Tanzania__the
+        rdfs:label  "United Republic of Tanzania"^^xsd:string .
+
+geo:FAO_2006  rdfs:label  "FAO_2006"^^xsd:string .
+
+geo:Finland  rdfs:label  "Finland"^^xsd:string .
+
+geo:middle_Africa  rdfs:label  "middle Africa"^^xsd:string .
+
+geo:Malta  rdfs:label  "Malta"^^xsd:string .
+
+geo:Romania  rdfs:label  "Romania"^^xsd:string .
+
+geo:northern_Africa  rdfs:label  "northern Africa"^^xsd:string .
+
+geo:Montenegro  rdfs:label  "Montenegro"^^xsd:string .
+
+geo:CCASG  rdfs:label  "Cooperation Council for the Arab States of the Gulf "^^xsd:string .
+
+geo:Uruguay  rdfs:label  "Uruguay"^^xsd:string .
+
+geo:Ghana  rdfs:label  "Ghana"^^xsd:string .
+
+geo:IGAD  rdfs:label  "Intergovernmental Authority on Development"^^xsd:string .
+
+geo:Austria  rdfs:label  "Austria"^^xsd:string .
+
+geo:Namibia  rdfs:label  "Namibia"^^xsd:string .
+
+geo:Cambodia  rdfs:label  "Cambodia"^^xsd:string .
+
+geo:Grenada  rdfs:label  "Grenada"^^xsd:string .
+
+geo:Morocco  rdfs:label  "Morocco"^^xsd:string .
+
+geo:Pakistan  rdfs:label  "Pakistan"^^xsd:string .
+
+geo:Lao_People_s_Democratic_Republic__the
+        rdfs:label  "Lao People's Democratic Republic"^^xsd:string .
+
+geo:Albania  rdfs:label  "Albania"^^xsd:string .
+
+geo:MERCOSUR  rdfs:label  "Southern Common Market "^^xsd:string .
+
+geo:CEN_SAD_1998  rdfs:label  "Community of Sahel-Saharan States"^^xsd:string .
+
+geo:French_Guiana  rdfs:label  "French Guiana"^^xsd:string .
+
+geo:Canada  rdfs:label  "Canada"^^xsd:string .
+
+geo:NFIDC  rdfs:label  "NFIDC"^^xsd:string .
+
+geo:Ireland  rdfs:label  "Ireland"^^xsd:string .
+
+geo:Benin  rdfs:label  "Benin"^^xsd:string .
+
+geo:Socialist_Federal_Republic_of_Yugoslavia_the
+        rdfs:label  "Yugoslavia, Socialist Federal Republic of"^^xsd:string .
+
+geo:Brunei_Darussalam
+        rdfs:label  "Brunei Darussalam"^^xsd:string .
+
+geo:Eritrea  rdfs:label  "Eritrea"^^xsd:string .
+
+geo:eastern_Africa  rdfs:label  "eastern Africa"^^xsd:string .
+
+geo:Estonia  rdfs:label  "Estonia"^^xsd:string .
+
+geo:LIFDC  rdfs:label  "low income and food deficit countries"^^xsd:string .
+
+geo:Europe  rdfs:label  "Europe"^^xsd:string .
+
+geo:Caribbean  rdfs:label  "Caribbean"^^xsd:string .
+
+geo:Fiji  rdfs:label  "Fiji"^^xsd:string .
+
+geo:Egypt  rdfs:label  "Egypt"^^xsd:string .
+
+geo:central_Asia  rdfs:label  "Central Asia"^^xsd:string .
+
+geo:Aruba  rdfs:label  "Aruba"^^xsd:string .
+
+geo:Mongolia  rdfs:label  "Mongolia"^^xsd:string .
+
+geo:Kazakhstan  rdfs:label  "Kazakhstan"^^xsd:string .
+
+geo:Botswana  rdfs:label  "Botswana"^^xsd:string .
+
+geo:Turkey  rdfs:label  "Turkey"^^xsd:string .
+
+geo:Iceland  rdfs:label  "Iceland"^^xsd:string .
+
+geo:Switzerland  rdfs:label  "Switzerland"^^xsd:string .
+
+geo:PIF  rdfs:label  "Pacific Islands Forum "^^xsd:string .
+
+geo:Brazil  rdfs:label  "Brazil"^^xsd:string .
+
+geo:Cote_d_Ivoire  rdfs:label  "Côte d'Ivoire"^^xsd:string .
+
+geo:Hungary  rdfs:label  "Hungary"^^xsd:string .
+
+geo:Turks_and_Caicos_Islands
+        rdfs:label  "Turks and Caicos Islands"^^xsd:string .
+
+geo:Samoa  rdfs:label  "Samoa"^^xsd:string .
+
+geo:Antarctica  rdfs:label  "Antarctica"^^xsd:string .
+
+geo:Papua_New_Guinea  rdfs:label  "Papua New Guinea"^^xsd:string .
+
+geo:Oceania  rdfs:label  "Oceania"^^xsd:string .
+
+geo:Saint_Vincent_and_the_Grenadines
+        rdfs:label  "Saint Vincent and the Grenadines"^^xsd:string .
+
+geo:FAO_2007  rdfs:label  "Food and Agriculture Organization of the United Nations "^^xsd:string .
+
+geo:LIFDC_2005  rdfs:label  "low income and food deficit countries"^^xsd:string .
+
+geo:LLDC  rdfs:label  "land-locked developing country"^^xsd:string .
+
+geo:northern_Europe  rdfs:label  "northern Europe"^^xsd:string .
+
+geo:Chad  rdfs:label  "Chad"^^xsd:string .
+
+geo:Djibouti  rdfs:label  "Djibouti"^^xsd:string .
+
+geo:United_States_Virgin_Islands
+        rdfs:label  "United States Virgin Islands"^^xsd:string .
+
+geo:Latvia  rdfs:label  "Latvia"^^xsd:string .
+
+geo:South_Sudan  rdfs:label  "South Sudan "^^xsd:string .
+
+geo:Guadeloupe  rdfs:label  "Guadeloupe"^^xsd:string .
+
+geo:United_States_of_America
+        rdfs:label  "United States of America"^^xsd:string .
+
+geo:Timor-Leste  rdfs:label  "Timor-Leste"^^xsd:string .
+
+geo:Guatemala  rdfs:label  "Guatemala"^^xsd:string .
+
+geo:Suriname  rdfs:label  "Suriname"^^xsd:string .
+
+geo:Niue  rdfs:label  "Niue"^^xsd:string .
+
+geo:Iraq  rdfs:label  "Iraq"^^xsd:string .
+
+geo:World  rdfs:label  "World"^^xsd:string .
+
+geo:Belize  rdfs:label  "Belize"^^xsd:string .
+
+geo:southern_Asia  rdfs:label  "southern Asia"^^xsd:string .
+
+geo:SAARC_1985  rdfs:label  "South Asian Association for Regional Cooperation "^^xsd:string .
+
+geo:Barbados  rdfs:label  "Barbados"^^xsd:string .
+
+geo:COMESA_1994  rdfs:label  "Common Market for Eastern and Southern Africa "^^xsd:string .
+
+geo:CARIFORUM  rdfs:label  "Caribbean Forum of African, Caribbean and Pacific States "^^xsd:string .
+
+geo:eastern_Europe  rdfs:label  "eastern Europe"^^xsd:string .
+
+geo:Croatia  rdfs:label  "Croatia"^^xsd:string .
+
+geo:Mauritania  rdfs:label  "Mauritania"^^xsd:string .
+
+geo:Maldives  rdfs:label  "Maldives"^^xsd:string .
+
+geo:Vanuatu  rdfs:label  "Vanuatu"^^xsd:string .
+
+geo:Azerbaijan  rdfs:label  "Azerbaijan"^^xsd:string .
+
+geo:Qatar  rdfs:label  "Qatar"^^xsd:string .
+
+geo:French_Polynesia  rdfs:label  "French Polynesia"^^xsd:string .
+
+geo:Kenya  rdfs:label  "Kenya"^^xsd:string .
+
+geo:CEEAC  rdfs:label  "Economic Community of Central African States "^^xsd:string .
+
+geo:Bahrain  rdfs:label  "Bahrain"^^xsd:string .
+
+geo:Montserrat  rdfs:label  "Montserrat"^^xsd:string .
+
+geo:Thailand  rdfs:label  "Thailand"^^xsd:string .
+
+geo:San_Marino  rdfs:label  "San Marino"^^xsd:string .
+
+geo:Ethiopia_1993  rdfs:label  "Ethiopia_1993"^^xsd:string .
+
+geo:CARICOM  rdfs:label  "Caribbean Community and Common Market "^^xsd:string .
+
+geo:Bahamas_the  rdfs:label  "Bahamas"^^xsd:string .
+
+geo:Saint_Pierre_and_Miquelon
+        rdfs:label  "Saint Pierre and Miquelon"^^xsd:string .
+
+geo:Israel  rdfs:label  "Israel"^^xsd:string .
+
+geo:Liberia  rdfs:label  "Liberia"^^xsd:string .
+
+geo:Kyrgyzstan  rdfs:label  "Kyrgyzstan"^^xsd:string .
+
+geo:Norway  rdfs:label  "Norway"^^xsd:string .
+
+geo:CARICOM_1985  rdfs:label  "Caribbean Community and Common Market "^^xsd:string .
+
+geo:Portugal  rdfs:label  "Portugal"^^xsd:string .
+
+geo:Netherlands_the  rdfs:label  "Netherlands"^^xsd:string .
+
+geo:Libyan_Arab_Jamahiriya__the
+        rdfs:label  "Libyan Arab Jamahiriya"^^xsd:string .
+
+geo:Guyana  rdfs:label  "Guyana"^^xsd:string .
+
+geo:Anguilla  rdfs:label  "Anguilla"^^xsd:string .
+
+geo:Saint_Barthelemy  rdfs:label  "Saint Barthélemy   "^^xsd:string .
+
+geo:SIDS  rdfs:label  "Small Island Developing States "^^xsd:string .
+
+geo:Togo  rdfs:label  "Togo"^^xsd:string .
+
+geo:Trinidad_and_Tobago
+        rdfs:label  "Trinidad and Tobago"^^xsd:string .
+
+geo:Lebanon  rdfs:label  "Lebanon"^^xsd:string .
+
+geo:Lesotho  rdfs:label  "Lesotho"^^xsd:string .
+
+geo:Russian_Federation__the
+        rdfs:label  "Russian Federation"^^xsd:string .
+
+geo:Nauru  rdfs:label  "Nauru"^^xsd:string .
+
+geo:Zambia  rdfs:label  "Zambia"^^xsd:string .
+
+geo:Kuwait  rdfs:label  "Kuwait"^^xsd:string .
+
+geo:German_Democratic_Republic_the
+        rdfs:label  "German Democratic Republic"^^xsd:string .
+
+geo:south-eastern_Asia
+        rdfs:label  "south-eastern Asia"^^xsd:string .
+
+geo:Niger_the  rdfs:label  "Niger"^^xsd:string .
+
+geo:Panama  rdfs:label  "Panama"^^xsd:string .
+
+geo:Indonesia  rdfs:label  "Indonesia"^^xsd:string .
+
+geo:Sudan_the_1956  rdfs:label  "Sudan"^^xsd:string .
+
+geo:Malawi  rdfs:label  "Malawi"^^xsd:string .
+
+geo:Republic_of_Korea__the
+        rdfs:label  "South Korea"^^xsd:string .
+
+geo:Algeria  rdfs:label  "Algeria"^^xsd:string .
+
+geo:COMESA  rdfs:label  "Common Market for Eastern and Southern Africa "^^xsd:string .
+
+geo:Puerto_Rico  rdfs:label  "Puerto Rico"^^xsd:string .
+
+geo:Serbia  rdfs:label  "Serbia"^^xsd:string .
+
+geo:British_Virgin_Islands
+        rdfs:label  "British Virgin Islands"^^xsd:string .
+
+geo:IGADD  rdfs:label  "Intergovernmental Authority on Development "^^xsd:string .
+
+geo:CAEU  rdfs:label  "Council of Arab Economic Unity "^^xsd:string .
+
+geo:Bolivia  rdfs:label  "Bolivia (Plurinational State of)"^^xsd:string .
+
+geo:New_Caledonia  rdfs:label  "New Caledonia"^^xsd:string .
+
+geo:Sao_Tome_and_Principe
+        rdfs:label  "Sao Tome and Principe"^^xsd:string .
+
+geo:Angola  rdfs:label  "Angola"^^xsd:string .
+
+geo:China  rdfs:label  "China"^^xsd:string .
+
+geo:SAARC  rdfs:label  "South Asian Association for Regional Cooperation "^^xsd:string .
+
+geo:Sierra_Leone  rdfs:label  "Sierra Leone"^^xsd:string .
+
+geo:Serbia_and_Montenegro
+        rdfs:label  "Serbia and Montenegro"^^xsd:string .
+
+geo:ECO  rdfs:label  "Economic Cooperation Organization "^^xsd:string .
+
+geo:Nicaragua  rdfs:label  "Nicaragua"^^xsd:string .
+
+geo:Slovenia  rdfs:label  "Slovenia"^^xsd:string .
+
+geo:Slovakia  rdfs:label  "Slovakia"^^xsd:string .
+
+geo:central_America  rdfs:label  "central America"^^xsd:string .
+
+geo:Marshall_Islands__the
+        rdfs:label  "Marshall Islands"^^xsd:string .
+
+geo:Peru  rdfs:label  "Peru"^^xsd:string .
+
+geo:Saint-Martin  rdfs:label  "Saint-Martin (French Part)   "^^xsd:string .
+
+geo:Lithuania  rdfs:label  "Lithuania"^^xsd:string .
+
+geo:Zimbabwe  rdfs:label  "Zimbabwe"^^xsd:string .
+
+geo:Tokelau  rdfs:label  "Tokelau"^^xsd:string .
+
+geo:Australia  rdfs:label  "Australia"^^xsd:string .
+
+geo:Seychelles  rdfs:label  "Seychelles"^^xsd:string .
+
+geo:Curacao  rdfs:label  "Curaçao "^^xsd:string .
+
+geo:Denmark  rdfs:label  "Denmark"^^xsd:string .
+
+geo:Turkmenistan  rdfs:label  "Turkmenistan"^^xsd:string .
+
+geo:Argentina  rdfs:label  "Argentina"^^xsd:string .
+
+geo:Guinea  rdfs:label  "Guinea"^^xsd:string .
+
+geo:PTA  rdfs:label  "Preferential Trade Area for Eastern and Southern African States "^^xsd:string .
+
+geo:United_Arab_Emirates__the
+        rdfs:label  "United Arab Emirates"^^xsd:string .
+
+geo:Bhutan  rdfs:label  "Bhutan"^^xsd:string .
+
+geo:Saint_Kitts_and_Nevis
+        rdfs:label  "Saint Kitts and Nevis"^^xsd:string .
+
+geo:Bonaire_Sint_Eustatius_and_Saba
+        rdfs:label  "Bonaire, Sint Eustatius and Saba  "^^xsd:string .
+
+geo:Costa_Rica  rdfs:label  "Costa Rica"^^xsd:string .
+
+geo:Singapore  rdfs:label  "Singapore"^^xsd:string .
+
+geo:Micronesia__Fed_States_of_
+        rdfs:label  "Micronesia (Federated States of)"^^xsd:string .
+
+geo:Kiribati  rdfs:label  "Kiribati"^^xsd:string .
+
+geo:Federal_Republic_of_Germany_the
+        rdfs:label  "Germany, Federal Republic of"^^xsd:string .
+
+geo:Czechoslovakia  rdfs:label  "Czechoslovakia"^^xsd:string .
+
+geo:Polynesia  rdfs:label  "Polynesia"^^xsd:string .
+
+geo:Iran_Islamic_Rep_of_
+        rdfs:label  "Iran (Islamic Republic of)"^^xsd:string .
+
+geo:Cape_Verde  rdfs:label  "Cape Verde"^^xsd:string .
+
+geo:Tuvalu  rdfs:label  "Tuvalu"^^xsd:string .
+
+geo:Mali  rdfs:label  "Mali"^^xsd:string .
+
+geo:Ecuador  rdfs:label  "Ecuador"^^xsd:string .
+
+geo:Madagascar  rdfs:label  "Madagascar"^^xsd:string .
+
+geo:Georgia  rdfs:label  "Georgia"^^xsd:string .
+
+geo:Guam  rdfs:label  "Guam"^^xsd:string .
+
+geo:United_Kingdom_of_Great_Britain_and_Northern_Ireland__the
+        rdfs:label  "United Kingdom"^^xsd:string .
+
+geo:Bermuda  rdfs:label  "Bermuda"^^xsd:string .
+
+geo:Syrian_Arab_Republic_the
+        rdfs:label  "Syrian Arab Republic"^^xsd:string .
+
+geo:Jamaica  rdfs:label  "Jamaica"^^xsd:string .
+
+geo:Sint_Maarten  rdfs:label  "Sint Maarten (Dutch Part)  "^^xsd:string .
+
+geo:Burundi  rdfs:label  "Burundi"^^xsd:string .
+
+geo:Reunion  rdfs:label  "Réunion"^^xsd:string .
+
+geo:Uzbekistan  rdfs:label  "Uzbekistan"^^xsd:string .
+
+geo:Sweden  rdfs:label  "Sweden"^^xsd:string .
+
+geo:western_Africa  rdfs:label  "western Africa"^^xsd:string .
+
+geo:Somalia  rdfs:label  "Somalia"^^xsd:string .
+
+geo:Belgium  rdfs:label  "Belgium"^^xsd:string .
+
+geo:Dominican_Republic_the
+        rdfs:label  "Dominican Republic"^^xsd:string .
+
+geo:Czech_Republic_the
+        rdfs:label  "Czech Republic"^^xsd:string .
+
+geo:Congo_the  rdfs:label  "Congo"^^xsd:string .
+
+geo:Palau  rdfs:label  "Palau"^^xsd:string .
+
+geo:Italy  rdfs:label  "Italy"^^xsd:string .
+
+geo:Asia  rdfs:label  "Asia"^^xsd:string .
+
+geo:Cook_Islands_the  rdfs:label  "Cook Islands"^^xsd:string .
+
+geo:Wallis_and_Futuna_Is
+        rdfs:label  "Wallis and Futuna Islands"^^xsd:string .
+
+geo:Afghanistan  rdfs:label  "Afghanistan"^^xsd:string .
+
+geo:CEN_SAD  rdfs:label  "Community of Sahel-Saharan States"^^xsd:string .
+
+geo:Jordan  rdfs:label  "Jordan"^^xsd:string .
+
+geo:Micronesia  rdfs:label  "Micronesia"^^xsd:string .
+
+geo:Equatorial_Guinea
+        rdfs:label  "Equatorial Guinea"^^xsd:string .
+
+geo:Gibraltar  rdfs:label  "Gibraltar"^^xsd:string .
+
+geo:Sri_Lanka  rdfs:label  "Sri Lanka"^^xsd:string .
+
+geo:Gambia__the  rdfs:label  "Gambia"^^xsd:string .
+
+geo:Bangladesh  rdfs:label  "Bangladesh"^^xsd:string .
+
+geo:Paraguay  rdfs:label  "Paraguay"^^xsd:string .
+
+geo:Luxembourg  rdfs:label  "Luxembourg"^^xsd:string .
+
+geo:Senegal  rdfs:label  "Senegal"^^xsd:string .
+
+geo:LDC_1993  rdfs:label  "least developed countries "^^xsd:string .
+
+geo:Republic_of_Moldova
+        rdfs:label  "Republic of Moldova"^^xsd:string .
+
+geo:Union_of_Soviet_Socialist_Republic_the
+        rdfs:label  "Union of Soviet Socialist Republic"^^xsd:string .
+
+geo:Gabon  rdfs:label  "Gabon"^^xsd:string .
+
+geo:Dominica  rdfs:label  "Dominica"^^xsd:string .
+
+geo:Ukraine  rdfs:label  "Ukraine"^^xsd:string .
+
+geo:Uganda  rdfs:label  "Uganda"^^xsd:string .
+
+geo:Oman  rdfs:label  "Oman"^^xsd:string .
+
+geo:eastern_Asia  rdfs:label  "eastern Asia"^^xsd:string .
+
+geo:Martinique  rdfs:label  "Martinique"^^xsd:string .
+
+geo:FAO  rdfs:label  "Food and Agriculture Organization of the United Nations "^^xsd:string .
+
+geo:Belarus  rdfs:label  "Belarus"^^xsd:string .
+
+geo:Rwanda  rdfs:label  "Rwanda"^^xsd:string .
+
+geo:Americas  rdfs:label  "Americas"^^xsd:string .
+
+geo:LIFDC_2008  rdfs:label  "low income and food deficit countries"^^xsd:string .
+
+geo:Tonga  rdfs:label  "Tonga"^^xsd:string .
+
+geo:France  rdfs:label  "France"^^xsd:string .
+
+geo:Yemen_1990  rdfs:label  "Yemen_1990"^^xsd:string .
+
+geo:Falkland_Is  rdfs:label  "Falkland Islands"^^xsd:string .
+
+geo:Australia_and_New_Zealand
+        rdfs:label  "Australia and New Zealand"^^xsd:string .
+
+geo:UEMOA  rdfs:label  "West African Economic and Monetary Union "^^xsd:string .
+
+geo:Cameroon  rdfs:label  "Cameroon"^^xsd:string .
+
+geo:Japan  rdfs:label  "Japan"^^xsd:string .
+
+geo:Central_African_Republic_the
+        rdfs:label  "Central African Republic"^^xsd:string .
+
+geo:Venezuela  rdfs:label  "Venezuela (Bolivarian Republic of)"^^xsd:string .
+
+geo:Mozambique  rdfs:label  "Mozambique"^^xsd:string .
+
+geo:western_Europe  rdfs:label  "western Europe"^^xsd:string .
+
+geo:Burkina_Faso  rdfs:label  "Burkina Faso"^^xsd:string .
+
+geo:Myanmar  rdfs:label  "Myanmar"^^xsd:string .
+
+geo:Saint_Helena  rdfs:label  "Saint Helena, Ascension and Tristan da Cunha "^^xsd:string .
+
+geo:Cuba  rdfs:label  "Cuba"^^xsd:string .
+
+geo:Holy_See  rdfs:label  "Holy See"^^xsd:string .
+
+geo:El_Salvador  rdfs:label  "El Salvador"^^xsd:string .
+
+geo:southern_Africa  rdfs:label  "southern Africa"^^xsd:string .
+
+geo:Faroe_Islands  rdfs:label  "Faroe Islands"^^xsd:string .
+
+geo:Cayman_Islands  rdfs:label  "Cayman Islands"^^xsd:string .
+
+geo:Antigua_and_Barbuda
+        rdfs:label  "Antigua and Barbuda"^^xsd:string .
+
+geo:CAC  rdfs:label  "Central American Council of Agriculture  "^^xsd:string .
+
+geo:Solomon_Islands  rdfs:label  "Solomon Islands"^^xsd:string .
+
+geo:Germany  rdfs:label  "Germany"^^xsd:string .
+
+geo:Yemen  rdfs:label  "Yemen"^^xsd:string .
+
+geo:Mexico  rdfs:label  "Mexico"^^xsd:string .
+
+geo:Philippines__the  rdfs:label  "Philippines"^^xsd:string .
+
+geo:CAN  rdfs:label  "Andean Community "^^xsd:string .
+
+geo:PIF_1985  rdfs:label  "Pacific Islands Forum "^^xsd:string .
+
+geo:Democratic_Yemen  rdfs:label  "Yemen, Democratic"^^xsd:string .
+
+geo:Comoros_the  rdfs:label  "Comoros"^^xsd:string .
+
+geo:India  rdfs:label  "India"^^xsd:string .
+
+geo:Zaire  rdfs:label  "Zaire"^^xsd:string .
+
+geo:Viet_Nam  rdfs:label  "Viet Nam"^^xsd:string .
+
+geo:SADC  rdfs:label  "Southern African Development Community "^^xsd:string .
+
+geo:MERCOSUR_1991  rdfs:label  "Southern Common Market "^^xsd:string .
+
+geo:Saudi_Arabia  rdfs:label  "Saudi Arabia"^^xsd:string .
+
+geo:Netherlands_Antilles
+        rdfs:label  "Netherlands Antilles"^^xsd:string .
+
+geo:Ethiopia  rdfs:label  "Ethiopia"^^xsd:string .
+
+geo:Nepal  rdfs:label  "Nepal"^^xsd:string .
+
+geo:South_America  rdfs:label  "South America"^^xsd:string .
+
+geo:Saint_Lucia  rdfs:label  "Saint Lucia"^^xsd:string .
+
+geo:Nigeria  rdfs:label  "Nigeria"^^xsd:string .
+
+geo:ECOWAS  rdfs:label  "Economic Community of West African States"^^xsd:string .
+
+geo:Monaco  rdfs:label  "Monaco"^^xsd:string .
+
+geo:EU  rdfs:label  " European Union"^^xsd:string .
+
+geo:Mauritius  rdfs:label  "Mauritius"^^xsd:string .
+
+geo:Liechtenstein  rdfs:label  "Liechtenstein"^^xsd:string .
+
+geo:Cyprus  rdfs:label  "Cyprus"^^xsd:string .
+
+geo:Chile  rdfs:label  "Chile"^^xsd:string .
+
+geo:northern_America  rdfs:label  "North America"^^xsd:string .
+
+geo:Sudan_the  rdfs:label  "Sudan"^^xsd:string .
+
+geo:Andorra  rdfs:label  "Andorra"^^xsd:string .
+
+geo:Honduras  rdfs:label  "Honduras"^^xsd:string .
+
+geo:Democratic_People_s_Republic_of_Korea_the
+        rdfs:label  "North Korea"^^xsd:string .
+
+geo:The_former_Yugoslav_Republic_of_Macedonia
+        rdfs:label  "Yugoslav, former Yugoslav Republic of Macedonia"^^xsd:string .
+
+geo:Swaziland  rdfs:label  "Swaziland"^^xsd:string .
+
+geo:South_Africa  rdfs:label  "South Africa"^^xsd:string .
+
+geo:CEMAC  rdfs:label  "Central African Economic and Monetary Community "^^xsd:string .
+
+geo:Armenia  rdfs:label  "Armenia"^^xsd:string .
+
+geo:Bosnia_and_Herzegovina
+        rdfs:label  "Bosnia and Herzegovina"^^xsd:string .
+
+geo:Greece  rdfs:label  "Greece"^^xsd:string .
+
+<http://vivo.usda.gov/individual/ARS-0000258760-PUB>
+        a              bibo:Article , <http://vivo.wheatinitiative.org/ontology/ExternalToWheat> ;
+        rdfs:label     "The effect of milling on proteins in model Queso Fresco cheeses" ;
+        bibo:abstract  "q" ;
+        bibo:volume    "3:1-6" ;
+        vitro:modTime  "2017-07-10T21:06:14"^^xsd:dateTime .
+
+<http://vivo.wheatinitiative.org/individual/dataSource2>
+        <http://vivo.wheatinitiative.org/ontology/adminapp/deploymentURI>
+                "http://vmi-dev-88.jouy.inra.fr/wheatvivo-adminapp/dataSource/wheatinitiative"^^xsd:anyURI ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/usesQueryTermSet>
+                <http://vivo.wheatinitiative.org/individual/n4064> .
+
+<http://vivo.wheatinitiative.org/individual/dataSource3>
+        <http://vivo.wheatinitiative.org/ontology/adminapp/deploymentURI>
+                "http://vmi-dev-88.jouy.inra.fr/wheatvivo-adminapp/dataSource/usda"^^xsd:anyURI ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/usesQueryTermSet>
+                <http://vivo.wheatinitiative.org/individual/n4064> .
+
+<http://vivo.wheatinitiative.org/individual/dataSource1>
+        <http://vivo.wheatinitiative.org/ontology/adminapp/deploymentURI>
+                "http://vmi-dev-88.jouy.inra.fr/wheatvivo-adminapp/dataSource/prodinra"^^xsd:anyURI ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/usesQueryTermSet>
+                <http://vivo.wheatinitiative.org/individual/n4064> .
+
+<http://vivo.wheatinitiative.org/individual/dataSource4>
+        <http://vivo.wheatinitiative.org/ontology/adminapp/deploymentURI>
+                "http://vmi-dev-88.jouy.inra.fr/wheatvivo-adminapp/dataSource/rcuk"^^xsd:anyURI ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/usesQueryTermSet>
+                <http://vivo.wheatinitiative.org/individual/n4064> .
+
+<http://vivo.wheatinitiative.org/individual/n7120>
+        a              <http://vivo.wheatinitiative.org/ontology/adminapp/QueryTermSet> ;
+        rdfs:label     "Standard Wheat Query Term set"@en-US ;
+        vitro:modTime  "2017-02-16T18:45:27"^^xsd:dateTime .
+
+<http://vivo.wheatinitiative.org/individual/n4064>
+        a              <http://vivo.wheatinitiative.org/ontology/adminapp/QueryTermSet> ;
+        rdfs:label     "Standard Wheat Query Term set"@en-US ;
+        vitro:modTime  "2017-02-16T18:45:40"^^xsd:dateTime ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/queryTerm>
+                "wheat" , "triticum" , "tritici" , "ble" .
+
+<http://vivo.wheatinitiative.org/individual/n1184>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "organization name match"@en-US ;
+        vitro:modTime           "2017-02-24T14:14:45"^^xsd:dateTime ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/matchDegree>
+                90 ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomDataProperty>
+                rdfs:label .
+
+<http://vivo.wheatinitiative.org/individual/n6342>
+        a              <http://vivo.wheatinitiative.org/ontology/adminapp/PublishDataSource> ;
+        rdfs:label     "Publish to Public WheatVIVO Portal"@en-US ;
+        vitro:modTime  "2017-02-24T16:54:21"^^xsd:dateTime ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/deploymentURI>
+                "http://vmi-dev-88.jouy.inra.fr/wheatvivo-adminapp/dataSource/publish"^^xsd:anyURI ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/priority>
+                2 ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/serviceURI>
+                "http://vmi-dev-88.jouy.inra.fr/wheatvivo-adminapp/"^^xsd:anyURI ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/usesSparqlEndpoint>
+                <http://vivo.wheatinitiative.org/individual/n7428> .
+
+<http://vivo.wheatinitiative.org/individual/n3343>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Organization Merge Rule"@en-US , "Organization Name Merge Rule"@en-US ;
+        vitro:modTime           "2017-02-24T14:13:53"^^xsd:dateTime ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n1184> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                foaf:Organization .
+
+<http://vivo.wheatinitiative.org/individual/n3433>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/DataSource> , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeDataSource> ;
+        rdfs:label              "Standard merge source"@en-US ;
+        vitro:modTime           "2017-02-21T12:45:37"^^xsd:dateTime ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeDataSource> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/deploymentURI>
+                "http://vmi-dev-88.jouy.inra.fr/wheatvivo-adminapp/dataSource/merge"^^xsd:anyURI ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/graphURI>
+                "http://vivo.wheatinitiative.org/graph/merge"^^xsd:anyURI ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasMergeRule>
+                <http://vivo.wheatinitiative.org/individual/n3343> , <http://vivo.wheatinitiative.org/individual/n6476> , <http://vivo.wheatinitiative.org/individual/n7611> , <http://vivo.wheatinitiative.org/individual/n2837> , <http://vivo.wheatinitiative.org/individual/n6814> , <http://vivo.wheatinitiative.org/individual/n4402> , <http://vivo.wheatinitiative.org/individual/n2649> , <http://vivo.wheatinitiative.org/individual/n3136> , <http://vivo.wheatinitiative.org/individual/n264> , <http://vivo.wheatinitiative.org/individual/n6135> , <http://vivo.wheatinitiative.org/individual/n3349> , <http://vivo.wheatinitiative.org/individual/n3498> , <http://vivo.wheatinitiative.org/individual/n1447> , <http://vivo.wheatinitiative.org/individual/n3432> , <http://vivo.wheatinitiative.org/individual/n5689> , <http://vivo.wheatinitiative.org/individual/n6082> , <http://vivo.wheatinitiative.org/individual/n5983> , <http://vivo.wheatinitiative.org/individual/n1883> , <http://vivo.wheatinitiative.org/individual/n1707> , <http://vivo.wheatinitiative.org/individual/n2357> , <http://vivo.wheatinitiative.org/individual/n1586> , <http://vivo.wheatinitiative.org/individual/n6143> , <http://vivo.wheatinitiative.org/individual/n2343> , <http://vivo.wheatinitiative.org/individual/n7896> , <http://vivo.wheatinitiative.org/individual/n3764> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/serviceURI>
+                "http://localhost:8080/wheatvivo-adminapp/"^^xsd:anyURI ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/usesSparqlEndpoint>
+                <http://vivo.wheatinitiative.org/individual/sparqlEndpoint1> .
+
+<http://vivo.wheatinitiative.org/individual/n4360>
+        a              <http://vivo.wheatinitiative.org/ontology/adminapp/PublishDataSource> ;
+        rdfs:label     "Publish to Staging WheatVIVO"@en-US ;
+        vitro:modTime  "2017-02-21T12:58:33"^^xsd:dateTime ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/deploymentURI>
+                "http://localhost:8080/wheatvivo-adminapp/dataSource/publish"^^xsd:anyURI ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/priority>
+                1 ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/serviceURI>
+                "http://localhost:8080/wheatvivo-adminapp/"^^xsd:anyURI ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/usesSparqlEndpoint>
+                <http://vivo.wheatinitiative.org/individual/n571> .
+
+<http://vivo.wheatinitiative.org/individual/n5313>
+        a                 vivo:Project ;
+        rdfs:label        "BIOTREM"@en-US ;
+        vitro:modTime     "2017-04-20T11:52:36"^^xsd:dateTime ;
+        vivo:description  "Project&rsquo;s aim is to successfully commercialize BIOTREM technology &ndash; globally-unique, innovative and patented, sustainable method of processing by-products of the milling industry.<br /><br />Using modified servo-presses, the technology, allows moulding wheat-bran into designated forms. After processing the mouldings gain market value as biodegradable packaging. Their main application concerns disposable tableware or food-service take-away-containers.<br /><br />Biotrem packaging products are simultaneously bio-based, biodegradable within 30 days, use annually renewable agricultural side-products and are free of chemical additives. The above characteristics position Biotrem product line as a premium offer with environmental standards beyond its market counterparts.<br /><br />Degradable packaging, as market research show, is the fastest growing niche of the packaging industry &ndash; a business opportunity the project plans to exploit, as it provides products that meet a demand generated by both legislation (imposing decrease of packaging waste) and consumer trends (environmentally conscious attitude). <br /><br />Having concluded necessary R&amp;D works and completing investments assembling the production line, the company currently strives to optimize the technology in operational conditions and to specify its short-medium and medium-long term business strategy." .
+
+<http://vivo.wheatinitiative.org/individual/n5429>
+        a              <http://vivo.wheatinitiative.org/ontology/adminapp/DataSource> ;
+        rdfs:label     "ORCID"@en-US ;
+        vitro:modTime  "2017-05-15T18:13:26"^^xsd:dateTime ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/deploymentURI>
+                "http://vmi-dev-88.jouy.inra.fr/wheatvivo-adminapp/dataSource/orcid"^^xsd:anyURI ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/graphURI>
+                "http://vitro.mannlib.cornell.edu/a/graph/ORCID"^^xsd:anyURI ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/priority>
+                5 ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/serviceURI>
+                "http://vmi-dev-88.jouy.inra.fr/wheatvivo-adminapp/"^^xsd:anyURI ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/usesQueryTermSet>
+                <http://vivo.wheatinitiative.org/individual/n4064> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/usesSparqlEndpoint>
+                <http://vivo.wheatinitiative.org/individual/sparqlEndpoint1> .
+
+<http://vivo.wheatinitiative.org/individual/n3818>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Organization fax number match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                <http://vitro.mannlib.cornell.edu/ns/vitro/siteConfig/orgFaxContext> .
+
+<http://vivo.wheatinitiative.org/individual/n1448>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Organization funding org match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                <http://vitro.mannlib.cornell.edu/ns/vitro/siteConfig/orgAwardsGrantContext> .
+
+<http://vivo.wheatinitiative.org/individual/n690>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Grant title match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/matchDegree>
+                85 ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomDataProperty>
+                rdfs:label .
+
+<http://vivo.wheatinitiative.org/individual/n5033>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Publication PMID match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomDataProperty>
+                bibo:pmid .
+
+<http://vivo.wheatinitiative.org/individual/n148>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Publication DOI match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomDataProperty>
+                bibo:doi .
+
+<http://vivo.wheatinitiative.org/individual/n6465>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Organization contact email match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                <http://vitro.mannlib.cornell.edu/ns/vitro/siteConfig/organizationEmailContext> .
+
+<http://vivo.wheatinitiative.org/individual/n6476>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Publication PMID Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n5033> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                bibo:Document .
+
+<http://vivo.wheatinitiative.org/individual/n7611>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Grant PI Plus Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n690> , <http://vivo.wheatinitiative.org/individual/n1321> , <http://vivo.wheatinitiative.org/individual/n566> , <http://vivo.wheatinitiative.org/individual/n7521> , <http://vivo.wheatinitiative.org/individual/n3926> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                vivo:Grant .
+
+<http://vivo.wheatinitiative.org/individual/n2837>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Journal Title Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n3965> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                bibo:Journal .
+
+<http://vivo.wheatinitiative.org/individual/n6814>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Project Participant Plus Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n5910> , <http://vivo.wheatinitiative.org/individual/n3408> , <http://vivo.wheatinitiative.org/individual/n4928> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                vivo:Project .
+
+<http://vivo.wheatinitiative.org/individual/n4402>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Organization Fax Number Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n3818> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                foaf:Organization .
+
+<http://vivo.wheatinitiative.org/individual/n2649>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Organization Funding Org on Same Grant Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n1448> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                foaf:Organization .
+
+<http://vivo.wheatinitiative.org/individual/n3136>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Person Additional Email Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n4431> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                foaf:Person .
+
+<http://vivo.wheatinitiative.org/individual/n264>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Publication Title Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n1247> , <http://vivo.wheatinitiative.org/individual/n14> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                bibo:Document .
+
+<http://vivo.wheatinitiative.org/individual/n6135>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Person Email Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n16> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                foaf:Person .
+
+<http://vivo.wheatinitiative.org/individual/n3349>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Person Researcher ID Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n3327> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                foaf:Person .
+
+<http://vivo.wheatinitiative.org/individual/n3498>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Person Name and Position Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n7590> , <http://vivo.wheatinitiative.org/individual/n6918> , <http://vivo.wheatinitiative.org/individual/n5774> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                foaf:Person .
+
+<http://vivo.wheatinitiative.org/individual/n1447>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Publication PMCID Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n3385> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                bibo:Document .
+
+<http://vivo.wheatinitiative.org/individual/n3432>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Grant Sponsor ID Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n7420> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                vivo:Grant .
+
+<http://vivo.wheatinitiative.org/individual/n5689>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Organization Phone Number Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n8166> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                foaf:Organization .
+
+<http://vivo.wheatinitiative.org/individual/n6082>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Grant Local Award ID Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n4326> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                vivo:Grant .
+
+<http://vivo.wheatinitiative.org/individual/n5983>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Person Name Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n4636> , <http://vivo.wheatinitiative.org/individual/n6156> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                foaf:Person .
+
+<http://vivo.wheatinitiative.org/individual/n1883>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Person Authorship Rank on Same Publication Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n8077> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                foaf:Person .
+
+<http://vivo.wheatinitiative.org/individual/n1707>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Organization Contact Email Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n6465> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                foaf:Organization .
+
+<http://vivo.wheatinitiative.org/individual/n2357>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Organization Lead Organization on Same Grant Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n8121> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                foaf:Organization .
+
+<http://vivo.wheatinitiative.org/individual/n1586>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Publication Authorship Plus Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n6208> , <http://vivo.wheatinitiative.org/individual/n3057> , <http://vivo.wheatinitiative.org/individual/n7704> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                bibo:Document .
+
+<http://vivo.wheatinitiative.org/individual/n6143>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Organization Address Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n4408> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                foaf:Organization .
+
+<http://vivo.wheatinitiative.org/individual/n2343>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Person ORCID iD Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n2463> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                foaf:Person .
+
+<http://vivo.wheatinitiative.org/individual/n7896>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Publication DOI Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n148> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                bibo:Document .
+
+<http://vivo.wheatinitiative.org/individual/n3764>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        rdfs:label              "Journal ISSN Merge Rule" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRule> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/hasAtom>
+                <http://vivo.wheatinitiative.org/individual/n607> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeRuleClass>
+                bibo:Journal .
+
+<http://vivo.wheatinitiative.org/individual/n5910>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Project participant match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                <http://vitro.mannlib.cornell.edu/ns/vitro/siteConfig/bfo_0000055Context> .
+
+<http://vivo.wheatinitiative.org/individual/n1321>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Grant funding org match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                <http://vitro.mannlib.cornell.edu/ns/vitro/siteConfig/grantAwardedByContext> .
+
+<http://vivo.wheatinitiative.org/individual/n3385>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Publication PMCID match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomDataProperty>
+                vivo:pmcid .
+
+<http://vivo.wheatinitiative.org/individual/n8077>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Person authorship rank on same publication match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomDataProperty>
+                vivo:rank ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                <http://vitro.mannlib.cornell.edu/ns/vitro/siteConfig/authorInAuthorshipContext> .
+
+<http://vivo.wheatinitiative.org/individual/n3965>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Journal title match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomDataProperty>
+                rdfs:label .
+
+<http://vivo.wheatinitiative.org/individual/n1247>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Publication date match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                <http://vitro.mannlib.cornell.edu/ns/vitro/siteConfig/publicationDateContext> .
+
+<http://vivo.wheatinitiative.org/individual/n7420>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Grant sponsor ID match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomDataProperty>
+                vivo:sponsorAwardId .
+
+<http://vivo.wheatinitiative.org/individual/n6208>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Publication date match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                <http://vitro.mannlib.cornell.edu/ns/vitro/siteConfig/publicationDateContext> .
+
+<http://vivo.wheatinitiative.org/individual/n566>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Grant PI match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                <http://vitro.mannlib.cornell.edu/ns/vitro/siteConfig/grantRelatesContext> .
+
+<http://vivo.wheatinitiative.org/individual/n4431>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Person additional email match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                <http://vitro.mannlib.cornell.edu/ns/vitro/siteConfig/additionalEmailContext> .
+
+<http://vivo.wheatinitiative.org/individual/n3408>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Project date interval match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                vivo:dateTimeInterval .
+
+<http://vivo.wheatinitiative.org/individual/n4928>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Project title match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/matchDegree>
+                75 ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomDataProperty>
+                rdfs:label .
+
+<http://vivo.wheatinitiative.org/individual/n4636>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Person first name match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/matchDegree>
+                70 ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomDataProperty>
+                vcard:givenName .
+
+<http://vivo.wheatinitiative.org/individual/n4408>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "organization address match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                <http://vitro.mannlib.cornell.edu/ns/vitro/siteConfig/mailingAddressOrgContext> .
+
+<http://vivo.wheatinitiative.org/individual/n7521>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Grant date interval match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                vivo:dateTimeInterval .
+
+<http://vivo.wheatinitiative.org/individual/n7590>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Person last name inexact match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/matchDegree>
+                80 ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomDataProperty>
+                vcard:familyName .
+
+<http://vivo.wheatinitiative.org/individual/n6156>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Person last name match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/matchDegree>
+                95 ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomDataProperty>
+                vcard:familyName .
+
+<http://vivo.wheatinitiative.org/individual/n607>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Journal ISSN match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomDataProperty>
+                bibo:issn .
+
+<http://vivo.wheatinitiative.org/individual/n8121>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Organization lead organization on same grant match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                <http://vitro.mannlib.cornell.edu/ns/vitro/siteConfig/orgHasLeaderRoleContext> .
+
+<http://vivo.wheatinitiative.org/individual/n8166>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Organization phone number match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                <http://vitro.mannlib.cornell.edu/ns/vitro/siteConfig/orgTelephoneContext> .
+
+<http://vivo.wheatinitiative.org/individual/n3057>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Publication venue match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                vivo:hasPublicationVenue .
+
+<http://vivo.wheatinitiative.org/individual/n7704>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Publication authorship match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                <http://vitro.mannlib.cornell.edu/ns/vitro/siteConfig/informationResourceInAuthorshipContext> .
+
+<http://vivo.wheatinitiative.org/individual/n6918>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Person position match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                <http://vitro.mannlib.cornell.edu/ns/vitro/siteConfig/personInPositionContext> .
+
+<http://vivo.wheatinitiative.org/individual/n5774>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Person first name inexact match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/matchDegree>
+                60 ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomDataProperty>
+                vcard:givenName .
+
+<http://vivo.wheatinitiative.org/individual/n16>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Person email match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                <http://vitro.mannlib.cornell.edu/ns/vitro/siteConfig/primaryEmailContext> .
+
+<http://vivo.wheatinitiative.org/individual/n3327>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Person Researcher ID match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomDataProperty>
+                vivo:researcherId .
+
+<http://vivo.wheatinitiative.org/individual/n14>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Publication title match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/matchDegree>
+                99 ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomDataProperty>
+                rdfs:label .
+
+<http://vivo.wheatinitiative.org/individual/n2463>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Person ORCID iD match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                vivo:orcidId .
+
+<http://vivo.wheatinitiative.org/individual/n4326>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Grant local award ID match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomDataProperty>
+                vivo:localAwardId .
+
+<http://vivo.wheatinitiative.org/individual/n3926>
+        a                       owl:Thing , <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        rdfs:label              "Grant lead org match" ;
+        vitro:mostSpecificType  <http://vivo.wheatinitiative.org/ontology/adminapp/MergeRuleAtom> ;
+        <http://vivo.wheatinitiative.org/ontology/adminapp/mergeAtomObjectProperty>
+                <http://vitro.mannlib.cornell.edu/ns/vitro/siteConfig/grantAdministeredByContext> .

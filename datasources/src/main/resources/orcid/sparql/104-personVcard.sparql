@@ -16,23 +16,23 @@ PREFIX obo:      <http://purl.obolibrary.org/obo/>
 PREFIX ocrer:    <http://purl.org/net/OCRe/research.owl#>
 PREFIX ocresd:   <http://purl.org/net/OCRe/study_design.owl#>
 PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
+PREFIX nih:      <http://vivo.scripps.edu/ontology/nih#>
+PREFIX tsri:     <http://vivo.scripps.edu/ontology/tsri#>
 PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>
 PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
-PREFIX prodinra: <http://record.prodinra.inra.fr/>
+PREFIX rcuk:     <http://gtr.rcuk.ac.uk/gtr/api/>
+PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
 
 CONSTRUCT {
-    ?y a vivo:Authorship .
-    ?z a foaf:Person .
-    ?y vivo:rank ?rank .
-    ?y vivo:relates ?x .
-    ?y vivo:relates ?z .
+    ?x obo:ARG_2000028 _:vcard .
+    _:vcard a vcard:Individual .
+    _:vcard vcard:hasName _:name .
+    _:name a vcard:Name .
+    _:name vcard:familyName ?label .
+    _:name vcard:givenName ?label .
 } WHERE {
-    ?x prodinra:creator ?y .
-    ?x prodinra:minPosition ?minPosition .
-    # not available without reasoning: ?x a bibo:Document .
-    ?y prodinra:author ?z .
-    ?y vitro:position ?position
-    BIND( (xsd:int(?position) - ?minPosition + 1) AS ?rank)
+    ?x a foaf:Person .
+    ?x rdfs:label ?label 
 }

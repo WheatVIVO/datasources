@@ -1,0 +1,36 @@
+<http://www.wheatinitiative.org/administration/users/n3745994>
+        a       <http://xmlns.com/foaf/0.1/Person> ;
+        <http://www.w3.org/2000/01/rdf-schema#label>
+                "Lucas, Helene" ;
+        <http://purl.obolibrary.org/obo/ARG_2000028>
+                <http://www.wheatinitiative.org/administration/users/6042894> ;
+        <http://vivoweb.org/ontology/core#orcidId>
+                <http://orcid.org/0000-0002-1469-0212> ;
+        <http://vivoweb.org/ontology/core#relatedBy>
+                <http://www.wheatinitiative.org/administration/users/7333212> ;
+        <http://www.wheatinitiative.org/administration/users/ontology/addressCountry>
+                "France" ;
+        <http://www.wheatinitiative.org/administration/users/ontology/addressLocality>
+                "Paris Cedex 07" ;
+        <http://www.wheatinitiative.org/administration/users/ontology/addressPostalCode>
+                "75338" ;
+        <http://www.wheatinitiative.org/administration/users/ontology/addressThoroughfare>
+                "147 rue de l'Université" ;
+        <http://www.wheatinitiative.org/administration/users/ontology/employmentSector>
+                "Public sector"@en ;
+        <http://www.wheatinitiative.org/administration/users/ontology/firstName>
+                "Helene" ;
+        <http://www.wheatinitiative.org/administration/users/ontology/institutionCompany>
+                "INRA" ;
+        <http://www.wheatinitiative.org/administration/users/ontology/lastName>
+                "Lucas" ;
+        <http://www.wheatinitiative.org/administration/users/ontology/mail>
+                "Helene.Lucas@inra.fr" ;
+        <http://www.wheatinitiative.org/administration/users/ontology/mainEmploymentCategory>
+                "Administration/Management"@en ;
+        <http://www.wheatinitiative.org/administration/users/ontology/otherProfessionalActivities>
+                "Wheat Initiative - International Scientific Coordinator;\r\nGIS Biotechnologies Vertes - Chair of Managing Board"@en ;
+        <http://www.wheatinitiative.org/administration/users/ontology/phoneNumber>
+                "+33 142759253" ;
+        <http://www.wheatinitiative.org/administration/users/ontology/role>
+                "member"@en .

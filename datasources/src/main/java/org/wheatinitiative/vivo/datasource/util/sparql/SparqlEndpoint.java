@@ -38,7 +38,7 @@ import com.hp.hpl.jena.sparql.resultset.ResultSetException;
 public class SparqlEndpoint implements ModelConstructor {
 
     // writing too many triples at once to VIVO seems to result in 403 errors
-    private static final int CHUNK_SIZE = 5000;
+    private static final int CHUNK_SIZE = 2500;
     
     private static final Log log = LogFactory.getLog(SparqlEndpoint.class);
     

@@ -13,7 +13,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
     private static final Log log = LogFactory.getLog(ConnectorDataSource.class);
     /* number of iterator elements to be processed at once in memory 
     before being flushed to a SPARQL endpoint */
-    protected final static int DEFAULT_BATCH_SIZE = 100;
+    protected final static int DEFAULT_BATCH_SIZE = 50;
     
     private Model result;
     
@@ -67,22 +67,28 @@ public abstract class ConnectorDataSource extends DataSourceBase {
         Model buffer = ModelFactory.createDefaultModel();
         int count = 0;
         while(it.hasNext() && count < this.getConfiguration().getLimit()) {
-            count++;
-            Model model = mapToVIVO(it.next());
-            log.debug(model.size() + " statements before filtering");
-            model = filter(model);
-            log.debug(model.size() + " statements after filtering");
-            if(activeEndpointForResults()) {
-                buffer.add(model);                
-                if(count % getBatchSize() == 0 || !it.hasNext()) {
-                    log.debug("Adding " + buffer.size() + " triples to endpoint");
-                    addToEndpoint(buffer);
-                    buffer.removeAll();
+            try {
+                count++;
+                Model model = mapToVIVO(it.next());
+                log.debug(model.size() + " statements before filtering");
+                model = filter(model);
+                log.debug(model.size() + " statements after filtering");
+                if(activeEndpointForResults()) {
+                    buffer.add(model);                
+                    if(count % getBatchSize() == 0 || !it.hasNext() 
+                            || count == this.getConfiguration().getLimit()) {
+                        log.debug("Adding " + buffer.size() + " triples to endpoint");
+                        addToEndpoint(buffer);
+                        buffer.removeAll();
+                    }
+                } else {
+                    result.add(model);
                 }
-            } else {
-                result.add(model);
+            } catch (Exception e) {
+                log.error(e, e);
+                this.getStatus().setErrorRecords(this.getStatus().getErrorRecords() + 1);
             }
-        }
+        }        
     }
     
     private boolean activeEndpointForResults() {

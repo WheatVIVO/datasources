@@ -54,7 +54,7 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
                                              // be retrieved in a single request
     private static final int MAX_PAGES = 40;  // maximum number of pages to retrieve
                                              // for any search term
-    private static final int MIN_REST_MILLIS = 350; // ms to wait between
+    private static final int MIN_REST_MILLIS = 125; // ms to wait between
                                                     // subsequent API calls
     
     private HttpUtils httpUtils = new HttpUtils();

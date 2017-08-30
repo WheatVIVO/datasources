@@ -35,7 +35,8 @@ CONSTRUCT {
     ?person vivo:relatedBy _:authorship .
     ?person a foaf:Person .
     ?person rdfs:label ?personLabel .
-    ?person vivo:orcidId ?orcidId
+    ?person vivo:orcidId ?orcidId .
+    ?orcidId a owl:Thing .
 } WHERE {
     ?x a orcidwork:work .
     ?x generic:path ?workPath .

@@ -50,7 +50,7 @@ public class VivoDataSource extends ConnectorDataSource {
 
     private static final String PEOPLE = 
             "http://vivoweb.org/ontology#vitroClassGrouppeople";
-    private final static int MIN_REST = 300; // ms between linked data requests
+    private final static int MIN_REST = 125; // ms between linked data requests
     private static final String RESOURCE_PATH = "/vivo/update15to16/"; 
     
     private Set<String> retrievedURIs = new HashSet<String>();
@@ -87,7 +87,7 @@ public class VivoDataSource extends ConnectorDataSource {
                     log.info("Fetching related resource " + r.getURI());
                     fetch(r.getURI(), tmp);
                 } catch (Exception e) {
-                    log.error("Error retreiving " + r.getURI());
+                    log.error("Error retrieving " + r.getURI(), e);
                 }
             }
         }
@@ -161,12 +161,27 @@ public class VivoDataSource extends ConnectorDataSource {
         }
         URI nextPageUrl = builder.build();
         while(nextPageUrl != null) {
-            System.out.println("Requesting " + nextPageUrl.toString());
+            log.debug("Requesting " + nextPageUrl.toString());
             String searchResult = httpUtils.getHttpResponse(
                     nextPageUrl.toString());
-            Model resultsModel = xmlToRdf.toRDF(searchResult);
-            resultUris.addAll(getResultUris(resultsModel));
-            String nextPage = getNextPageUrl(resultsModel);
+            String nextPage = null;
+            try {
+                Model resultsModel = xmlToRdf.toRDF(searchResult);
+                resultUris.addAll(getResultUris(resultsModel));
+                nextPage = getNextPageUrl(resultsModel);
+            } catch (RuntimeException e) {
+                if(e.getCause() != null && e.getCause().getMessage() != null 
+                        && e.getCause().getMessage().contains(
+                                "Premature end of file")) {
+                    // (Old) VIVOs seem to respond with empty search results XML
+                    // documents when there are no   
+                    // Logging exception only to allow other searches to continue.
+                    log.info("Empty results document returned by VIVO " +
+                            "for query text " + querytext);
+                } else {                    
+                    throw e;
+                }
+            }
             if(nextPage == null) {
                 nextPageUrl = null;
             } else {

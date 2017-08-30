@@ -30,6 +30,7 @@ import org.wheatinitiative.vivo.datasource.util.xml.XmlToRdf;
 
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.RDFNode;
@@ -45,14 +46,18 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
             "https://pub.orcid.org/v2.0/";
     private static final String NAMESPACE_ETC = 
             "http://vivo.wheatinitiative.org/individual/orcid-";
-    private static final int MIN_REST = 250; // ms
+    private static final int MIN_REST = 125; // ms
     private static final String CLIENT_ID = "orcid.clientId";
     private static final String CLIENT_SECRET = "orcid.clientSecret";
     private String clientId;
     private String clientSecret;
     private static final String ORCIDID = "http://vivoweb.org/ontology/core#orcidId";
     private static final String SPARQL_RESOURCE_DIR = "/orcid/sparql/";
+    private static final String VCARD = "http://www.w3.org/2006/vcard/ns#";
+    private static final String GIVEN_NAME = VCARD + "givenName";
+    private static final String FAMILY_NAME = VCARD + "familyName";
     private DefaultHttpClient httpClient;
+    private NameProcessor nameProcessor = new NameProcessor();
     
     public OrcidConnector() {
         Object clientId = this.getConfiguration().getParameterMap().get(CLIENT_ID);
@@ -243,7 +248,16 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
 
     @Override
     protected Model filter(Model model) {
-        return model;
+        Model filtered = ModelFactory.createDefaultModel();
+        StmtIterator sit = model.listStatements();
+        while(sit.hasNext()) {
+            Statement stmt = sit.next();
+            if(!stmt.getPredicate().getURI().contains("orcid.org") 
+                    && !stmt.getPredicate().getURI().contains("generalizedXML")) {
+                filtered.add(stmt);
+            }
+        }
+        return filtered;
     }
 
     @Override
@@ -251,20 +265,50 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
         List<String> queries = Arrays.asList("100-documentTypes.sparql",
                 "102-authorship.sparql",
                 "103-knownPerson.sparql", 
+                "104-personVcard.sparql");
+        executeQueries(queries, model);
+        parseNames(model);
+        queries = Arrays.asList(
+                "1045-knownPersonRankMatch.sparql",
                 "105-title.sparql",
                 "113-year.sparql",
                 "114-doi.sparql",
                 "115-journal.sparql",
-                "116-url.sparql"
+                "116-url.sparql",
+                "119-internalSameAs.sparql",
+                "129-sameRank.sparql"
                 );
-        for(String query : queries) {
-            log.debug("Executing query " + query);
-            log.debug("Pre-query model size: " + model.size());
-            construct(SPARQL_RESOURCE_DIR + query, model, NAMESPACE_ETC);
-            log.debug("Post-query model size: " + model.size());
-        }
+        executeQueries(queries, model);
         return rdfUtils.renameBNodes(
                 model, NAMESPACE_ETC, model);
+    }
+    
+    private void executeQueries(List<String> queries, Model model) {
+        for(String query : queries) {
+            log.info("Executing query " + query);
+            log.info("Pre-query model size: " + model.size());
+            construct(SPARQL_RESOURCE_DIR + query, model, NAMESPACE_ETC);
+            log.info("Post-query model size: " + model.size());
+        }
+    }
+    
+    private Model parseNames(Model model) {
+        Model additions = ModelFactory.createDefaultModel();
+        Model subtractions = ModelFactory.createDefaultModel();
+        StmtIterator sit = model.listStatements(null, model.getProperty(FAMILY_NAME), (Literal) null);
+        while(sit.hasNext()) {
+            Statement stmt = sit.next();
+            Name name = nameProcessor.parseName(stmt.getObject().asLiteral().getLexicalForm());
+            additions.add(stmt.getSubject(), additions.getProperty(FAMILY_NAME), name.getFamilyName());
+            if(name.getGivenName() != null) {
+                additions.add(stmt.getSubject(), additions.getProperty(GIVEN_NAME), name.getGivenName());
+            }
+            subtractions.add(stmt);
+        }
+        subtractions.add(model.listStatements(null, model.getProperty(GIVEN_NAME), (Literal) null));
+        model.remove(subtractions);
+        model.add(additions);
+        return model;
     }
 
 }
