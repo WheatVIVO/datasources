@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wheatinitiative.vivo.datasource.connector.florida.Florida;
 import org.wheatinitiative.vivo.datasource.connector.cornell.Cornell;
 import org.wheatinitiative.vivo.datasource.connector.cordis.Cordis;
 import org.wheatinitiative.vivo.datasource.connector.orcid.OrcidConnector;
@@ -28,7 +29,8 @@ public class LaunchIngest {
     public static void main(String[] args) {
         if(args.length < 3) {
             System.out.println("Usage: LaunchIngest " 
-                    + "cordis|rcuk|prodinra|usda|wheatinitiative|cornell|tamu|upenn outputfile " 
+                    + "rcuk|prodinra|usda|wheatinitiative|florida outputfile " 
+                    + "cordis|rcuk|prodinra|usda|wheatinitiative|cornell|tamu|upenn|florida outputfile " 
                     + "queryTerm ... [queryTermN] [limit]");
             return;
         } 
@@ -87,6 +89,10 @@ public class LaunchIngest {
             connector = new WheatInitiative();
             connector.getConfiguration().setServiceURI(
                     "http://www.wheatinitiative.org/administration/users/csv");
+        } else if ("florida".equals(connectorName)) {
+                connector = new Florida();
+                connector.getConfiguration().setServiceURI(
+                        "http://vivo.ufl.edu/");
         } else if ("orcid".equals(connectorName)) {
             connector = new OrcidConnector();
         } else if ("upenn".equals(connectorName)) {
