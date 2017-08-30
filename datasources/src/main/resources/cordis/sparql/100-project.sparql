@@ -1,0 +1,36 @@
+PREFIX cordis:	<http://cordis.europa.eu/>
+PREFIX rdfs:	<http://www.w3.org/2000/01/rdf-schema#>
+PREFIX vivo:	<http://vivoweb.org/ontology/core#>
+PREFIX vcard:   <http://www.w3.org/2006/vcard/ns#>
+
+
+
+CONSTRUCT {
+
+	?project a vivo:Project .
+	?project rdfs:label ?title .
+	?project vivo:description ?objective .
+	?project vivo:identifier ?project_id .
+	
+	_:grant a vivo:Grant .
+    _:grant rdfs:label ?title .
+    _:grant vivo:description ?objective .
+    _:grant vivo:identifier ?project_id .
+    _:grant vivo:totalAwardAmount ?project_cost .
+    
+    _:grant vivo:fundingVehicleFor ?project .
+    
+} WHERE {
+
+	?project a cordis:project .
+	?project cordis:acronym ?acronym .
+	?project cordis:title ?cordis_title .
+	
+    BIND( CONCAT( ?acronym, " - ", ?cordis_title ) AS ?title )
+    
+	OPTIONAL { ?project cordis:objective ?objective }
+	
+	?project cordis:reference ?project_id .
+	
+	?project cordis:totalCost ?project_cost .
+}
