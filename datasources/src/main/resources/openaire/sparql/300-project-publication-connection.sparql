@@ -6,9 +6,9 @@ PREFIX bibo:    <http://purl.org/ontology/bibo/>
 
 CONSTRUCT {
 
-    ?proj vivo:supportedInformationResource ?pub .
+    ?project vivo:supportedInformationResource ?pub .
     
-    ?pub vivo:informationSourceSupportedBy ?proj .
+    ?pub vivo:informationSourceSupportedBy ?project .
 
 } WHERE {
 
@@ -17,10 +17,15 @@ CONSTRUCT {
     ?pub ingest:rels ?rels .
     ?rels ingest:rel ?rel .
     
-    ?rel ingest:code ?code. 
+    ?rel ingest:code ?code.
     
-    ?proj a vivo:Project .
-    ?proj vivo:identifier ?projectId .
+    ?project a vivo:Project .
+    ?project vivo:identifier ?projectId .
+    
+    FILTER NOT EXISTS {
+    	?rel ingest:code "unidentified" .
+    	?project vivo:identifier "unidentified" .
+    }
     
     FILTER ( ?projectId = ?code )
 }

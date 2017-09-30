@@ -28,6 +28,6 @@ CONSTRUCT {
 	
 	?entity vivo:relates ?role .
 
-	FILTER NOT EXIST { ?role a foaf:Organization }
+	FILTER NOT EXISTS { ?role a foaf:Organization }
 	?role ?roleP ?roleO .
 }

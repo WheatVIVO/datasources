@@ -21,6 +21,5 @@ CONSTRUCT {
     OPTIONAL {
 	# Not all projects are guaranteed to have an identifier.
 		?project ingest:code ?project_id .
-		FILTER ( ?projectId != "unidentified" )
     }
 }

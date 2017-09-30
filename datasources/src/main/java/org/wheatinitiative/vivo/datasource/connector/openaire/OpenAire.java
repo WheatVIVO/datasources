@@ -185,7 +185,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 					cachedResult = model;
 				}
 				
-				model.add( getRelatedProjects( model ) );
+				model.add( getPubRelatedProjects( model ) );
 				
 				return model;
 				
@@ -201,9 +201,42 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		}
 		
 		
+	    /**
+	     * Retrieve the pub-related projects for the current iteration.
+	     */
+	    Model getPubRelatedProjects( Model currentModel ) {
+	    	
+	    	Model relatedProjectsModel = ModelFactory.createDefaultModel();
+	    	
+	    	List<String> tempProjectIds = retrieveProjectsIds( currentModel );
+	    	ListIterator<String> listIt = tempProjectIds.listIterator();
+	    	
+	    	while ( listIt.hasNext() ) {
+				try {
+					URIBuilder uriB = new URIBuilder( OPEN_AIRE_API_URL + "search/projects" );
+					uriB.addParameter( "keywords", listIt.next().toString() );
+					uriB.addParameter( "format", "xml" );
+					
+					String request = uriB.build().toString();
+					log.info(request);
+					String response = httpUtils.getHttpResponse(request);
+					relatedProjectsModel = xmlToRdf.toRDF(response);
+					
+					Thread.sleep(MIN_REST_AFTER_HTTP_REQUEST);
+					
+				} catch (Exception e) {
+					log.error(e, e);
+					throw new RuntimeException(e);
+				}
+	    	}
+	    	
+	    	return relatedProjectsModel;
+	    }
+		
+		
 		/**
 		 * A method to retrieve all the projects' IDs from a model.
-		 */ 
+		 */
 	    public List<String> retrieveProjectsIds( Model currentModel ) {
 	    	
 			String selectQueryStr = loadQuery(SPARQL_RESOURCE_DIR + "SELECT-project-id.sparql");
@@ -233,39 +266,6 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	    		if ( selectExec != null )
 	    			selectExec.close();
 	    	}
-	    }
-	    
-	    
-	    /**
-	     * Retrieve the pub-related projects for the current iteration.
-	     */
-	    Model getRelatedProjects( Model currentModel ) {
-	    	
-	    	Model relatedProjectsModel = ModelFactory.createDefaultModel();
-	    	
-	    	List<String> tempProjectIds = retrieveProjectsIds( currentModel );
-	    	ListIterator<String> listIt = tempProjectIds.listIterator();
-	    	
-	    	while ( listIt.hasNext() ) {
-				try {
-					URIBuilder uriB = new URIBuilder( OPEN_AIRE_API_URL + "search/projects" );
-					uriB.addParameter( "keywords", listIt.next().toString() );
-					uriB.addParameter( "format", "xml" );
-					
-					String request = uriB.build().toString();
-					log.info(request);
-					String response = httpUtils.getHttpResponse(request);
-					relatedProjectsModel = xmlToRdf.toRDF(response);
-					
-					Thread.sleep(MIN_REST_AFTER_HTTP_REQUEST);
-					
-				} catch (Exception e) {
-					log.error(e, e);
-					throw new RuntimeException(e);
-				}
-	    	}
-	    	
-	    	return relatedProjectsModel;
 	    }
 	    
 	    
