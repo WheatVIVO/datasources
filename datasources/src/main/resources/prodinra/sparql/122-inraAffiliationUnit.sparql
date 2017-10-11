@@ -23,19 +23,26 @@ PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
 
 CONSTRUCT {
-    ?lab a vivo:Laboratory .
-    ?lab obo:BFO_0000050 <http://record.prodinra.inra.fr/individual/INRA> .
-    <http://record.prodinra.inra.fr/individual/INRA> a foaf:Organization .
-    <http://record.prodinra.inra.fr/individual/INRA> rdfs:label "INRA" .
-    ?lab rdfs:label ?labLabel .
     _:position a vivo:Position .
     _:position vivo:relates ?x .
-    _:position vivo:relates ?lab .
+    _:position vivo:relates <http://record.prodinra.inra.fr/individual/INRA> .
+    <http://record.prodinra.inra.fr/individual/INRA> a foaf:Organization .
+    <http://record.prodinra.inra.fr/individual/INRA> rdfs:label "INRA" .
+    ?vcard vcard:hasAddress _:address .
+    _:address a vcard:Address .
+    _:address vcard:streetAddress ?unitLabel .
+    _:address vcard:locality ?city .
+    _:address vcard:country ?country .
 } WHERE {
-    ?x a foaf:Person .
     ?x prodinra:inraAffiliation ?inra .
+    ?x a foaf:Person .
+    ?x obo:ARG_2000028 ?vcard .
     ?inra prodinra:unit ?unit .
-    ?unit prodinra:code ?unitCode .
-    ?unit prodinra:name ?labLabel .
-    BIND(IRI(CONCAT("http://vivo.wheatinitiative.org/individual/unit", ?unitCode)) AS ?lab)
+    ?unit prodinra:name ?unitLabel .
+    OPTIONAL {
+        ?unit prodinra:city ?city .
+    }
+    OPTIONAL {
+        ?unit prodinra:country ?country .
+    }
 }

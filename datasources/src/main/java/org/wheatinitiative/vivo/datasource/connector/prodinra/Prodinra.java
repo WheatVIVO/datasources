@@ -176,8 +176,8 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
                 "115-journal.sparql",
                 "116-attachment.sparql",
                 "120-externalAffiliation.sparql",
-                "122-inraAffiliationUnit.sparql",
-                "124-inraLab.sparql");
+                "122-inraAffiliationUnit.sparql"
+                );
         for(String query : queries) {
             log.debug("Executing query " + query);
             log.debug("Pre-query model size: " + m.size());

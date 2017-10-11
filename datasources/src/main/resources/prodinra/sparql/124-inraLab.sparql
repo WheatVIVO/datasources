@@ -22,6 +22,8 @@ PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
 
+# Retained for reference.  Not currently needed as lab names are recorded only in the address.
+
 CONSTRUCT {
     ?lab ?labP ?labO .
 } WHERE {
