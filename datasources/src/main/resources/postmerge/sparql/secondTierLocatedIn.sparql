@@ -1,0 +1,13 @@
+PREFIX foaf:     <http://xmlns.com/foaf/0.1/>
+PREFIX vivo: <http://vivoweb.org/ontology/core#>
+
+CONSTRUCT  {
+    ?x <http://purl.obolibrary.org/obo/RO_0001025> ?y # locatedIn
+} WHERE {
+    ?org <http://purl.obolibrary.org/obo/RO_0001025> ?y .
+    ?org a foaf:Organization .
+    ?position vivo:relates ?org .
+    ?position a vivo:Position .
+    ?x vivo:relatedBy ?position .
+    ?x a foaf:Person .
+}

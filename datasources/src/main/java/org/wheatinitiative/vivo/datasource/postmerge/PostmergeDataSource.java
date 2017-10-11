@@ -25,6 +25,8 @@ public class PostmergeDataSource extends ConnectorDataSource implements DataSour
         getSparqlEndpoint();
         List<String> queries = Arrays.asList(
                 "geoqueries.sparql",
+                "participatesIn.sparql",
+                "secondTierLocatedIn.sparql",
                 "externalToWheatPublicationsQuery.sparql",
                 "externalToWheatPeopleQuery.sparql",
                 "externalToWheatOrganizationsQuery.sparql"
