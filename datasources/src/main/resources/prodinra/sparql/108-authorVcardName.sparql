@@ -27,14 +27,16 @@ PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
 
 CONSTRUCT {
-    ?x obo:ARG_2000028 _:vcard .
-    _:vcard a vcard:Individual .
-    _:vcard vcard:hasName _:name .
-    _:name a vcard:Name .
-    _:name vcard:familyName ?lastName .
-    _:name vcard:givenName ?firstName .
+    ?x obo:ARG_2000028 ?vcard .
+    ?vcard a vcard:Individual .
+    ?vcard vcard:hasName ?name .
+    ?name a vcard:Name .
+    ?name vcard:familyName ?lastName .
+    ?name vcard:givenName ?firstName .
 } WHERE {
     ?x prodinra:lastName ?lastName .
     ?x prodinra:firstName ?firstName .
     ?x a foaf:Person
+    BIND(IRI(CONCAT(STR(?x), "-vcard")) AS ?vcard)
+    BIND(IRI(CONCAT(STR(?x), "-vcard-name")) AS ?name)
 }

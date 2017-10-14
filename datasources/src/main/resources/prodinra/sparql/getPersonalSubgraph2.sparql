@@ -45,10 +45,13 @@ WHERE {
     ?authorship2 ?authorship2P ?authorship2O .
     ?otherAuthor a foaf:Person .
     ?otherAuthor ?otherAuthorP ?otherAuthorO .
+    FILTER(!REGEX(STR(?authorship2P), STR(prodinra:)))
+    FILTER(!REGEX(STR(?otherAuthorP), STR(prodinra:)))
     OPTIONAL {
         ?otherAuthor vivo:relatedBy ?otherAuthorPosition .
         ?otherAuthorPosition a foaf:Position .
         ?otherAuthorPosition vivo:relates ?otherAuthorOrg .
         ?otherAuthorOrg ?otherAuthorOrgP ?otherAuthorOrgO .
+        FILTER(!REGEX(STR(?otherAuthorOrgP), STR(prodinra:)))
     }
 }

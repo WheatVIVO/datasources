@@ -21,18 +21,24 @@ PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
+PREFIX afn:      <http://jena.hpl.hp.com/ARQ/function#>
 
 CONSTRUCT {
-    ?y a vivo:Authorship .
+    ?authorship a vivo:Authorship .
     ?z a foaf:Person .
-    ?y vivo:rank ?rank .
-    ?y vivo:relates ?x .
-    ?y vivo:relates ?z .
+    ?authorship vivo:rank ?rank .
+    ?authorship vivo:relates ?x .
+    ?authorship vivo:relates ?z .
 } WHERE {
     ?x prodinra:creator ?y .
     ?x prodinra:minPosition ?minPosition .
     # not available without reasoning: ?x a bibo:Document .
     ?y prodinra:author ?z .
+    FILTER(
+      EXISTS { ?z prodinra:identifier ?id }
+      || EXISTS { ?z prodinra:inraIdentifier ?in }
+    )
     ?y vitro:position ?position
     BIND( (xsd:int(?position) - ?minPosition + 1) AS ?rank)
+    BIND(IRI(CONCAT(STR(?x), "-authorship-", afn:localname(?z))) AS ?authorship)
 }

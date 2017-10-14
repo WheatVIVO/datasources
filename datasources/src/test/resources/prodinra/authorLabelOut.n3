@@ -16,9 +16,9 @@
 @prefix c4o:   <http://purl.org/spar/c4o/> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
 
-<http://record.prodinra.inra.fr/individual/n8596062>
+<http://record.prodinra.inra.fr/individual/n995812-author1>
         rdfs:label "Le Cotty, T." .
 
-<http://record.prodinra.inra.fr/individual/n6916527>
+<http://record.prodinra.inra.fr/individual/n995812-author2>
         rdfs:label "Voituriez, Tancrede" .
 

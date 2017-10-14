@@ -23,12 +23,12 @@ PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
 
 CONSTRUCT {
-   ?record obo:ARG_2000028 _:vcard .
-   _:vcard a vcard:Kind .
-   _:vcard vcard:hasURL _:url .
-   _:url a vcard:URL .
-   _:url rdfs:label ?urlLabel .
-   _:url vcard:url ?urlValue .
+   ?record obo:ARG_2000028 ?vcard .
+   ?vcard a vcard:Kind .
+   ?vcard vcard:hasURL ?url .
+   ?url a vcard:URL .
+   ?url rdfs:label ?urlLabel .
+   ?url vcard:url ?urlValue .
   
 } WHERE {
    ?x prodinra:attachment ?attachment .
@@ -38,4 +38,6 @@ CONSTRUCT {
    ?attachment prodinra:attachmentId ?attachmentId .
    BIND(?fileName AS ?urlLabel) 
    BIND(xsd:anyURI(concat("http://prodinra.inra.fr/ft?id=", ?attachmentId)) AS ?urlValue)
+   BIND(IRI(CONCAT(STR(?record), "-vcard")) AS ?vcard)
+   BIND(IRI(CONCAT(STR(?record), "-vcard-url")) AS ?url)
 }

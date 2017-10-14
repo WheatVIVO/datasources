@@ -21,15 +21,17 @@ PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
+PREFIX afn: <http://jena.hpl.hp.com/ARQ/function#>
 
 CONSTRUCT {
     ?org a foaf:Organization .
     ?org rdfs:label ?orgLabel .
-    _:position a vivo:Position .
-    _:position vivo:relates ?x .
-    _:position vivo:relates ?org .
+    ?position a vivo:Position .
+    ?position vivo:relates ?x .
+    ?position vivo:relates ?org .
 } WHERE {
     ?x a foaf:Person .
     ?x prodinra:externalAffiliation ?org .
     OPTIONAL { ?org prodinra:name ?orgLabel }
+    BIND(IRI(CONCAT(STR(?x), "-position-", afn:localname(?org))) AS ?position)
 }

@@ -32,5 +32,9 @@ WHERE {
     ?person ?p ?o .
     ?position vivo:relates ?person .
     ?position ?positionP ?positionO .
-    OPTIONAL { ?positionO ?positionOP ?positionOO }
+    OPTIONAL { ?positionO ?positionOP ?positionOO 
+        FILTER(!REGEX(STR(?positionOP), STR(prodinra:)))
+    }
+    FILTER(!REGEX(STR(?p), STR(prodinra:)))
+    FILTER(!REGEX(STR(?positionP), STR(prodinra:)))
 } 

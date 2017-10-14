@@ -126,10 +126,10 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
     @Override
     protected Model mapToVIVO(Model m) {
         m = rdfUtils.renameBNodes(m, NAMESPACE_ETC, m);
-        m = renameByIdentifier(m);
-        m = constructForVIVO(m);
         m = rdfUtils.smushResources(m, m.getProperty(
                 PRODINRA_TBOX_NS + "identifier"));
+        m = renameByIdentifier(m);
+        m = constructForVIVO(m);
         return m;
     }
     
@@ -167,6 +167,7 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
                 "105-title.sparql",
                 "101-authorshipPositionAdjust.sparql",
                 "102-authorshipPersonTypes.sparql",
+                "103-authorshipUnknownPersonTypes.sparql",
                 "107-authorLabel.sparql",
                 "108-authorVcardName.sparql",
                 "110-abstract.sparql",

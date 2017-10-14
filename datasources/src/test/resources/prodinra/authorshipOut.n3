@@ -85,24 +85,18 @@
         <http://www.w3.org/2001/XMLSchema-instance/type>
                 "ns2:researchReport" .
 
-<http://record.prodinra.inra.fr/individual/n1948767>
+<http://record.prodinra.inra.fr/individual/n995812-authorship1>
         a vivo:Authorship ;
 	vivo:rank "1"^^xsd:int ;
 	vivo:relates <http://record.prodinra.inra.fr/individual/n995812> ;
-	vivo:relates <http://record.prodinra.inra.fr/individual/n8596062> ;
-        <http://record.prodinra.inra.fr/author>
-                <http://record.prodinra.inra.fr/individual/n8596062> ;
-        vitro:position  "3" .
+	vivo:relates <http://record.prodinra.inra.fr/individual/n995812-author1> .
 
-<http://record.prodinra.inra.fr/individual/n8596062> a foaf:Person .
+<http://record.prodinra.inra.fr/individual/n995812-author1> a foaf:Person .
 
-<http://record.prodinra.inra.fr/individual/n2748871>
+<http://record.prodinra.inra.fr/individual/n995812-authorship2>
         a vivo:Authorship ;
 	vivo:rank "2"^^xsd:int ;
 	vivo:relates <http://record.prodinra.inra.fr/individual/n995812> ;
-	vivo:relates <http://record.prodinra.inra.fr/individual/n6916527> ;
-        <http://record.prodinra.inra.fr/author>
-                <http://record.prodinra.inra.fr/individual/n6916527> ;
-        vitro:position  "4" .
+	vivo:relates <http://record.prodinra.inra.fr/individual/n995812-author2> .
 
-<http://record.prodinra.inra.fr/individual/n6916527> a foaf:Person .
+<http://record.prodinra.inra.fr/individual/n995812-author2> a foaf:Person .

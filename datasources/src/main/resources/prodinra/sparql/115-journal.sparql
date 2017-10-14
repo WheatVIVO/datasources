@@ -24,6 +24,7 @@ PREFIX prodinra: <http://record.prodinra.inra.fr/>
 
 CONSTRUCT {
    ?x vivo:hasPublicationVenue ?journal .
+   ?journal a bibo:Journal .
    ?journal rdfs:label ?title .
    ?journal bibo:issn ?issn 
 } WHERE {

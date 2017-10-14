@@ -93,3 +93,30 @@
         <http://record.prodinra.inra.fr/author>
                 <http://record.prodinra.inra.fr/individual/n6916527> ;
         vitro:position  "4" .
+
+<http://record.prodinra.inra.fr/individual/n8596062>
+        <http://record.prodinra.inra.fr/initial>
+	        "T." ;
+	<http://record.prodinra.inra.fr/inraAffiliation>
+		<http://record.prodinra.inra.fr/individual/n4510351> ;
+	<http://record.prodinra.inra.fr/lastName>
+		"Le Cotty" ;
+	<http://record.prodinra.inra.fr/publicationName>
+		"Le Cotty" ;
+	vitro:position  "1" ;
+	<http://www.w3.org/2001/XMLSchema-instance/type>
+		"ns2:inraAuthor" .
+
+<http://record.prodinra.inra.fr/individual/n6916527>
+        <http://record.prodinra.inra.fr/externalAffiliation>
+	        <http://record.prodinra.inra.fr/individual/n4220466> ;
+	<http://record.prodinra.inra.fr/firstName>
+	        "Tancrede" ;
+	<http://record.prodinra.inra.fr/lastName>
+		"Voituriez" ;
+	<http://record.prodinra.inra.fr/publicationName>
+		"Voituriez" ;
+	vitro:position  "1" ;
+	<http://www.w3.org/2001/XMLSchema-instance/type>
+		"ns2:externalAuthor" .
+

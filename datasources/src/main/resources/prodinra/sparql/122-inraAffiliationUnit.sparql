@@ -23,16 +23,16 @@ PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
 
 CONSTRUCT {
-    _:position a vivo:Position .
-    _:position vivo:relates ?x .
-    _:position vivo:relates <http://record.prodinra.inra.fr/individual/INRA> .
+    ?position a vivo:Position .
+    ?position vivo:relates ?x .
+    ?position vivo:relates <http://record.prodinra.inra.fr/individual/INRA> .
     <http://record.prodinra.inra.fr/individual/INRA> a foaf:Organization .
     <http://record.prodinra.inra.fr/individual/INRA> rdfs:label "INRA" .
-    ?vcard vcard:hasAddress _:address .
-    _:address a vcard:Address .
-    _:address vcard:streetAddress ?unitLabel .
-    _:address vcard:locality ?city .
-    _:address vcard:country ?country .
+    ?vcard vcard:hasAddress ?address .
+    ?address a vcard:Address .
+    ?address vcard:streetAddress ?unitLabel .
+    ?address vcard:locality ?city .
+    ?address vcard:country ?country .
 } WHERE {
     ?x prodinra:inraAffiliation ?inra .
     ?x a foaf:Person .
@@ -45,4 +45,6 @@ CONSTRUCT {
     OPTIONAL {
         ?unit prodinra:country ?country .
     }
+    BIND(IRI(CONCAT(STR(?x), "-position-INRA")) AS ?position)
+    BIND(IRI(CONCAT(STR(?x), "-vcard-address")) AS ?address)
 }

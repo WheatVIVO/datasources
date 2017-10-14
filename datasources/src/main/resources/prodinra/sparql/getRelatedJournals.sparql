@@ -33,4 +33,5 @@ WHERE {
     FILTER (?document != ?person) 
     ?document vivo:hasPublicationVenue ?journal .
     ?journal ?journalP ?journalO
+    FILTER(!REGEX(STR(?journalP), STR(prodinra:)))
 }
