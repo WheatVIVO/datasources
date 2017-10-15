@@ -16,20 +16,18 @@ PREFIX obo:      <http://purl.obolibrary.org/obo/>
 PREFIX ocrer:    <http://purl.org/net/OCRe/research.owl#>
 PREFIX ocresd:   <http://purl.org/net/OCRe/study_design.owl#>
 PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
+PREFIX nih:      <http://vivo.scripps.edu/ontology/nih#>
+PREFIX tsri:     <http://vivo.scripps.edu/ontology/tsri#>
 PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>
 PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
+PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
 PREFIX wi:       <http://www.wheatinitiative.org/administration/users/ontology/>
 
 CONSTRUCT {
-    ?vcard vcard:hasEmail ?email .
-    ?email a vcard:Email .
-    ?email vcard:email ?emailAddress .
+    ?x wi:identifier ?identifier
 } WHERE {
-    ?x wi:mail ?emailAddress .
-    ?x a foaf:Person .
-    ?x obo:ARG_2000028 ?vcard .
-    ?vcard a vcard:Individual .
-    BIND(IRI(CONCAT(STR(?x), "-vcard-email")) AS ?email)
+    ?x vivo:orcidId ?orcidId .
+    BIND(CONCAT("orcid-", SUBSTR(STR(?orcidId), 18)) AS ?identifier)
 }

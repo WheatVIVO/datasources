@@ -1,5 +1,8 @@
 package org.wheatinitiative.vivo.datasource.connector;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wheatinitiative.vivo.datasource.DataSourceBase;
@@ -7,6 +10,12 @@ import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
+import com.hp.hpl.jena.util.ResourceUtils;
 
 public abstract class ConnectorDataSource extends DataSourceBase {
     
@@ -98,6 +107,24 @@ public abstract class ConnectorDataSource extends DataSourceBase {
     @Override
     public Model getResult() {
         return this.result;
+    }
+    
+    protected Model renameByIdentifier(Model m, Property identifier, 
+            String namespace, String localNamePrefix) {
+        Map<Resource, String> idMap = new HashMap<Resource, String>();
+        StmtIterator sit = m.listStatements(null, identifier, (RDFNode) null);
+        while(sit.hasNext()) {
+            Statement stmt = sit.next();
+            if(stmt.getObject().isLiteral()) {
+                idMap.put(stmt.getSubject(), 
+                        stmt.getObject().asLiteral().getLexicalForm());
+            }
+        }
+        for(Resource res : idMap.keySet()) {
+            ResourceUtils.renameResource(
+                    res, namespace + localNamePrefix + idMap.get(res));
+        }
+        return m;
     }
     
 }

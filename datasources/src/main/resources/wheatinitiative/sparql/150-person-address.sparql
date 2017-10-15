@@ -23,13 +23,13 @@ PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX wi:       <http://www.wheatinitiative.org/administration/users/ontology/>
 
 CONSTRUCT {
-    ?vcard vcard:hasAddress _:address .
-    _:address a vcard:Address .
-    _:address vcard:streetAddress ?streetAddress .
-    _:address vcard:locality ?locality .
-    _:address vcard:region ?region .
-    _:address vcard:postalCode ?postalCode .
-    _:address vcard:country ?country .
+    ?vcard vcard:hasAddress ?address .
+    ?address a vcard:Address .
+    ?address vcard:streetAddress ?streetAddress .
+    ?address vcard:locality ?locality .
+    ?address vcard:region ?region .
+    ?address vcard:postalCode ?postalCode .
+    ?address vcard:country ?country .
 } WHERE {
     ?x wi:addressCountry ?country .
     ?x a foaf:Person .
@@ -38,4 +38,5 @@ CONSTRUCT {
     OPTIONAL { ?x wi:addressThoroughfare ?streetAddress }
     OPTIONAL { ?x wi:addressLocality ?locality }
     OPTIONAL { ?x wi:addressPostalCode ?postalCode }
+    BIND(IRI(CONCAT(STR(?x), "-vcard-address")) AS ?address)
 }

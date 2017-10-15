@@ -135,29 +135,11 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
     
     protected Model renameByIdentifier(Model m) {
         m = renameByIdentifier(m, m.getProperty(
-                PRODINRA_TBOX_NS + "identifier"), "id");
+                PRODINRA_TBOX_NS + "identifier"), PRODINRA_ABOX_NS, "id");
         m = renameByIdentifier(m, m.getProperty(
-                PRODINRA_TBOX_NS + "inraIdentifier"), "in");
+                PRODINRA_TBOX_NS + "inraIdentifier"), PRODINRA_ABOX_NS, "in");
         m = renameByIdentifier(m, m.getProperty(
-                PRODINRA_TBOX_NS + "idCollection"), "ic");
-        return m;
-    }
-    
-    private Model renameByIdentifier(Model m, Property identifier, 
-            String localNamePrefix) {
-        Map<Resource, String> idMap = new HashMap<Resource, String>();
-        StmtIterator sit = m.listStatements(null, identifier, (RDFNode) null);
-        while(sit.hasNext()) {
-            Statement stmt = sit.next();
-            if(stmt.getObject().isLiteral()) {
-                idMap.put(stmt.getSubject(), 
-                        stmt.getObject().asLiteral().getLexicalForm());
-            }
-        }
-        for(Resource res : idMap.keySet()) {
-            ResourceUtils.renameResource(
-                    res, PRODINRA_ABOX_NS + localNamePrefix + idMap.get(res));
-        }
+                PRODINRA_TBOX_NS + "idCollection"), PRODINRA_ABOX_NS, "ic");
         return m;
     }
     

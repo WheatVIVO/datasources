@@ -21,15 +21,17 @@ PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX wi:       <http://www.wheatinitiative.org/administration/users/ontology/>
+PREFIX wia:      <http://www.wheatinitiative.org/administration/users/>
+PREFIX afn:      <http://jena.hpl.hp.com/ARQ/function#>
 
 CONSTRUCT {
-    _:org a foaf:Organization .
-    _:org rdfs:label ?orgName .
-    _:position a vivo:Position .
-    ?x vivo:relatedBy _:position .
-    _:position vivo:relates _:org .
-    _:position wi:employmentSector ?employmentSector .
-    _:position wi:mainEmploymentCategory ?employmentCategory .
+    ?org a foaf:Organization .
+    ?org rdfs:label ?orgName .
+    ?position a vivo:Position .
+    ?x vivo:relatedBy ?position .
+    ?position vivo:relates ?org .
+    ?position wi:employmentSector ?employmentSector .
+    ?position wi:mainEmploymentCategory ?employmentCategory .
 } WHERE {
     ?x wi:institutionCompany ?orgName .
     OPTIONAL {
@@ -38,4 +40,6 @@ CONSTRUCT {
     OPTIONAL {
         ?x wi:mainEmploymentCategory ?employmentCategory 
     }
+    BIND(IRI(CONCAT(STR(wia:), REPLACE(REPLACE(STR(?orgName), " ", "-"), "[^-a-zA-Z0-9]", ""))) AS ?org)
+    BIND(IRI(CONCAT(STR(?x), "-position-", afn:localname(?org))) AS ?position)
 }

@@ -23,12 +23,13 @@ PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX wi:       <http://www.wheatinitiative.org/administration/users/ontology/>
 
 CONSTRUCT {
-    ?vcard vcard:hasTelephone _:telephone .
-    _:telephone a vcard:Telephone .
-    _:telephone vcard:telephone ?telno .
+    ?vcard vcard:hasTelephone ?telephone .
+    ?telephone a vcard:Telephone .
+    ?telephone vcard:telephone ?telno .
 } WHERE {
     ?x wi:phoneNumber ?telno .
     ?x a foaf:Person .
     ?x obo:ARG_2000028 ?vcard .
     ?vcard a vcard:Individual .
+    BIND(IRI(CONCAT(STR(?x), "-vcard-telephone")) AS ?telephone)
 }

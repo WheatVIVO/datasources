@@ -56,6 +56,11 @@ public class WheatInitiative extends CsvDataSource implements DataSource {
      * @return model with VIVO RDF added
      */
     protected Model mapToVIVO(Model m) {
+        construct(SPARQL_RESOURCE_DIR + "090-identifier-orcid.sparql", m, ABOX);
+        construct(SPARQL_RESOURCE_DIR + "091-identifier-name.sparql", m, ABOX);
+        construct(SPARQL_RESOURCE_DIR + "092-identifier-names.sparql", m, ABOX);
+        m = renameByIdentifier(m, m.getProperty(
+                TBOX + "identifier"), ABOX, "");
         List<String> queries = Arrays.asList( 
                 "100-person-vcard-name.sparql", 
                 "105-person-label.sparql",
