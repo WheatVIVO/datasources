@@ -22,7 +22,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
     private static final Log log = LogFactory.getLog(ConnectorDataSource.class);
     /* number of iterator elements to be processed at once in memory 
     before being flushed to a SPARQL endpoint */
-    protected final static int DEFAULT_BATCH_SIZE = 50;
+    protected final static int DEFAULT_BATCH_SIZE = 5;
     
     private Model result;
     

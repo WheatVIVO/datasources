@@ -25,6 +25,12 @@ PREFIX orcidcommon: <http://www.orcid.org/ns/common/>
 
 CONSTRUCT {
     ?a a bibo:AcademicArticle .
+    ?b a bibo:Document .
 } WHERE {
-    ?a orcidwork:type "journal-article"
+    { 
+        ?a orcidwork:type "journal-article" 
+    } UNION {
+        ?b a orcidwork:work .
+	FILTER NOT EXISTS { ?b orcidwork:type "journal-article" }
+    }
 }

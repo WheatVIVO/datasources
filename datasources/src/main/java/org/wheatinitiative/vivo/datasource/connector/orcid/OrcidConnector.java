@@ -44,8 +44,11 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
             "https://orcid.org/oauth/token";
     private static final String PUBLIC_API_BASE_URL = 
             "https://pub.orcid.org/v2.0/";
+    private static final String WHEAT_INITIATIVE = 
+            "http://vivo.wheatinitiative.org/individual/";
     private static final String NAMESPACE_ETC = 
-            "http://vivo.wheatinitiative.org/individual/orcid-";
+            WHEAT_INITIATIVE + "orcid-";
+    private static final String TEMP_NS = "http://example.org/tmp/";
     private static final int MIN_REST = 125; // ms
     private static final String CLIENT_ID = "orcid.clientId";
     private static final String CLIENT_SECRET = "orcid.clientSecret";
@@ -142,7 +145,7 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
                 Statement stmt = workIt.next();
                 if(stmt.getObject().isLiteral()) {
                     String putCode = stmt.getObject().asLiteral().getLexicalForm();
-                    String work = getOrcidResponse(
+                    String work = getOrcidResponse(                
                             PUBLIC_API_BASE_URL + orcidNum + "/work/" + putCode);
                     works.add(xmlToRdf.toRDF(work));
                 }
@@ -192,7 +195,7 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
                 String orcid = "";
                 try {
                     int status = resp.getStatusLine().getStatusCode();
-                    log.info("Status: " + status);
+                    log.debug("Status: " + status);
                     InputStream in = resp.getEntity().getContent();
                     String payload = IOUtils.toString(in, "UTF-8");
                     if(status >= 300) {
@@ -253,7 +256,9 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
         while(sit.hasNext()) {
             Statement stmt = sit.next();
             if(!stmt.getPredicate().getURI().contains("orcid.org") 
-                    && !stmt.getPredicate().getURI().contains("generalizedXML")) {
+                    && !stmt.getPredicate().getURI().contains(XmlToRdf.GENERIC_NS)
+                    && !stmt.getPredicate().getURI().contains(XmlToRdf.VITRO_NS)
+                    && !stmt.getPredicate().getURI().contains(TEMP_NS)) {
                 filtered.add(stmt);
             }
         }
@@ -262,11 +267,16 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
 
     @Override
     protected Model mapToVIVO(Model model) {
+        model = renameByIdentifier(model, model.getProperty(
+                XmlToRdf.GENERIC_NS + "put-code"), WHEAT_INITIATIVE, "orcid-work-");
         List<String> queries = Arrays.asList("100-documentTypes.sparql",
                 "102-authorship.sparql",
                 "103-knownPerson.sparql", 
-                "104-personVcard.sparql");
+                "107-tempPropsForNaming.sparql");
         executeQueries(queries, model);
+        model = renameByIdentifier(model, model.getProperty(
+                TEMP_NS + "localName"), WHEAT_INITIATIVE, "");
+        executeQueries(Arrays.asList("104-personVcard.sparql"), model);
         parseNames(model);
         queries = Arrays.asList(
                 "1045-knownPersonRankMatch.sparql",
@@ -285,10 +295,10 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
     
     private void executeQueries(List<String> queries, Model model) {
         for(String query : queries) {
-            log.info("Executing query " + query);
-            log.info("Pre-query model size: " + model.size());
+            log.debug("Executing query " + query);
+            log.debug("Pre-query model size: " + model.size());
             construct(SPARQL_RESOURCE_DIR + query, model, NAMESPACE_ETC);
-            log.info("Post-query model size: " + model.size());
+            log.debug("Post-query model size: " + model.size());
         }
     }
     

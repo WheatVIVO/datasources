@@ -26,13 +26,15 @@ PREFIX rcuk:     <http://gtr.rcuk.ac.uk/gtr/api/>
 PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
 
 CONSTRUCT {
-    ?x obo:ARG_2000028 _:vcard .
-    _:vcard a vcard:Individual .
-    _:vcard vcard:hasName _:name .
-    _:name a vcard:Name .
-    _:name vcard:familyName ?label .
-    _:name vcard:givenName ?label .
+    ?x obo:ARG_2000028 ?vcard .
+    ?vcard a vcard:Individual .
+    ?vcard vcard:hasName ?name .
+    ?name a vcard:Name .
+    ?name vcard:familyName ?label .
+    ?name vcard:givenName ?label .
 } WHERE {
     ?x a foaf:Person .
-    ?x rdfs:label ?label 
+    ?x rdfs:label ?label
+    BIND(IRI(CONCAT(STR(?x), "-vcard")) AS ?vcard)
+    BIND(IRI(CONCAT(STR(?x), "-vcard-name")) AS ?name)
 }

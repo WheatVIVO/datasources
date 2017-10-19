@@ -24,12 +24,13 @@ PREFIX orcidwork:   <http://www.orcid.org/ns/work/>
 PREFIX orcidcommon: <http://www.orcid.org/ns/common/>
 
 CONSTRUCT {
-   ?x vivo:dateTimeValue ?publicationDate .
-   ?publicationDate a vivo:DateTimeValue .
-   ?publicationDate vivo:dateTimePrecision vivo:yearPrecision .
-   ?publicationDate vivo:dateTime ?dateTime
+   ?x vivo:dateTimeValue ?dtv .
+   ?dtv a vivo:DateTimeValue .
+   ?dtv vivo:dateTimePrecision vivo:yearPrecision .
+   ?dtv vivo:dateTime ?dateTime
 } WHERE {
    ?x orcidcommon:publication-date ?publicationDate .
    ?publicationDate orcidcommon:year ?year .
    BIND(xsd:dateTime(concat(str(?year), "-01-01T00:00:00Z")) AS ?dateTime)
+   BIND(IRI(CONCAT(STR(?x), "-year")) AS ?dtv)
 }

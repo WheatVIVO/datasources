@@ -25,9 +25,10 @@ PREFIX orcidwork:   <http://www.orcid.org/ns/work/>
 PREFIX orcidcommon: <http://www.orcid.org/ns/common/>
 
 CONSTRUCT {
-   ?x vivo:hasPublicationVenue _:journal .
-   _:journal a bibo:Journal .
-   _:journal rdfs:label ?journalTitle .
+   ?x vivo:hasPublicationVenue ?journal .
+   ?journal a bibo:Journal .
+   ?journal rdfs:label ?journalTitle .
 } WHERE {
    ?x orcidwork:journal-title ?journalTitle .
+   BIND(IRI(CONCAT(STR(?x), "-journal-", REPLACE(STR(?journalTitle), "\\W", ""))) AS ?journal)
 }

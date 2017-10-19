@@ -23,19 +23,22 @@ PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
 PREFIX orcidwork:   <http://www.orcid.org/ns/work/>
 PREFIX orcidcommon: <http://www.orcid.org/ns/common/>
+PREFIX abox:   <http://vivo.wheatinitiative.org/individual/>
 
 CONSTRUCT {
-    ?contributor a vivo:Authorship .
-    ?contributor vivo:rank ?rank .
-    ?contributor vivo:relates ?x .
-    ?x vivo:relatedBy ?contributor .
-    ?contributor vivo:relates _:author .
-    _:author a foaf:Person .
-    _:author rdfs:label ?creditName .
+    ?authorship a vivo:Authorship .
+    ?authorship vivo:rank ?rank .
+    ?authorship vivo:relates ?x .
+    ?x vivo:relatedBy ?authorship .
+    ?authorship vivo:relates ?author .
+    ?author a foaf:Person .
+    ?author rdfs:label ?creditName .
 } WHERE {
     ?x orcidwork:contributors ?contributors .
     ?contributors orcidwork:contributor ?contributor .
     ?contributor vitro:position ?position .
     ?contributor orcidwork:credit-name ?creditName .
     BIND(xsd:int(?position) AS ?rank)
+    BIND(IRI(CONCAT(STR(?x), "-authorship-", REPLACE(STR(?creditName), "\\W", ""))) AS ?authorship)
+    BIND(IRI(CONCAT(STR(?x), "-author-", REPLACE(STR(?creditName), "\\W", ""))) AS ?author)
 }

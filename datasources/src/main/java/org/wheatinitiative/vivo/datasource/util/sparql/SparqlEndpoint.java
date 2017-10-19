@@ -183,6 +183,7 @@ public class SparqlEndpoint implements ModelConstructor {
                             "VIVO forbid update with the supplied " +
                             "username and password.  Update unsuccessful.");
                 } else if (result > 200) {
+                    log.error("Error code " + result + " processing update \n" + updateString);
                     throw new RuntimeException("VIVO responded with error code " + 
                             result + ". Update unsuccessful. ");
                 }

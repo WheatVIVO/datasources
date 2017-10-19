@@ -25,14 +25,16 @@ PREFIX orcidwork:   <http://www.orcid.org/ns/work/>
 PREFIX orcidcommon: <http://www.orcid.org/ns/common/>
 
 CONSTRUCT {
-   ?x obo:ARG_2000028 _:vcard .
-   _:vcard a vcard:Kind .
-   _:vcard vcard:hasURL _:url .
-   _:url a vcard:URL .
-   _:url rdfs:label ?urlLabel .
-   _:url vcard:url ?urlValue .
+   ?x obo:ARG_2000028 ?vcard .
+   ?vcard a vcard:Kind .
+   ?vcard vcard:hasURL ?url .
+   ?url a vcard:URL .
+   ?url rdfs:label ?urlLabel .
+   ?url vcard:url ?urlValue .
   
 } WHERE {
    ?x orcidwork:url ?urlValue .
    BIND(?urlValue AS ?urlLabel) 
+   BIND(IRI(CONCAT(STR(?x), "-vcard")) AS ?vcard)
+   BIND(IRI(CONCAT(STR(?x), "-vcard-url")) AS ?url)
 }
