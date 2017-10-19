@@ -15,7 +15,7 @@ CONSTRUCT {
 	_:grant a vivo:Grant .
     _:grant rdfs:label ?title .
     _:grant vivo:description ?objective .
-    _:grant vivo:identifier ?project_id .
+    _:grant vivo:identifier ?grant_id .
     _:grant vivo:totalAwardAmount ?project_cost .
     
     _:grant vivo:fundingVehicleFor ?project .
@@ -31,6 +31,6 @@ CONSTRUCT {
 	OPTIONAL { ?project cordis:objective ?objective }
 	
 	?project cordis:reference ?project_id .
-	
+        BIND(CONCAT("grant-", STR(?project_id)) AS ?grant_id) 	
 	?project cordis:totalCost ?project_cost .
 }

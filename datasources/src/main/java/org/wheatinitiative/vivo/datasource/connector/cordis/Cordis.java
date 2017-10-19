@@ -42,6 +42,7 @@ public class Cordis extends ConnectorDataSource implements DataSource {
     private static final String CORDIS_TBOX_NS = "http://cordis.europa.eu/";
     private static final String CORDIS_ABOX_NS = CORDIS_TBOX_NS + "individual/";
     private static final String NAMESPACE_ETC = CORDIS_ABOX_NS + "n";
+    private static final String VIVO_CORE_NS = "http://vivoweb.org/ontology/core#";
     private static final String SPARQL_RESOURCE_DIR = "/cordis/sparql/";
     private static final int MIN_REST_AFTER_HTTP_REQUEST = 250; //ms
     
@@ -334,11 +335,10 @@ public class Cordis extends ConnectorDataSource implements DataSource {
 	 * Transform raw RDF into VIVO RDF.
 	 */
 	@Override
-	protected Model mapToVIVO(Model model) {
-		
-		model = constructForVIVO(model);
-		
-		return model;
+	protected Model mapToVIVO(Model model) {		
+		model = constructForVIVO(model);		
+		return this.renameByIdentifier(model, 
+		        model.getProperty(VIVO_CORE_NS + "identifier"), CORDIS_ABOX_NS, "cordis-");
 	}
 	
 	
