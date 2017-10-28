@@ -25,11 +25,20 @@ CONSTRUCT {
     ?x a <http://vivo.wheatinitiative.org/ontology/ExternalToWheat>
 }
 #SELECT (count(distinct ?x) AS ?count)
-WHERE {
-    ?person a foaf:Person .
-    ?person a <http://vivo.wheatinitiative.org/ontology/ExternalToWheat> .
-    ?person vivo:relatedBy ?position .
-    ?position a vivo:Position .
-    ?position vivo:relates ?x .
+	WHERE {
     ?x a foaf:Organization 
+    FILTER NOT EXISTS {
+        ?x vivo:relatedBy ?position .
+        ?position a vivo:Position .
+	?position vivo:relates ?person .
+        ?person a foaf:Person .
+	FILTER NOT EXISTS {
+            ?person a <http://vivo.wheatinitiative.org/ontology/ExternalToWheat> .
+        }
+    }
+    FILTER NOT EXISTS {
+        ?x obo:RO_0000053 ?role .
+        ?role obo:RO_0000052 ?activity .
+        FILTER NOT EXISTS { ?activity a <http://vivo.wheatinitiative.org/ontology/ExternalToWheat> }
+    }
 }

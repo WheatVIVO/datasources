@@ -27,13 +27,16 @@ CONSTRUCT {
 #SELECT (count(distinct ?x) AS ?count)
 WHERE {
     ?x a foaf:Person .
-    ?x vivo:relatedBy ?authorship .
-    ?authorship a vivo:Authorship .
     FILTER NOT EXISTS {
         ?x vivo:relatedBy ?internalauthorship .
         ?internalauthorship a vivo:Authorship .
         ?internalauthorship vivo:relates ?internalpub .
-        ?internalpub a bibo:Document 
+        ?internalpub a bibo:Document
         FILTER NOT EXISTS { ?internalpub a <http://vivo.wheatinitiative.org/ontology/ExternalToWheat> }
+    }
+    FILTER NOT EXISTS {
+        ?x obo:RO_0000053 ?role .
+        ?role obo:RO_0000052 ?activity .
+        FILTER NOT EXISTS { ?activity a <http://vivo.wheatinitiative.org/ontology/ExternalToWheat> }
     }
 }
