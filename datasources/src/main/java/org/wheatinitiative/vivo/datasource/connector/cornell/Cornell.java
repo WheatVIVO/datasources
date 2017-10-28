@@ -14,11 +14,10 @@ import com.hp.hpl.jena.rdf.model.Model;
 
 public class Cornell extends VivoDataSource implements DataSource {
 	
-    private static final String CORNELL_VIVO_URL = "http://vivo.cornell.edu";
+    //private static final String CORNELL_VIVO_URL = "http://vivo.cornell.edu/";
+    private static final String CORNELL_VIVO_URL = "https://scholars.cornell.edu/";
     
-    private static final String CORNELL_TBOX_NS = "http://vivo.cornell.edu/";
-    private static final String CORNELL_ABOX_NS = CORNELL_TBOX_NS + "individual/";
-    private static final String NAMESPACE_ETC = CORNELL_ABOX_NS + "n";
+    private static final String NAMESPACE_ETC = "http://vivo.wheatinitiative.org/individual/cornell-";
     private static final String SPARQL_RESOURCE_DIR = "/cornell/sparql/";
     
     

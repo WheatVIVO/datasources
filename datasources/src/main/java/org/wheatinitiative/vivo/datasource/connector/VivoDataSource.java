@@ -177,7 +177,8 @@ public class VivoDataSource extends ConnectorDataSource {
                     // documents when there are no   
                     // Logging exception only to allow other searches to continue.
                     log.info("Empty results document returned by VIVO " +
-                            "for query text " + querytext);
+                            "for query text " + querytext + "\nRequest URL " 
+                            + nextPageUrl.toString());
                 } else {                    
                     throw e;
                 }
