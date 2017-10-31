@@ -5,9 +5,11 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -15,6 +17,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.client.utils.URIBuilder;
 import org.wheatinitiative.vitro.webapp.ontology.update.KnowledgeBaseUpdater;
 import org.wheatinitiative.vitro.webapp.ontology.update.UpdateSettings;
+import org.wheatinitiative.vivo.datasource.VivoVocabulary;
 import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
 import org.wheatinitiative.vivo.datasource.util.classpath.ClasspathUtils;
 import org.wheatinitiative.vivo.datasource.util.http.HttpUtils;
@@ -47,13 +50,9 @@ public class VivoDataSource extends ConnectorDataSource {
     protected Model result;
     protected HttpUtils httpUtils = new HttpUtils();
     protected XmlToRdf xmlToRdf = new XmlToRdf();
-
-    private static final String PEOPLE = 
-            "http://vivoweb.org/ontology#vitroClassGrouppeople";
+    
     private final static int MIN_REST = 125; // ms between linked data requests
     private static final String RESOURCE_PATH = "/vivo/update15to16/"; 
-    
-    private Set<String> retrievedURIs = new HashSet<String>();
     
     protected String getRemoteVivoURL() {
         return this.getConfiguration().getServiceURI();
@@ -64,52 +63,6 @@ public class VivoDataSource extends ConnectorDataSource {
         return model;
     }
     
-    /**
-     * 
-     * @param model
-     * @throws InterruptedException
-     */
-    protected void fetchRelatedURIs(Model model) {
-        Model tmp = ModelFactory.createDefaultModel();
-        NodeIterator nit = model.listObjects();
-        while(nit.hasNext()) {
-            RDFNode n = nit.next();
-            if(n.isURIResource()) {
-                Resource r = n.asResource();
-//                if(model.contains(r, RDF.type, (Resource) null)) {
-//                    continue;
-//                }
-                // don't try to retrieve classes
-                if(model.contains(null, RDF.type, r)) {
-                    continue;
-                }
-                try {
-                    log.info("Fetching related resource " + r.getURI());
-                    fetch(r.getURI(), tmp);
-                } catch (Exception e) {
-                    log.error("Error retrieving " + r.getURI(), e);
-                }
-            }
-        }
-        model.add(tmp);
-    }
-    
-    private void fetch(String uri, Model model) {
-        if(uri == null) {
-            return;
-        }
-        if(!retrievedURIs.contains(uri)) {
-            log.info("Fetching " + uri);
-            retrievedURIs.add(uri);
-            model.read(uri);
-            try {
-                Thread.sleep(MIN_REST);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }        
-    }
-
     protected Model updateToOneSix(Model model) {
         UpdateSettings settings = new UpdateSettings();
         settings.setABoxModel(model);
@@ -128,7 +81,7 @@ public class VivoDataSource extends ConnectorDataSource {
             oldTBoxModel.read(is, null, "RDF/XML");
         }
         settings.setOldTBoxModel(oldTBoxModel);
-        settings.setNewTBoxModel(oldTBoxModel); // TODO doesn't matter
+        settings.setNewTBoxModel(oldTBoxModel); // doesn't matter
         KnowledgeBaseUpdater kbu = new KnowledgeBaseUpdater(settings);
         try {
             kbu.update();
@@ -256,10 +209,15 @@ public class VivoDataSource extends ConnectorDataSource {
         private Set<String> searchResults = new HashSet<String>();
         private Iterator<String> searchResultIterator;
         
+        private Set<String> retrievedURIs = new HashSet<String>();
+        private Map<String, Model> lodModelCache = new HashMap<String, Model>();
+        
         public VivoModelIterator() throws IOException, URISyntaxException {
             for (String filterTerm : getConfiguration().getQueryTerms()) {
                 searchResults.addAll(getUrisFromSearchResults(
-                        getRemoteVivoURL(), filterTerm, PEOPLE));
+                        getRemoteVivoURL(), filterTerm, VivoVocabulary.CLASSGROUP_ACTIVITIES));
+                searchResults.addAll(getUrisFromSearchResults(
+                        getRemoteVivoURL(), filterTerm, VivoVocabulary.CLASSGROUP_RESEARCH));
             }
             searchResultIterator = searchResults.iterator();
         }
@@ -272,15 +230,158 @@ public class VivoDataSource extends ConnectorDataSource {
             Model model = ModelFactory.createDefaultModel();
             String uri = searchResultIterator.next();
             Model m = ModelFactory.createDefaultModel();
-            fetch(uri, m);
+            model.add(fetchLOD(uri));
             model.add(m);
-            fetchRelatedURIs(model);
+            model.add(fetchRelatedResources(model));
+            // TODO add additional related resources by type
+            // we want to link positions to their top-level orgs to avoid
+            // filling the repository with confusing university-specific
+            // department names
+            model.add(organizationAncestry(model));
             return model;
         }
 
         public Integer size() {
             return searchResults.size();
         }
+        
+        /**
+         * Return all parent organizations for organizations found in the
+         * given model 
+         * @param model
+         * @return
+         */
+        protected Model organizationAncestry(Model model) {
+            Set<String> visitedURIs = new HashSet<String>();
+            return organizationAncestry(model, visitedURIs);
+        }
+        
+        private Model organizationAncestry(Model model, Set<String> visitedURIs) {
+            Model ancestors = ModelFactory.createDefaultModel();
+            ResIterator rit = model.listSubjectsWithProperty(
+                    RDF.type, VivoVocabulary.ORGANIZATION);
+            while(rit.hasNext()){
+                Resource r = rit.next();
+                ancestors.add(parentOrgs(r, 
+                        VivoVocabulary.PART_OF, model, visitedURIs));
+                ancestors.add(parentOrgs(r, 
+                        VivoVocabulary.OLD_SUBORG_WITHIN, model, visitedURIs));
+            }
+            return ancestors;
+        }
+        
+        private Model parentOrgs(Resource org, Property subOrgProperty, Model model, Set<String> visitedURIs) {
+            Model parentOrgs = ModelFactory.createDefaultModel();            
+            NodeIterator parentIt = model.listObjectsOfProperty(
+                    org, subOrgProperty);
+                while(parentIt.hasNext()) {
+                RDFNode parent = parentIt.next();    
+                if(!parent.isURIResource()) {
+                    continue;
+                }
+                if(visitedURIs.contains(parent.asResource().getURI())) {
+                    continue;
+                }
+                Model orgModel = fetchLOD(parent.asResource().getURI(), 
+                        PROCEED_WITH_REPEAT_VISIT);
+                parentOrgs.add(orgModel);
+                parentOrgs.add(organizationAncestry(orgModel));
+            }
+            return parentOrgs;            
+        }
+        
+        /**
+         * Fetch the model returned by a linked data request for a given URI
+         * @param uri
+         * @return
+         */
+        private Model fetchLOD(String uri) {
+            return fetchLOD(uri, !PROCEED_WITH_REPEAT_VISIT);
+        }
+        
+        private static final boolean PROCEED_WITH_REPEAT_VISIT = true;
+        
+        /**
+         * Fetch the model returned by a linked data request for a given URI
+         * @param uri
+         * @param proceedWithRepeatVisit - true if fetch should proceed even if uri
+         * has already been visited
+         * @return
+         */
+        private Model fetchLOD(String uri, boolean proceedWithRepeatVisit) {
+            Model lodModel = ModelFactory.createDefaultModel();
+            if(uri == null) {
+                return lodModel;
+            }
+            if(proceedWithRepeatVisit || !retrievedURIs.contains(uri)) {
+                if(lodModelCache.keySet().contains(uri)) {
+                    log.info("Returning " + uri + " from cache");
+                    return clone(lodModelCache.get(uri));
+                }
+                log.info("Fetching " + uri);
+                lodModel.read(uri);         
+                retrievedURIs.add(uri);
+                if(shouldCache(uri, lodModel)) {
+                    lodModelCache.put(uri, clone(lodModel));
+                }
+                try {
+                    Thread.sleep(MIN_REST);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }            
+            }   
+            return lodModel;
+        }
+        
+        protected Model clone(Model model) {
+            Model clone = ModelFactory.createDefaultModel();
+            clone.add(model);
+            return clone;
+        }
+        
+        protected boolean shouldCache(String uri, Model lodModelForUri) {
+            return lodModelForUri.contains(
+                    lodModelForUri.getResource(uri), 
+                    RDF.type, VivoVocabulary.ORGANIZATION);
+        }
+
+        /**
+         * Fetch resources related to the resources in the given model
+         * @param model containing original data
+         * @param type of related resources to be fetched (optional; may be null)
+         * @throws InterruptedException
+         */
+        protected Model fetchRelatedResources(Model model, Resource type) {
+            Model related = ModelFactory.createDefaultModel();
+            ResIterator nit = model.listResourcesWithProperty(RDF.type, type);
+            while(nit.hasNext()) {
+                Resource n = nit.next();
+                if(n.isURIResource()) {
+                    Resource r = n.asResource();
+                    // don't try to retrieve classes
+                    if(model.contains(null, RDF.type, r)) {
+                        continue;
+                    }
+                    try {
+                        log.info("Fetching related resource " + r.getURI());
+                        related.add(fetchLOD(r.getURI()));
+                    } catch (Exception e) {
+                        log.error("Error retrieving " + r.getURI(), e);
+                    }
+                }
+            }
+            return related;
+        }
+        
+        /**
+         * Fetch resources related to the resources in the given model
+         * @param model containing original data
+         * @throws InterruptedException
+         */
+        protected Model fetchRelatedResources(Model model) {
+            return fetchRelatedResources(model, null);
+        }
+
         
     }
     
