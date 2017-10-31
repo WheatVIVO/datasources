@@ -15,6 +15,8 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.jena.riot.RiotException;
+import org.apache.jena.riot.RiotNotFoundException;
 import org.wheatinitiative.vitro.webapp.ontology.update.KnowledgeBaseUpdater;
 import org.wheatinitiative.vitro.webapp.ontology.update.UpdateSettings;
 import org.wheatinitiative.vivo.datasource.VivoVocabulary;
@@ -34,6 +36,7 @@ import com.hp.hpl.jena.rdf.model.ResIterator;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
+import com.hp.hpl.jena.vocabulary.OWL;
 import com.hp.hpl.jena.vocabulary.RDF;
 
 public class VivoDataSource extends ConnectorDataSource {
@@ -45,6 +48,7 @@ public class VivoDataSource extends ConnectorDataSource {
     private static final String HITS_PER_PAGE_PARAM = "hitsPerPage";
     private static final String HITS_PER_PAGE = "100";
     private static final String CLASSGROUP_PARAM = "classgroup";
+    private static final String MESH = "http://id.nlm.nih.gov/mesh/";
     
     private Log log = LogFactory.getLog(VivoDataSource.class);
     protected Model result;
@@ -114,7 +118,7 @@ public class VivoDataSource extends ConnectorDataSource {
         }
         URI nextPageUrl = builder.build();
         while(nextPageUrl != null) {
-            log.debug("Requesting " + nextPageUrl.toString());
+            log.info("Requesting " + nextPageUrl.toString());
             String searchResult = httpUtils.getHttpResponse(
                     nextPageUrl.toString());
             String nextPage = null;
@@ -220,6 +224,7 @@ public class VivoDataSource extends ConnectorDataSource {
                         getRemoteVivoURL(), filterTerm, VivoVocabulary.CLASSGROUP_RESEARCH));
             }
             searchResultIterator = searchResults.iterator();
+            log.info("Finished constructing model iterator");
         }
         
         public boolean hasNext() {
@@ -227,18 +232,75 @@ public class VivoDataSource extends ConnectorDataSource {
         }
 
         public Model next() {
-            Model model = ModelFactory.createDefaultModel();
+            log.info("*********************************************** NEXT **");
             String uri = searchResultIterator.next();
-            Model m = ModelFactory.createDefaultModel();
-            model.add(fetchLOD(uri));
-            model.add(m);
-            model.add(fetchRelatedResources(model));
-            // TODO add additional related resources by type
+            Model uriModel = (fetchLOD(uri));
+            if (isDocument(uri, uriModel)) {
+               log.info("Adding persons to document");                
+                Model authorsModel = addRelatedResources(fetchRelatedResources(
+                        uriModel, VivoVocabulary.AUTHORSHIP), 
+                        VivoVocabulary.PERSON);
+                authorsModel.add(addRelatedResources(fetchRelatedResources(
+                        authorsModel, VivoVocabulary.POSITION), 
+                        VivoVocabulary.ORGANIZATION));
+                uriModel.add(authorsModel);
+            } else if(isProject(uri, uriModel) || isGrant(uri, uriModel)) {
+                log.info("Adding stuff to grant/project.  Need to go through role.");
+                // get persons related to grants/projects
+                Model roleModel = fetchRelatedResources(uriModel,
+                        VivoVocabulary.ROLE);
+                roleModel.add(fetchRelatedResources(uriModel, 
+                        VivoVocabulary.OLD_ROLE));
+                Model relevantPersonModel = fetchRelatedResources(
+                        roleModel, VivoVocabulary.PERSON);
+                Model authorshipModel = fetchRelatedResources(
+                        relevantPersonModel, VivoVocabulary.AUTHORSHIP);
+                Model publicationModel = fetchRelatedResources(
+                        authorshipModel, VivoVocabulary.DOCUMENT);
+                publicationModel.add(addRelatedResources(fetchRelatedResources(
+                        publicationModel, VivoVocabulary.AUTHORSHIP), 
+                        VivoVocabulary.PERSON));
+                publicationModel.add(addRelatedResources(fetchRelatedResources(
+                        publicationModel, VivoVocabulary.POSITION), 
+                        VivoVocabulary.ORGANIZATION));
+                uriModel.add(relevantPersonModel);
+                uriModel.add(authorshipModel);
+                uriModel.add(publicationModel);
+            } 
+            // add any DateTimeIntervals
+            log.info("Adding date/time intervals");
+            uriModel.add(addRelatedResources(fetchRelatedResources(
+                    uriModel, VivoVocabulary.DATETIME_INTERVAL)));            
+            // add any DateTimeValues
+            log.info("Adding date/time values");
+            uriModel.add(addRelatedResources(
+                    uriModel, VivoVocabulary.DATETIME_VALUE));            
+            // add any skos:Concepts
+            log.info("Adding concepts");
+            uriModel.add(fetchRelatedResources(
+                    uriModel, VivoVocabulary.CONCEPT));
+            // add any Journals
+            log.info("Adding journals");
+            uriModel.add(fetchRelatedResources(
+                    uriModel, VivoVocabulary.JOURNAL));
+            // get any vCards we can
+            log.info("Adding vcards");
+            uriModel.add(addRelatedResources(fetchRelatedResources(
+                    uriModel, VivoVocabulary.VCARD_KIND)));
+            log.info("Adding addresses");
+            // any pre-ISF addresses we can
+            uriModel.add(addRelatedResources(fetchRelatedResources(
+                    uriModel, VivoVocabulary.OLD_ADDRESS)));
             // we want to link positions to their top-level orgs to avoid
             // filling the repository with confusing university-specific
             // department names
-            model.add(organizationAncestry(model));
-            return model;
+            // get orgs related to grants/projects
+            log.info("Adding orgs");
+            uriModel.add(fetchRelatedResources(uriModel, 
+                    VivoVocabulary.ORGANIZATION));
+            log.info("Adding ancestry");
+            uriModel.add(organizationAncestry(uriModel));
+            return uriModel;
         }
 
         public Integer size() {
@@ -274,7 +336,7 @@ public class VivoDataSource extends ConnectorDataSource {
             Model parentOrgs = ModelFactory.createDefaultModel();            
             NodeIterator parentIt = model.listObjectsOfProperty(
                     org, subOrgProperty);
-                while(parentIt.hasNext()) {
+            while(parentIt.hasNext()) {
                 RDFNode parent = parentIt.next();    
                 if(!parent.isURIResource()) {
                     continue;
@@ -282,10 +344,11 @@ public class VivoDataSource extends ConnectorDataSource {
                 if(visitedURIs.contains(parent.asResource().getURI())) {
                     continue;
                 }
+                visitedURIs.add(parent.asResource().getURI());
                 Model orgModel = fetchLOD(parent.asResource().getURI(), 
                         PROCEED_WITH_REPEAT_VISIT);
                 parentOrgs.add(orgModel);
-                parentOrgs.add(organizationAncestry(orgModel));
+                parentOrgs.add(organizationAncestry(orgModel, visitedURIs));
             }
             return parentOrgs;            
         }
@@ -319,8 +382,16 @@ public class VivoDataSource extends ConnectorDataSource {
                     return clone(lodModelCache.get(uri));
                 }
                 log.info("Fetching " + uri);
-                lodModel.read(uri);         
                 retrievedURIs.add(uri);
+                try {
+                    lodModel.read(uri);
+                } catch (RiotNotFoundException e) {
+                    log.warn("Linked data resource not found: " + uri);
+                    tryAlternative(uri, lodModel);
+                } catch (RiotException e) {
+                    log.warn("Exception reading " + uri, e);
+                    tryAlternative(uri, lodModel);
+                }
                 if(shouldCache(uri, lodModel)) {
                     lodModelCache.put(uri, clone(lodModel));
                 }
@@ -331,6 +402,17 @@ public class VivoDataSource extends ConnectorDataSource {
                 }            
             }   
             return lodModel;
+        }
+        
+        private void tryAlternative(String uri, Model model) {
+            try {
+                if(uri.startsWith(MESH)) {
+                    model.read(uri + ".n3");
+                }
+            } catch (Exception e) {
+                log.debug("Exception attempting alternative requests for " 
+                        + uri, e);
+            }
         }
         
         protected Model clone(Model model) {
@@ -354,16 +436,19 @@ public class VivoDataSource extends ConnectorDataSource {
         protected Model fetchRelatedResources(Model model, Resource type) {
             Model related = ModelFactory.createDefaultModel();
             ResIterator nit = model.listResourcesWithProperty(RDF.type, type);
+            if(type != null) {
+                log.debug("Listing resources with type <" + type.getURI() + ">");
+            }
             while(nit.hasNext()) {
                 Resource n = nit.next();
-                if(n.isURIResource()) {
+                if(n.isURIResource()) {                    
                     Resource r = n.asResource();
-                    // don't try to retrieve classes
-                    if(model.contains(null, RDF.type, r)) {
+                    log.debug("Found" + r.getURI());
+                    if(isIrrelevantResource(r, model)) {
                         continue;
                     }
                     try {
-                        log.info("Fetching related resource " + r.getURI());
+                        log.debug("Fetching related resource " + r.getURI());
                         related.add(fetchLOD(r.getURI()));
                     } catch (Exception e) {
                         log.error("Error retrieving " + r.getURI(), e);
@@ -371,6 +456,57 @@ public class VivoDataSource extends ConnectorDataSource {
                 }
             }
             return related;
+        }
+        
+        private boolean isIrrelevantResource(Resource r, Model model) {
+            // don't go off site
+            if(r.getURI().startsWith(VivoVocabulary.VIVO)
+                    || r.getURI().startsWith(VivoVocabulary.FOAF)
+                    || r.getURI().startsWith(VivoVocabulary.BIBO)
+                    || r.getURI().startsWith(VivoVocabulary.VCARD)
+                    || r.getURI().startsWith(VivoVocabulary.OBO)
+                    || r.getURI().startsWith(VivoVocabulary.SKOS)) {
+                return true;
+            }
+            // don't try to retrieve classes
+            if(model.contains(null, RDF.type, r)) {
+                return true;
+            }
+            if(model.contains(r, RDF.type, OWL.Class) 
+                    || model.contains(r, RDF.type, OWL.ObjectProperty)
+                    || model.contains(r, RDF.type, OWL.DatatypeProperty)
+                    || model.contains(r, RDF.type, OWL.AnnotationProperty)
+                    || model.contains(r, RDF.type, RDF.Property)
+                    ) {
+                return true;
+            }
+            return false;
+        }
+
+        /**
+         * Add resources related to the resources in the given model
+         * and return a model containing the original plus the added data
+         * @param model containing original data
+         * @param type of related resources to be fetched (optional; may be null)
+         * @return copy of original model with added data, for daisy chaining
+         * @throws InterruptedException
+         */
+        protected Model addRelatedResources(Model model, Resource type) {
+            Model m = clone(model).add(fetchRelatedResources(model, type));
+            return m;
+        }
+
+        
+        /**
+         * Add resources related to the resources in the given model
+         * and return a model containing the original plus the added data
+         * @param model containing original data
+         * @return copy of original model with added data, for daisy chaining
+         * @throws InterruptedException
+         */
+        protected Model addRelatedResources(Model model) {
+            model.add(fetchRelatedResources(model));
+            return model;
         }
         
         /**
@@ -382,6 +518,20 @@ public class VivoDataSource extends ConnectorDataSource {
             return fetchRelatedResources(model, null);
         }
 
+        private boolean isDocument(String uri, Model uriModel) {
+            return uriModel.contains(
+                    uriModel.getResource(uri), RDF.type, VivoVocabulary.DOCUMENT);
+        }
+
+        private boolean isGrant(String uri, Model uriModel) {
+            return uriModel.contains(
+                    uriModel.getResource(uri), RDF.type, VivoVocabulary.GRANT);
+        }
+        
+        private boolean isProject(String uri, Model uriModel) {
+            return uriModel.contains(
+                    uriModel.getResource(uri), RDF.type, VivoVocabulary.PROJECT);
+        }
         
     }
     
