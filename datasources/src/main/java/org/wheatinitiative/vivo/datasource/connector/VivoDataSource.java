@@ -195,6 +195,7 @@ public class VivoDataSource extends ConnectorDataSource {
     
     @Override
     protected Model filter(Model model) {
+        model = positionsToTopLevelOrgs(model);
         log.info(model.size() + " before filtering");
         int iterations = 0;
         long difference = -1;
@@ -205,6 +206,18 @@ public class VivoDataSource extends ConnectorDataSource {
             difference = model.size() - before;
         }
         log.info(model.size() + " after filtering");        
+        return model;
+    }
+    
+    /**
+     * Connect positions only to top-level organizations, recording
+     * the immediate department in wi:immediateOrgName data property
+     * @return the supplied model with appropriate statements modified
+     * relating to positions
+     */
+    protected Model positionsToTopLevelOrgs(Model model) {
+        model = construct(SPARQL_PATH + "positions-addedStatements.rq", model, "");
+        model.remove(constructQuery(SPARQL_PATH + "positions-removedStatements.rq", model, "", null));
         return model;
     }
 
@@ -314,20 +327,7 @@ public class VivoDataSource extends ConnectorDataSource {
                     VivoVocabulary.ORGANIZATION));
             log.info("Adding ancestry");
             uriModel.add(organizationAncestry(uriModel));
-            uriModel = positionsToTopLevelOrgs(uriModel);
             return uriModel;
-        }
-        
-        /**
-         * Connect positions only to top-level organizations, recording
-         * the immediate department in wi:immediateOrgName data property
-         * @return the supplied model with appropriate statements modified
-         * relating to positions
-         */
-        private Model positionsToTopLevelOrgs(Model model) {
-            model = construct(SPARQL_PATH + "positions-addedStatements.rq", model, "");
-            model.remove(constructQuery(SPARQL_PATH + "positions-removedStatements.rq", model, "", null));
-            return model;
         }
 
         public Integer size() {
