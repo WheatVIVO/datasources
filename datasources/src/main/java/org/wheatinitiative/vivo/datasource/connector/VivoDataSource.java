@@ -57,6 +57,7 @@ public class VivoDataSource extends ConnectorDataSource {
     
     private final static int MIN_REST = 125; // ms between linked data requests
     private static final String RESOURCE_PATH = "/vivo/update15to16/"; 
+    private static final String SPARQL_PATH = "/vivo/sparql/";
     
     protected String getRemoteVivoURL() {
         return this.getConfiguration().getServiceURI();
@@ -194,7 +195,16 @@ public class VivoDataSource extends ConnectorDataSource {
     
     @Override
     protected Model filter(Model model) {
-        // nothing to do, for now
+        log.info(model.size() + " before filtering");
+        int iterations = 0;
+        long difference = -1;
+        while(difference != 0 && iterations < 5) {
+            long before = model.size();
+            iterations++;
+            model.remove(constructQuery(SPARQL_PATH + "filter.rq", model, "", null));
+            difference = model.size() - before;
+        }
+        log.info(model.size() + " after filtering");        
         return model;
     }
 
@@ -243,6 +253,10 @@ public class VivoDataSource extends ConnectorDataSource {
                 authorsModel.add(addRelatedResources(fetchRelatedResources(
                         authorsModel, VivoVocabulary.POSITION), 
                         VivoVocabulary.ORGANIZATION));
+                authorsModel.add(addRelatedResources(fetchRelatedResources(
+                        authorsModel, VivoVocabulary.AUTHORSHIP), 
+                        VivoVocabulary.DOCUMENT));
+                // TODO refactor the authors of the documents from below
                 uriModel.add(authorsModel);
             } else if(isProject(uri, uriModel) || isGrant(uri, uriModel)) {
                 log.info("Adding stuff to grant/project.  Need to go through role.");
@@ -300,7 +314,20 @@ public class VivoDataSource extends ConnectorDataSource {
                     VivoVocabulary.ORGANIZATION));
             log.info("Adding ancestry");
             uriModel.add(organizationAncestry(uriModel));
+            uriModel = positionsToTopLevelOrgs(uriModel);
             return uriModel;
+        }
+        
+        /**
+         * Connect positions only to top-level organizations, recording
+         * the immediate department in wi:immediateOrgName data property
+         * @return the supplied model with appropriate statements modified
+         * relating to positions
+         */
+        private Model positionsToTopLevelOrgs(Model model) {
+            model = construct(SPARQL_PATH + "positions-addedStatements.rq", model, "");
+            model.remove(constructQuery(SPARQL_PATH + "positions-removedStatements.rq", model, "", null));
+            return model;
         }
 
         public Integer size() {
@@ -389,7 +416,11 @@ public class VivoDataSource extends ConnectorDataSource {
                     log.warn("Linked data resource not found: " + uri);
                     tryAlternative(uri, lodModel);
                 } catch (RiotException e) {
-                    log.warn("Exception reading " + uri, e);
+                    if(uri.startsWith(MESH)) {
+                        log.warn("Exception reading " + uri);
+                    } else {
+                        log.warn("Exception reading " + uri, e);
+                    }
                     tryAlternative(uri, lodModel);
                 }
                 if(shouldCache(uri, lodModel)) {
@@ -407,6 +438,7 @@ public class VivoDataSource extends ConnectorDataSource {
         private void tryAlternative(String uri, Model model) {
             try {
                 if(uri.startsWith(MESH)) {
+                    log.info("Fetching alternative address " + uri + ".n3");
                     model.read(uri + ".n3");
                 }
             } catch (Exception e) {
