@@ -6,6 +6,8 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 public class VivoVocabulary {
 
+    public static final String DEFAULT_NAMESPACE = "http://vivo.wheatinitiative.org/individual/";
+    
     public static final String BIBO = "http://purl.org/ontology/bibo/";
     public static final String FOAF = "http://xmlns.com/foaf/0.1/";
     public static final String OBO = "http://purl.obolibrary.org/obo/";

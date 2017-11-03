@@ -68,10 +68,14 @@ public class VivoDataSource extends ConnectorDataSource {
         return model;
     }
     
+    protected static int prefixIteration = 0;
+    
     protected Model updateToOneSix(Model model) {
         UpdateSettings settings = new UpdateSettings();
         settings.setABoxModel(model);
-        settings.setDefaultNamespace("http://vivo.example.org/individual/");
+        prefixIteration++;
+        String localNamePrefix = "vivo-n" + prefixIteration + "-"; 
+        settings.setDefaultNamespace(VivoVocabulary.DEFAULT_NAMESPACE + localNamePrefix);
         settings.setDiffFile(resolveResource("diff.tab.txt"));
         settings.setSparqlConstructAdditionsDir(resolveResource(
                 "sparqlConstructs/additions"));
