@@ -28,6 +28,10 @@ CONSTRUCT {
   ?oo ?pp ?x 
 } WHERE {
   {
+    ?x a foaf:Document . # some erroneous garbage that is fabricated in VIVO linked data
+    ?x ?p ?o
+  }
+  {
     ?x a owl:Class .
     ?x ?p ?o 
   }
@@ -50,10 +54,13 @@ CONSTRUCT {
 	?position a vivo:Position .
     }
     FILTER NOT EXISTS {
-        ?x vivo:assigns ?assignedThing 
+        ?x vivo:assigns ?grant .
+	?grant a vivo:Grant .
     }
     FILTER NOT EXISTS {
-        ?x obo:RO_0000053 ?orgRole 
+        ?x obo:RO_0000053 ?orgRole .
+	?orgRole vivo:relatedBy ?grant .
+	{ ?grant a vivo:Grant . ?grant a vivo:Project }
     }
     ?x ?p ?o 
   } UNION {
@@ -63,10 +70,13 @@ CONSTRUCT {
 	?position a foaf:Position .
     }
     FILTER NOT EXISTS {
-        ?x vivo:assigns ?assignedThing 
+        ?x vivo:assigns ?grant .
+	?grant a vivo:Grant .
     }
     FILTER NOT EXISTS {
-        ?x obo:RO_0000053 ?orgRole 
+        ?x obo:RO_0000053 ?orgRole .
+	?orgRole vivo:relatedBy ?grant .
+	{ ?grant a vivo:Grant . ?grant a vivo:Project }
     }
     ?oo ?pp ?x
   }
@@ -88,19 +98,36 @@ CONSTRUCT {
   UNION {
     ?x a obo:BFO_0000023 . #Role
     FILTER NOT EXISTS {
-      ?x obo:BFO_0000054 ?process 
+      ?x obo:BFO_0000054 ?process .
+      ?process a vivo:Project .
     }
     FILTER NOT EXISTS {
-      ?x vivo:relatedBy ?relator
+      ?x vivo:relatedBy ?grant .
+      ?grant a vivo:Grant .
     }
     ?x ?p ?o
   } UNION {
     ?x a obo:BFO_0000023 . #Role
     FILTER NOT EXISTS {
-      ?x obo:BFO_0000054 ?process 
+      ?x obo:BFO_0000054 ?process .
+      ?process a vivo:Project .
     } 
     FILTER NOT EXISTS {
-      ?x vivo:relatedBy ?relator
+      ?x vivo:relatedBy ?grant .
+      ?grant a vivo:Grant .
+    }
+    ?oo ?pp ?x
+  }
+  UNION {
+    ?x a obo:BFO_0000015 . #Process
+    FILTER NOT EXISTS {
+      ?x a vivo:Project .
+    }
+    ?x ?p ?o
+  } UNION {
+    ?x a obo:BFO_0000015 . #Process
+    FILTER NOT EXISTS {
+      ?x a vivo:Project .
     }
     ?oo ?pp ?x
   }

@@ -75,7 +75,8 @@ public class VivoDataSource extends ConnectorDataSource {
         settings.setABoxModel(model);
         prefixIteration++;
         String localNamePrefix = "vivo-n" + prefixIteration + "-"; 
-        settings.setDefaultNamespace(VivoVocabulary.DEFAULT_NAMESPACE + localNamePrefix);
+        settings.setDefaultNamespace(
+                VivoVocabulary.DEFAULT_NAMESPACE + localNamePrefix);
         settings.setDiffFile(resolveResource("diff.tab.txt"));
         settings.setSparqlConstructAdditionsDir(resolveResource(
                 "sparqlConstructs/additions"));
@@ -267,13 +268,7 @@ public class VivoDataSource extends ConnectorDataSource {
                 Model authorsModel = addRelatedResources(fetchRelatedResources(
                         uriModel, VivoVocabulary.AUTHORSHIP), 
                         VivoVocabulary.PERSON);
-                authorsModel.add(addRelatedResources(fetchRelatedResources(
-                        authorsModel, VivoVocabulary.POSITION), 
-                        VivoVocabulary.ORGANIZATION));
-                authorsModel.add(addRelatedResources(fetchRelatedResources(
-                        authorsModel, VivoVocabulary.AUTHORSHIP), 
-                        VivoVocabulary.DOCUMENT));
-                // TODO refactor the authors of the documents from below
+                authorsModel.add(fetchPersonPubsAndAffiliations(authorsModel));
                 uriModel.add(authorsModel);
             } else if(isProject(uri, uriModel) || isGrant(uri, uriModel)) {
                 log.info("Adding stuff to grant/project.  Need to go through role.");
@@ -284,21 +279,14 @@ public class VivoDataSource extends ConnectorDataSource {
                         VivoVocabulary.OLD_ROLE));
                 Model relevantPersonModel = fetchRelatedResources(
                         roleModel, VivoVocabulary.PERSON);
-                Model authorshipModel = fetchRelatedResources(
-                        relevantPersonModel, VivoVocabulary.AUTHORSHIP);
-                Model publicationModel = fetchRelatedResources(
-                        authorshipModel, VivoVocabulary.DOCUMENT);
-                publicationModel.add(addRelatedResources(fetchRelatedResources(
-                        publicationModel, VivoVocabulary.AUTHORSHIP), 
-                        VivoVocabulary.PERSON));
-                publicationModel.add(addRelatedResources(fetchRelatedResources(
-                        publicationModel, VivoVocabulary.POSITION), 
-                        VivoVocabulary.ORGANIZATION));
-                uriModel.add(relevantPersonModel);
-                uriModel.add(authorshipModel);
-                uriModel.add(publicationModel);
-            } 
-            // add any DateTimeIntervals
+                uriModel.add(fetchPersonPubsAndAffiliations(relevantPersonModel));
+                uriModel.add(roleModel);
+                uriModel.add(relevantPersonModel);           
+            }
+            // add any Positions we somehow missed
+            log.info("Adding positions");
+            uriModel.add(fetchRelatedResources(
+                    uriModel, VivoVocabulary.POSITION));
             log.info("Adding date/time intervals");
             uriModel.add(addRelatedResources(fetchRelatedResources(
                     uriModel, VivoVocabulary.DATETIME_INTERVAL)));            
@@ -334,6 +322,28 @@ public class VivoDataSource extends ConnectorDataSource {
             return uriModel;
         }
 
+        private Model fetchPersonPubsAndAffiliations(Model relevantPersonModel) {
+            // For now, just get affiliations
+            return addRelatedResources(fetchRelatedResources(
+                  relevantPersonModel, VivoVocabulary.POSITION), 
+                  VivoVocabulary.ORGANIZATION);
+            // Retrieving all the publications and their authors takes forever
+//            Model model = ModelFactory.createDefaultModel();
+//            Model authorshipModel = fetchRelatedResources(
+//                    relevantPersonModel, VivoVocabulary.AUTHORSHIP);
+//            Model publicationModel = fetchRelatedResources(
+//                    authorshipModel, VivoVocabulary.DOCUMENT);
+//            publicationModel.add(addRelatedResources(fetchRelatedResources(
+//                    publicationModel, VivoVocabulary.AUTHORSHIP), 
+//                    VivoVocabulary.PERSON));
+//            publicationModel.add(addRelatedResources(fetchRelatedResources(
+//                    publicationModel, VivoVocabulary.POSITION), 
+//                    VivoVocabulary.ORGANIZATION));
+//            model.add(authorshipModel);
+//            model.add(publicationModel);
+//            return model;
+        }
+        
         public Integer size() {
             return searchResults.size();
         }
@@ -363,7 +373,8 @@ public class VivoDataSource extends ConnectorDataSource {
             return ancestors;
         }
         
-        private Model parentOrgs(Resource org, Property subOrgProperty, Model model, Set<String> visitedURIs) {
+        private Model parentOrgs(Resource org, Property subOrgProperty, 
+                Model model, Set<String> visitedURIs) {
             Model parentOrgs = ModelFactory.createDefaultModel();            
             NodeIterator parentIt = model.listObjectsOfProperty(
                     org, subOrgProperty);
@@ -398,8 +409,8 @@ public class VivoDataSource extends ConnectorDataSource {
         /**
          * Fetch the model returned by a linked data request for a given URI
          * @param uri
-         * @param proceedWithRepeatVisit - true if fetch should proceed even if uri
-         * has already been visited
+         * @param proceedWithRepeatVisit - true if fetch should proceed even if 
+         * URI has already been visited
          * @return
          */
         private Model fetchLOD(String uri, boolean proceedWithRepeatVisit) {

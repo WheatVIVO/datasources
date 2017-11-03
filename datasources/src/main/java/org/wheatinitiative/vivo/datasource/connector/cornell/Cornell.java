@@ -26,7 +26,12 @@ public class Cornell extends VivoDataSource implements DataSource {
     
     @Override 
     protected String getRemoteVivoURL() {
-        return CORNELL_VIVO_URL;
+        String url =  this.getConfiguration().getServiceURI();
+        if(url != null) {
+            return url;
+        } else {
+            return CORNELL_VIVO_URL;
+        }
     }
     
     
