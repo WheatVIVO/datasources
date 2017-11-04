@@ -58,6 +58,10 @@ public class VivoDataSource extends ConnectorDataSource {
     private final static int MIN_REST = 125; // ms between linked data requests
     private static final String RESOURCE_PATH = "/vivo/update15to16/"; 
     private static final String SPARQL_PATH = "/vivo/sparql/";
+    private static final int NUMBER_OF_FILTERS = 24;
+    // the maximum number of times the filter rules will be applied to a given
+    // model, even if they are still finding triples to remove
+    private static final int MAX_FILTER_ITERATIONS = 8;
     
     protected String getRemoteVivoURL() {
         return this.getConfiguration().getServiceURI();
@@ -203,11 +207,19 @@ public class VivoDataSource extends ConnectorDataSource {
         model = positionsToTopLevelOrgs(model);
         log.info(model.size() + " before filtering");
         int iterations = 0;
-        long difference = -1;
-        while(difference != 0 && iterations < 5) {
-            long before = model.size();
+        long difference = -1;;
+        while(difference != 0 && iterations < MAX_FILTER_ITERATIONS) {
+            Model removalModel = ModelFactory.createDefaultModel();
             iterations++;
-            model.remove(constructQuery(SPARQL_PATH + "filter.rq", model, "", null));
+            long before = model.size();
+            for(int i = 1; i <= NUMBER_OF_FILTERS; i++) {
+                long start = System.currentTimeMillis();
+                removalModel.add(constructQuery(
+                        SPARQL_PATH + "filter" + i + ".rq", model, "", null));
+                log.info((System.currentTimeMillis() - start) + " to run filter" + i);
+            }
+            model.remove(removalModel);
+            log.info("Removed " + removalModel.size() + " triples on iteration " + iterations);
             difference = model.size() - before;
         }
         log.info(model.size() + " after filtering");        
@@ -279,14 +291,13 @@ public class VivoDataSource extends ConnectorDataSource {
                         VivoVocabulary.OLD_ROLE));
                 Model relevantPersonModel = fetchRelatedResources(
                         roleModel, VivoVocabulary.PERSON);
+                Model relevantOrganizationModel = fetchRelatedResources(
+                        roleModel, VivoVocabulary.ORGANIZATION);
                 uriModel.add(fetchPersonPubsAndAffiliations(relevantPersonModel));
                 uriModel.add(roleModel);
-                uriModel.add(relevantPersonModel);           
+                uriModel.add(relevantPersonModel);
+                uriModel.add(relevantOrganizationModel);
             }
-            // add any Positions we somehow missed
-            log.info("Adding positions");
-            uriModel.add(fetchRelatedResources(
-                    uriModel, VivoVocabulary.POSITION));
             log.info("Adding date/time intervals");
             uriModel.add(addRelatedResources(fetchRelatedResources(
                     uriModel, VivoVocabulary.DATETIME_INTERVAL)));            
@@ -314,9 +325,9 @@ public class VivoDataSource extends ConnectorDataSource {
             // filling the repository with confusing university-specific
             // department names
             // get orgs related to grants/projects
-            log.info("Adding orgs");
-            uriModel.add(fetchRelatedResources(uriModel, 
-                    VivoVocabulary.ORGANIZATION));
+//            log.info("Adding orgs");
+//            uriModel.add(fetchRelatedResources(uriModel, 
+//                    VivoVocabulary.ORGANIZATION));
             log.info("Adding ancestry");
             uriModel.add(organizationAncestry(uriModel));
             return uriModel;

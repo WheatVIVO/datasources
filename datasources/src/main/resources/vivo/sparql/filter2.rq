@@ -21,20 +21,11 @@ PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX wi:    <http://vivo.wheatinitiative.org/ontology/wi#>
 
+# Construct statements about irrelevant individuals we want to remove
+
 CONSTRUCT {
-  ?pos vivo:relates ?superOrg .
-  ?superOrg vivo:relatedBy ?pos .
-  ?pos wi:immediateOrgName ?orgLabel .
+  ?x ?p ?o .
 } WHERE {
-  ?pos a vivo:Position .
-  ?pos vivo:relates ?org .
-  ?org a foaf:Organization .
-  ?org rdfs:label ?orgLabel .
-  ?org obo:BFO_0000050+ ?superOrg .
-  FILTER (?org != ?superOrg)
-  FILTER NOT EXISTS {
-    ?superOrg obo:BFO_0000050 ?top .
-    ?top a foaf:Organization
-    FILTER (?top != ?superOrg)
-  }
+    ?x a owl:Class .
+    ?x ?p ?o 
 }
