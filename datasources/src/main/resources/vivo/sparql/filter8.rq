@@ -41,4 +41,11 @@ CONSTRUCT {
 	?personRole vivo:relatedBy ?grant .
 	?grant a vivo:Grant .
     }
+    FILTER NOT EXISTS {
+        ?x a foaf:Person .
+        ?x obo:RO_0000053 ?personRole .
+	?personRole obo:BFO_0000054 ?project .
+	?project a vivo:Project .
+    }
+
 }

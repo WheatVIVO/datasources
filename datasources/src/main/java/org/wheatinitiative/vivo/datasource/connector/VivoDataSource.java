@@ -58,7 +58,7 @@ public class VivoDataSource extends ConnectorDataSource {
     private final static int MIN_REST = 125; // ms between linked data requests
     private static final String RESOURCE_PATH = "/vivo/update15to16/"; 
     private static final String SPARQL_PATH = "/vivo/sparql/";
-    private static final int NUMBER_OF_FILTERS = 24;
+    private static final int NUMBER_OF_FILTERS = 27;
     // the maximum number of times the filter rules will be applied to a given
     // model, even if they are still finding triples to remove
     private static final int MAX_FILTER_ITERATIONS = 8;
@@ -205,7 +205,7 @@ public class VivoDataSource extends ConnectorDataSource {
     @Override
     protected Model filter(Model model) {
         model = positionsToTopLevelOrgs(model);
-        log.info(model.size() + " before filtering");
+        log.debug(model.size() + " before filtering");
         int iterations = 0;
         long difference = -1;;
         while(difference != 0 && iterations < MAX_FILTER_ITERATIONS) {
@@ -216,13 +216,13 @@ public class VivoDataSource extends ConnectorDataSource {
                 long start = System.currentTimeMillis();
                 removalModel.add(constructQuery(
                         SPARQL_PATH + "filter" + i + ".rq", model, "", null));
-                log.info((System.currentTimeMillis() - start) + " to run filter" + i);
+                log.debug((System.currentTimeMillis() - start) + " to run filter" + i);
             }
             model.remove(removalModel);
-            log.info("Removed " + removalModel.size() + " triples on iteration " + iterations);
+            log.debug("Removed " + removalModel.size() + " triples on iteration " + iterations);
             difference = model.size() - before;
         }
-        log.info(model.size() + " after filtering");        
+        log.debug(model.size() + " after filtering");        
         return model;
     }
     
@@ -233,7 +233,8 @@ public class VivoDataSource extends ConnectorDataSource {
      * relating to positions
      */
     protected Model positionsToTopLevelOrgs(Model model) {
-        model = construct(SPARQL_PATH + "positions-addedStatements.rq", model, "");
+        Model addition = constructQuery(SPARQL_PATH + "positions-addedStatements.rq", model, "", null);
+        model.add(addition);
         model.remove(constructQuery(SPARQL_PATH + "positions-removedStatements.rq", model, "", null));
         return model;
     }
@@ -264,7 +265,7 @@ public class VivoDataSource extends ConnectorDataSource {
                         getRemoteVivoURL(), filterTerm, VivoVocabulary.CLASSGROUP_RESEARCH));
             }
             searchResultIterator = searchResults.iterator();
-            log.info("Finished constructing model iterator");
+            log.debug("Finished constructing model iterator");
         }
         
         public boolean hasNext() {
@@ -283,7 +284,7 @@ public class VivoDataSource extends ConnectorDataSource {
                 authorsModel.add(fetchPersonPubsAndAffiliations(authorsModel));
                 uriModel.add(authorsModel);
             } else if(isProject(uri, uriModel) || isGrant(uri, uriModel)) {
-                log.info("Adding stuff to grant/project.  Need to go through role.");
+                log.info("Adding stuff to grant/project.");
                 // get persons related to grants/projects
                 Model roleModel = fetchRelatedResources(uriModel,
                         VivoVocabulary.ROLE);
@@ -431,7 +432,7 @@ public class VivoDataSource extends ConnectorDataSource {
             }
             if(proceedWithRepeatVisit || !retrievedURIs.contains(uri)) {
                 if(lodModelCache.keySet().contains(uri)) {
-                    log.info("Returning " + uri + " from cache");
+                    log.debug("Returning " + uri + " from cache");
                     return clone(lodModelCache.get(uri));
                 }
                 log.info("Fetching " + uri);
@@ -507,7 +508,11 @@ public class VivoDataSource extends ConnectorDataSource {
                     }
                     try {
                         log.debug("Fetching related resource " + r.getURI());
-                        related.add(fetchLOD(r.getURI()));
+                        if(VivoVocabulary.ORGANIZATION.equals(type)) {
+                            related.add(fetchLOD(r.getURI(), PROCEED_WITH_REPEAT_VISIT));
+                        } else {
+                            related.add(fetchLOD(r.getURI()));
+                        }
                     } catch (Exception e) {
                         log.error("Error retrieving " + r.getURI(), e);
                     }

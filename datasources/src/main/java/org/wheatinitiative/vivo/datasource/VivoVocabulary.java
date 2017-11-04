@@ -27,7 +27,7 @@ public class VivoVocabulary {
     public static final Resource POSITION = ResourceFactory.createResource(
             VIVO + "Position");
     public static final Resource ROLE = ResourceFactory.createResource(
-            OBO + "Role");
+            OBO + "BFO_0000023");
     public static final Resource OLD_ROLE = ResourceFactory.createResource(
             VIVO + "Role");
     public static final Resource GRANT = ResourceFactory.createResource(
