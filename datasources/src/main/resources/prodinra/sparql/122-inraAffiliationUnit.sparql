@@ -21,30 +21,31 @@ PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
+PREFIX wi:    <http://vivo.wheatinitiative.org/ontology/wi#>
 
 CONSTRUCT {
     ?position a vivo:Position .
     ?position vivo:relates ?x .
+    ?position wi:immediateOrgName ?immediateOrgName .
+    ?x wi:country ?country .
     ?position vivo:relates <http://record.prodinra.inra.fr/individual/INRA> .
     <http://record.prodinra.inra.fr/individual/INRA> a foaf:Organization .
     <http://record.prodinra.inra.fr/individual/INRA> rdfs:label "INRA" .
-    ?vcard vcard:hasAddress ?address .
-    ?address a vcard:Address .
-    ?address vcard:streetAddress ?unitLabel .
-    ?address vcard:locality ?city .
-    ?address vcard:country ?country .
 } WHERE {
     ?x prodinra:inraAffiliation ?inra .
     ?x a foaf:Person .
-    ?x obo:ARG_2000028 ?vcard .
     ?inra prodinra:unit ?unit .
-    ?unit prodinra:name ?unitLabel .
     OPTIONAL {
-        ?unit prodinra:city ?city .
+        ?unit prodinra:name ?unitLabel .
+	FILTER NOT EXISTS { ?unit prodinra:laboratory ?laboratory }
+        BIND(?unitLabel AS ?immediateOrgName)
+    }
+    OPTIONAL {
+        ?unit prodinra:laboratory ?laboratoryLabel 
+	BIND(?laboratoryLabel AS ?immediateOrgName)
     }
     OPTIONAL {
         ?unit prodinra:country ?country .
     }
     BIND(IRI(CONCAT(STR(?x), "-position-INRA")) AS ?position)
-    BIND(IRI(CONCAT(STR(?x), "-vcard-address")) AS ?address)
 }

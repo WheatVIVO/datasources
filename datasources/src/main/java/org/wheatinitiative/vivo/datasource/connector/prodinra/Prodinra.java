@@ -31,7 +31,6 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.hp.hpl.jena.util.ResourceUtils;
 
 public class Prodinra extends ConnectorDataSource implements DataSource {
 
@@ -144,7 +143,6 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
     }
     
     protected Model constructForVIVO(Model m) {
-        // TODO dynamically get/sort list from classpath resource directory
         List<String> queries = Arrays.asList("100-documentTypes.sparql",
                 "105-title.sparql",
                 "101-authorshipPositionAdjust.sparql",

@@ -22,10 +22,12 @@ PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
 PREFIX afn: <http://jena.hpl.hp.com/ARQ/function#>
+PREFIX wi:    <http://vivo.wheatinitiative.org/ontology/wi#>
 
 CONSTRUCT {
     ?org a foaf:Organization .
     ?org rdfs:label ?orgLabel .
+    ?org wi:country ?country .
     ?position a vivo:Position .
     ?position vivo:relates ?x .
     ?position vivo:relates ?org .
@@ -33,5 +35,6 @@ CONSTRUCT {
     ?x a foaf:Person .
     ?x prodinra:externalAffiliation ?org .
     OPTIONAL { ?org prodinra:name ?orgLabel }
+    OPTIONAL { ?org prodinra:country ?country }
     BIND(IRI(CONCAT(STR(?x), "-position-", afn:localname(?org))) AS ?position)
 }
