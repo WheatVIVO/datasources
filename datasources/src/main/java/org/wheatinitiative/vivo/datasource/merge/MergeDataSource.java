@@ -921,9 +921,13 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             "} \n";
     }
     
-    private int distance(String string1, String string2) {     
-        int distance = ld.apply(string1, string2);
-        log.debug("Levenshtein distance " + distance + " for " + string1 + " , " + string2);
+    private int distance(String string1, String string2) {  
+        if(string1 == null || string2 == null) {
+            return Integer.MAX_VALUE;
+        }
+        int distance = ld.apply(string1.toLowerCase(), string2.toLowerCase());
+        log.debug("Case-insensitive Levenshtein distance " + distance + 
+                " for " + string1 + " , " + string2);
         return distance;
     }
     
@@ -981,7 +985,6 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         }
         
         public int compare(MergeRule a, MergeRule b) {
-            // TODO Auto-generated method stub
             int aRank = rankAffectedClass(a.getMergeClassURI());
             int bRank = rankAffectedClass(b.getMergeClassURI());
             if(aRank != bRank) {
