@@ -888,7 +888,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         } else {
             queryStr = "SELECT ?x ?value WHERE { \n" +
                 "    ?x a <" + rule.getMergeClassURI() + "> ." +
-                "    ?x <" + atom.getMergeDataPropertyURI() + "> ?value \n" +
+                "    ?x <" + atom.getMergeDataPropertyURI() + "> ?val \n" +
+                "    BIND(LCASE(?val) AS ?value) \n" +
                 "} ORDER BY ?value \n";
         }
         return queryStr;
