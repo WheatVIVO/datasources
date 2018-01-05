@@ -34,6 +34,9 @@ import com.hp.hpl.jena.vocabulary.RDFS;
 
 public class MergeDataSource extends DataSourceBase implements DataSource {
 
+    // number of neighboring alphabetically-sorted strings to compare
+    private static final int WINDOW_SIZE = 11 * 10; 
+    
     private static final Log log = LogFactory.getLog(MergeDataSource.class);
     private static final String VIVO = "http://vivoweb.org/ontology/core#";
     private static final String RELATIONSHIP = VIVO + "Relationship";
@@ -735,8 +738,6 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     public Model getResult() {
         return this.result;
     }
-    
-    private static final int WINDOW_SIZE = 11;
     
     protected Model getFuzzySameAs(MergeRule rule, MergeRuleAtom atom, 
             Model fauxPropertyContextModel) {
