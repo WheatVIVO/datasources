@@ -39,6 +39,10 @@ WHERE {
     ?authorship a vivo:Authorship .
     ?authorship vivo:relates ?doc .
     FILTER(?doc != ?person)
+    FILTER NOT EXISTS {
+        ?doc a bibo:Report .
+	?doc prodinra:language "fra"
+    }
     ?authorship2 vivo:relates ?doc .
     FILTER(?authorship2 != ?authorship1)
     ?authorship2 vivo:relates ?otherAuthor .

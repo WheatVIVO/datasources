@@ -32,6 +32,10 @@ WHERE {
     UNION 
     { ?x vivo:freetextKeyword ?value}
     FILTER(regex(str(?value), "\\b$TERM\\b", "i"))
+    FILTER NOT EXISTS {
+        ?x a bibo:Report .
+	?x prodinra:language "fra" 
+    }
     ?authorship vivo:relates ?person .
     ?person a foaf:Person
 }
