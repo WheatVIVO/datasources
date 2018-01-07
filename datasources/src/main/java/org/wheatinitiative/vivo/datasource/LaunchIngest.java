@@ -67,8 +67,6 @@ public class LaunchIngest {
         DataSource connector = null;
         if ("cornell".equals(connectorName)) {
         	connector = new Cornell();
-        	connector.getConfiguration().setServiceURI(
-        			"http://vivo.cornell.edu/");
         } else if ("cordis".equals(connectorName)) {
         	connector = new Cordis();
         	connector.getConfiguration().setServiceURI(

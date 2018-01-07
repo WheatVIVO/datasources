@@ -222,7 +222,28 @@ public class VivoDataSource extends ConnectorDataSource {
             log.debug("Removed " + removalModel.size() + " triples on iteration " + iterations);
             difference = model.size() - before;
         }
+        model = convertFundingOrganizationsToOrganizations(model);
         log.debug(model.size() + " after filtering");        
+        return model;
+    }
+    
+    private Model convertFundingOrganizationsToOrganizations(Model model) {
+        Model additions = ModelFactory.createDefaultModel();
+        Model retractions = ModelFactory.createDefaultModel();
+        StmtIterator sit = model.listStatements(null, RDF.type, VivoVocabulary.FUNDING_ORG);
+        while(sit.hasNext()) {
+            Statement stmt = sit.next();
+            retractions.add(stmt);
+            additions.add(stmt.getSubject(), RDF.type, VivoVocabulary.ORGANIZATION);
+        }
+        sit = model.listStatements(null, VivoVocabulary.MOST_SPECIFIC_TYPE, VivoVocabulary.FUNDING_ORG);
+        while(sit.hasNext()) {
+            Statement stmt = sit.next();
+            retractions.add(stmt);
+            additions.add(stmt.getSubject(), VivoVocabulary.MOST_SPECIFIC_TYPE, VivoVocabulary.ORGANIZATION);
+        }
+        model.remove(retractions);
+        model.add(additions);
         return model;
     }
     

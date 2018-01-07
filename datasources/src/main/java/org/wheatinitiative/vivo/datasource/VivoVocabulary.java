@@ -30,6 +30,8 @@ public class VivoVocabulary {
             OBO + "BFO_0000023");
     public static final Resource OLD_ROLE = ResourceFactory.createResource(
             VIVO + "Role");
+    public static final Resource FUNDING_ORG = ResourceFactory.createResource(
+            VIVO + "FundingOrganization");
     public static final Resource GRANT = ResourceFactory.createResource(
             VIVO + "Grant");
     public static final Resource PROJECT = ResourceFactory.createResource(
@@ -56,6 +58,8 @@ public class VivoVocabulary {
             OBO + "BFO_0000051");
     public static final Property OLD_SUBORG_WITHIN = ResourceFactory.createProperty(
             VIVO + "subOrganizationWithin");
+    public static final Property MOST_SPECIFIC_TYPE = ResourceFactory.createProperty(
+            "http://vitro.mannlib.cornell.edu/ns/vitro/0.7#mostSpecificType");
     public static final String CLASSGROUP_PEOPLE = 
             "http://vivoweb.org/ontology#vitroClassGrouppeople";
     public static final String CLASSGROUP_ACTIVITIES = 
