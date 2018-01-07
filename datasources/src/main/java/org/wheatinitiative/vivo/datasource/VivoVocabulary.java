@@ -22,6 +22,12 @@ public class VivoVocabulary {
             BIBO + "Document");
     public static final Resource JOURNAL = ResourceFactory.createResource(
             BIBO + "Journal");
+    public static final Resource ARTICLE = ResourceFactory.createResource(
+            BIBO + "Article");
+    public static final Resource ACADEMIC_ARTICLE = ResourceFactory.createResource(
+            BIBO + "AcademicArticle");
+    public static final Resource JOURNAL_ARTICLE = ResourceFactory.createResource(
+            OBO + "IAO_0000013");
     public static final Resource AUTHORSHIP = ResourceFactory.createResource(
             VIVO + "Authorship");
     public static final Resource POSITION = ResourceFactory.createResource(

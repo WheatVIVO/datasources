@@ -16,7 +16,7 @@ CONSTRUCT {
 
 } WHERE {
 
-    ?pub a bibo:AcademicArticle .
+    ?pub a bibo:Article .
     
     ?pub ingest:publisher ?publisherLegalName .
     

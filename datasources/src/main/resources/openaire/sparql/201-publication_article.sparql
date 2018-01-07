@@ -6,10 +6,11 @@ PREFIX obo:     <http://purl.obolibrary.org/obo/>
 
 CONSTRUCT {
 
-    ?pub a bibo:AcademicArticle .
+    ?pub a bibo:Article .
     
 # Also a JournalArticle.
-    ?pub a obo:IAO_0000013 .
+# BJL 2018-01-07 hold off on for now
+#    ?pub a obo:IAO_0000013 .
 
 } WHERE {
 

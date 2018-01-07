@@ -24,7 +24,7 @@ PREFIX orcidwork:   <http://www.orcid.org/ns/work/>
 PREFIX orcidcommon: <http://www.orcid.org/ns/common/>
 
 CONSTRUCT {
-    ?a a bibo:AcademicArticle .
+    ?a a bibo:Article .
     ?b a bibo:Document .
 } WHERE {
     { 

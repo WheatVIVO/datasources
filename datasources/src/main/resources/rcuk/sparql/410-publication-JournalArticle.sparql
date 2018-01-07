@@ -26,7 +26,7 @@ PREFIX rcuko:    <http://gtr.rcuk.ac.uk/gtr/api/organisation/>
 PREFIX rcukoc:   <http://gtr.rcuk.ac.uk/gtr/api/project/outcome/>
 
 CONSTRUCT {
-    ?x a bibo:AcademicArticle .
+    ?x a bibo:Article .
 } WHERE {
     ?x rcukoc:type "Journal Article/Review" .
 }

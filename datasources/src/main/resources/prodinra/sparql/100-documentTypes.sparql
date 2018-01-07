@@ -27,7 +27,7 @@ CONSTRUCT {
     ?b a bibo:Thesis .
     ?c a bibo:AudioVisualDocument .
     ?d a vivo:ConferencePaper .
-    ?e a bibo:AcademicArticle . 
+    ?e a bibo:Article . 
     ?f a bibo:Report .
     ?g a bibo:Thesis .  # May want local extension to preserve distinction from master's theses.
     ?h a bibo:Document . # TODO: review for better option

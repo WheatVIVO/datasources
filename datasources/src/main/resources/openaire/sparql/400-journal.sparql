@@ -19,7 +19,7 @@ CONSTRUCT {
     
 } WHERE {
 
-    ?pub a bibo:AcademicArticle .
+    ?pub a bibo:Article .
     
     ?pub ingest:journal ?journal .
     ?journal vitro:value ?journalName .

@@ -222,25 +222,27 @@ public class VivoDataSource extends ConnectorDataSource {
             log.debug("Removed " + removalModel.size() + " triples on iteration " + iterations);
             difference = model.size() - before;
         }
-        model = convertFundingOrganizationsToOrganizations(model);
+        model = reassignType(VivoVocabulary.FUNDING_ORG, VivoVocabulary.ORGANIZATION, model);
+        model = reassignType(VivoVocabulary.ACADEMIC_ARTICLE, VivoVocabulary.ARTICLE, model);
+        model = reassignType(VivoVocabulary.JOURNAL_ARTICLE, VivoVocabulary.ARTICLE, model);
         log.debug(model.size() + " after filtering");        
         return model;
     }
     
-    private Model convertFundingOrganizationsToOrganizations(Model model) {
+    private Model reassignType(Resource fromType, Resource toType, Model model) {
         Model additions = ModelFactory.createDefaultModel();
         Model retractions = ModelFactory.createDefaultModel();
-        StmtIterator sit = model.listStatements(null, RDF.type, VivoVocabulary.FUNDING_ORG);
+        StmtIterator sit = model.listStatements(null, RDF.type, fromType);
         while(sit.hasNext()) {
             Statement stmt = sit.next();
             retractions.add(stmt);
-            additions.add(stmt.getSubject(), RDF.type, VivoVocabulary.ORGANIZATION);
+            additions.add(stmt.getSubject(), RDF.type, toType);
         }
-        sit = model.listStatements(null, VivoVocabulary.MOST_SPECIFIC_TYPE, VivoVocabulary.FUNDING_ORG);
+        sit = model.listStatements(null, VivoVocabulary.MOST_SPECIFIC_TYPE, fromType);
         while(sit.hasNext()) {
             Statement stmt = sit.next();
             retractions.add(stmt);
-            additions.add(stmt.getSubject(), VivoVocabulary.MOST_SPECIFIC_TYPE, VivoVocabulary.ORGANIZATION);
+            additions.add(stmt.getSubject(), VivoVocabulary.MOST_SPECIFIC_TYPE, toType);
         }
         model.remove(retractions);
         model.add(additions);
