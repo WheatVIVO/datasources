@@ -25,7 +25,7 @@
 
 <http://record.prodinra.inra.fr/individual/n4970790> a bibo:Report .
 
-<http://record.prodinra.inra.fr/individual/n2359207> a bibo:AcademicArticle .
+<http://record.prodinra.inra.fr/individual/n2359207> a bibo:Article .
 
 <http://record.prodinra.inra.fr/individual/n2359208> a vivo:Review .
 
