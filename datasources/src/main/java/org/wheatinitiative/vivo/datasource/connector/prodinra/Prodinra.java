@@ -131,17 +131,21 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
         m = renameByIdentifier(m);
         m = constructForVIVO(m);
         m = trimLiterals(m);
-        m = correctItalics(m);
+        m = removeItalics(m);
         return m;
     }
     
     /**
-     * Convert italic tags with brackets to HTML tags
+     * Remove italic tags of the type [i][/i].
+     * WAS: Convert italic tags with brackets to HTML tags
      * e.g. [i] -&gt; &lt;/i&gt;
+     * but this breaks VIVO's rendering of search results
+     * because snippets may lack closing italic tag and every subsequent
+     * result ends up italicized
      * @param m
      * @return
      */
-    protected Model correctItalics(Model m) {
+    protected Model removeItalics(Model m) {
         Model copy = ModelFactory.createDefaultModel();
         StmtIterator sit = m.listStatements();
         while(sit.hasNext()) {
@@ -151,8 +155,10 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
             } else {
                 Literal l = stmt.getObject().asLiteral();
                 String lexicalForm = l.getLexicalForm();
-                lexicalForm = lexicalForm.replaceAll("\\[i\\]", "<i>");
-                lexicalForm = lexicalForm.replaceAll("\\[/i\\]", "</i>");
+//                lexicalForm = lexicalForm.replaceAll("\\[i\\]", "<i>");
+//                lexicalForm = lexicalForm.replaceAll("\\[/i\\]", "</i>");
+                lexicalForm = lexicalForm.replaceAll("\\[i\\]", "");
+                lexicalForm = lexicalForm.replaceAll("\\[/i\\]", "");
                 copy.add(stmt.getSubject(), stmt.getPredicate(), copyLiteral(
                         l, lexicalForm));        
             }
