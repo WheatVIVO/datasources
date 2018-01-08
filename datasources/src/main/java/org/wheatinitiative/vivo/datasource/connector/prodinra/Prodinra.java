@@ -22,6 +22,7 @@ import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.NodeIterator;
@@ -129,7 +130,34 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
                 PRODINRA_TBOX_NS + "identifier"));
         m = renameByIdentifier(m);
         m = constructForVIVO(m);
+        m = trimLiterals(m);
         return m;
+    }
+    
+    protected Model trimLiterals(Model m) {
+        Model copy = ModelFactory.createDefaultModel();
+        StmtIterator sit = m.listStatements();
+        while(sit.hasNext()) {
+            Statement stmt = sit.next();
+            if(!stmt.getObject().isLiteral()) {
+                copy.add(stmt);
+            } else {
+                Literal l = stmt.getObject().asLiteral();
+                Literal trimmedCopy = null;
+                String lexicalForm = l.getLexicalForm().trim();
+                if(l.getDatatype() != null) {
+                    trimmedCopy = ResourceFactory.createTypedLiteral(
+                            lexicalForm, l.getDatatype());
+                } else if(l.getLanguage() != null && !l.getLanguage().isEmpty()) {
+                    trimmedCopy = ResourceFactory.createLangLiteral(
+                            lexicalForm, l.getLanguage());
+                } else {
+                    trimmedCopy = ResourceFactory.createPlainLiteral(lexicalForm);
+                }
+                copy.add(stmt.getSubject(), stmt.getPredicate(), trimmedCopy);
+            }
+        }
+        return copy;
     }
     
     protected Model renameByIdentifier(Model m) {
