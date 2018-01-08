@@ -131,7 +131,33 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
         m = renameByIdentifier(m);
         m = constructForVIVO(m);
         m = trimLiterals(m);
+        m = correctItalics(m);
         return m;
+    }
+    
+    /**
+     * Convert italic tags with brackets to HTML tags
+     * e.g. [i] -&gt; &lt;/i&gt;
+     * @param m
+     * @return
+     */
+    protected Model correctItalics(Model m) {
+        Model copy = ModelFactory.createDefaultModel();
+        StmtIterator sit = m.listStatements();
+        while(sit.hasNext()) {
+            Statement stmt = sit.next();
+            if(!stmt.getObject().isLiteral()) {
+                copy.add(stmt);
+            } else {
+                Literal l = stmt.getObject().asLiteral();
+                String lexicalForm = l.getLexicalForm();
+                lexicalForm = lexicalForm.replaceAll("\\[i\\]", "<i>");
+                lexicalForm = lexicalForm.replaceAll("\\[/i\\]", "</i>");
+                copy.add(stmt.getSubject(), stmt.getPredicate(), copyLiteral(
+                        l, lexicalForm));        
+            }
+        }
+        return copy;
     }
     
     protected Model trimLiterals(Model m) {
@@ -143,21 +169,25 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
                 copy.add(stmt);
             } else {
                 Literal l = stmt.getObject().asLiteral();
-                Literal trimmedCopy = null;
                 String lexicalForm = l.getLexicalForm().trim();
-                if(l.getDatatype() != null) {
-                    trimmedCopy = ResourceFactory.createTypedLiteral(
-                            lexicalForm, l.getDatatype());
-                } else if(l.getLanguage() != null && !l.getLanguage().isEmpty()) {
-                    trimmedCopy = ResourceFactory.createLangLiteral(
-                            lexicalForm, l.getLanguage());
-                } else {
-                    trimmedCopy = ResourceFactory.createPlainLiteral(lexicalForm);
-                }
-                copy.add(stmt.getSubject(), stmt.getPredicate(), trimmedCopy);
+                copy.add(stmt.getSubject(), stmt.getPredicate(), copyLiteral(
+                        l, lexicalForm));        
             }
         }
         return copy;
+    }
+    
+    protected Literal copyLiteral(Literal l, String newLexicalForm) {        
+        if(l.getDatatype() != null) {
+            return ResourceFactory.createTypedLiteral(
+                    newLexicalForm, l.getDatatype());
+        } else if(l.getLanguage() != null && !l.getLanguage().isEmpty()) {
+            return ResourceFactory.createLangLiteral(
+                    newLexicalForm, l.getLanguage());
+        } else {
+            return ResourceFactory.createPlainLiteral(newLexicalForm);
+        }
+        
     }
     
     protected Model renameByIdentifier(Model m) {
