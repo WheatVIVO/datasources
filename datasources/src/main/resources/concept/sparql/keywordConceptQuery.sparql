@@ -28,7 +28,7 @@ CONSTRUCT {
     ?author vivo:hasResearchArea ?concept 
 } WHERE {  
     ?y vivo:freetextKeyword ?x
-  BIND(replace(?x, "\\W", "") AS ?keyword)
+  BIND(lcase(replace(?x, "\\W", "")) AS ?keyword)
   BIND(IRI(concat("http://vivo.wheatinitiative.org/individual/kconcept_", ?keyword)) AS ?concept)
   FILTER( (strlen(?keyword) < 32) && (strlen(?keyword) > 0) )
   ?y vivo:relatedBy ?authorship .
