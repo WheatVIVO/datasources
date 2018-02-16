@@ -33,5 +33,13 @@ CONSTRUCT {
     ?x a rcukoc:publication .
     OPTIONAL { ?x rcukoc:abstractText ?abstractText }
     OPTIONAL { ?x rcukoc:pubMedId ?pmid }
-    OPTIONAL { ?x rcukoc:doi ?doi }
+    OPTIONAL { ?x rcukoc:doi ?doiAsUrl 
+               FILTER(REGEX(STR(?doiAsUrl), "^http://dx.doi.org/"))
+	       BIND(SUBSTR(STR(?doiAsUrl), 19) AS ?doi) 
+             }
+    OPTIONAL { ?x rcukoc:doi ?plainDoi 
+               # not sure if plain DOIs are ever expected to occur, but let's plan for them 
+               FILTER(!REGEX(STR(?plainDoi), "^http://dx.doi.org/"))
+	       BIND(?plainDoi as ?doi)
+	     }
 }
