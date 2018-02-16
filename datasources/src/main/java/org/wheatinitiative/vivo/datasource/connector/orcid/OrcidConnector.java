@@ -279,6 +279,7 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
         executeQueries(Arrays.asList("104-personVcard.sparql"), model);
         parseNames(model);
         queries = Arrays.asList(
+                "1041-personLabel.sparql",
                 "1045-knownPersonRankMatch.sparql",
                 "105-title.sparql",
                 "113-year.sparql",

@@ -34,7 +34,7 @@ CONSTRUCT {
     ?name vcard:givenName ?label .
 } WHERE {
     ?x a foaf:Person .
-    ?x rdfs:label ?label
+    ?x orcidcommon:label ?label
     BIND(IRI(CONCAT(STR(?x), "-vcard")) AS ?vcard)
     BIND(IRI(CONCAT(STR(?x), "-vcard-name")) AS ?name)
 }
