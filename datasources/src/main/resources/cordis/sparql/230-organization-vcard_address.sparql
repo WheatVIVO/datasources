@@ -34,10 +34,19 @@ CONSTRUCT {
 	?adr cordis:street ?org_street .
 	?adr cordis:city ?org_city .
 	?adr cordis:postalCode ?org_post .
-	?adr cordis:url ?org_url_str .
+
+        OPTIONAL {
+	    ?adr cordis:url ?org_url_str .
+	    FILTER(REGEX(STR(?org_url_str), "^http"))
+	    BIND ( xsd:anyURI( ?org_url_str ) AS ?org_url )
+        }
 	
-	BIND ( xsd:anyURI( ?org_url_str ) AS ?org_url )
-	
+        OPTIONAL {
+	    ?adr cordis:url ?org_url_str .
+	    FILTER(!REGEX(STR(?org_url_str), "^http"))
+	    BIND ( xsd:anyURI( CONCAT("http://", STR(?org_url_str)) ) AS ?org_url )
+        }
+
 	?org cordis:relations ?rel .
 	?rel cordis:regions ?reg_pl .
 	?reg_pl cordis:region ?reg .

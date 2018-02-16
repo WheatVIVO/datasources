@@ -24,8 +24,18 @@ CONSTRUCT {
     ?project a vivo:Project .
     
     ?grant vivo:fundingVehicleFor ?project .
+
+    ?project cordis:url ?someUrl
+
+    OPTIONAL {
+        ?project cordis:url ?project_url_str . 
+	FILTER(REGEX(STR(?project_url_str), "^http"))
+        BIND ( xsd:anyURI( ?project_url_str ) AS ?project_url )
+    }
     
-    ?project cordis:url ?project_url_str .
-    
-    BIND ( xsd:anyURI( ?project_url_str ) AS ?project_url )   
+    OPTIONAL {
+        ?project cordis:url ?project_url_str . 
+	FILTER(!REGEX(STR(?project_url_str), "^http"))
+        BIND ( xsd:anyURI( CONCAT("http://", STR(?project_url_str)) ) AS ?project_url )
+    }
 }

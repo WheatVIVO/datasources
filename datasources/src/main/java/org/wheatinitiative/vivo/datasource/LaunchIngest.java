@@ -70,7 +70,7 @@ public class LaunchIngest {
         } else if ("cordis".equals(connectorName)) {
         	connector = new Cordis();
         	connector.getConfiguration().setServiceURI(
-        			"http://cordis.europa.eu/search/result_en");
+        			"https://cordis.europa.eu/search/result_en");
         } else if("rcuk".equals(connectorName)) {
             connector = new Rcuk();
             connector.getConfiguration().setServiceURI(
