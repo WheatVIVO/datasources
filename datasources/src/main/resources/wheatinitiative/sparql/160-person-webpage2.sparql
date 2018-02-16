@@ -29,7 +29,7 @@ CONSTRUCT {
 } WHERE {
     ?x wi:personalWebpage ?webpage .
     FILTER(!REGEX(STR(?webpage), "^http"))
-    BIND(CONCAT("http://", STR(?webpage)) AS ?webpageWithHttp)
+    BIND(xsd:anyURI(CONCAT("http://", STR(?webpage))) AS ?webpageWithHttp)
     ?x a foaf:Person .
     ?x obo:ARG_2000028 ?vcard .
     ?vcard a vcard:Individual .
