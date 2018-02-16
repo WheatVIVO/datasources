@@ -68,6 +68,7 @@ public class WheatInitiative extends CsvDataSource implements DataSource {
                 "153-person-phone.sparql",
                 "156-person-mail.sparql",
                 "159-person-webpage.sparql",
+                "160-person-webpage2.sparql",
                 "200-organization-name.sparql"
                 );
         for(String query : queries) {

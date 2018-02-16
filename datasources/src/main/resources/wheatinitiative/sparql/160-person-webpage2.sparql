@@ -25,10 +25,11 @@ PREFIX wi:       <http://www.wheatinitiative.org/administration/users/ontology/>
 CONSTRUCT {
     ?vcard vcard:hasURL ?url .
     ?url a vcard:URL .
-    ?url vcard:url ?webpage .
+    ?url vcard:url ?webpageWithHttp .
 } WHERE {
     ?x wi:personalWebpage ?webpage .
-    FILTER(REGEX(STR(?webpage), "^http"))
+    FILTER(!REGEX(STR(?webpage), "^http"))
+    BIND(CONCAT("http://", STR(?webpage)) AS ?webpageWithHttp)
     ?x a foaf:Person .
     ?x obo:ARG_2000028 ?vcard .
     ?vcard a vcard:Individual .
