@@ -62,29 +62,26 @@ public class HttpUtils {
         HttpPost post = new HttpPost(url);
         post.addHeader("content-type", contentType);
         try {
+            ContentType ctype = ContentType.create(contentType, "UTF-8");
+            post.setEntity(new StringEntity(payload, ctype));
+        } catch (Exception e) {
+            log.warn("Unable to use content type " + contentType +
+                    ".  Using default UTF-8 StringEntity");
+            post.setEntity(new StringEntity(payload, "UTF-8"));
+        }
+        try {
+            HttpResponse response = httpClient.execute(post);
             try {
-                ContentType ctype = ContentType.create(contentType, "UTF-8");
-                post.setEntity(new StringEntity(payload, ctype));
-            } catch (Exception e) {
-                log.warn("Unable to use content type " + contentType +
-                        ".  Using default UTF-8 StringEntity");
-                post.setEntity(new StringEntity(payload, "UTF-8"));
-            }
-            try {
-                HttpResponse response = httpClient.execute(post);
-                try {
-                    return EntityUtils.toString(response.getEntity());
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } finally {
-                    EntityUtils.consume(response.getEntity());
-                }
+                return EntityUtils.toString(response.getEntity());
             } catch (IOException e) {
                 throw new RuntimeException(e);
-            } 
-        } catch (UnsupportedEncodingException e) {
+            } finally {
+                EntityUtils.consume(response.getEntity());
+            }
+        } catch (IOException e) {
             throw new RuntimeException(e);
-        }        
+        } 
+
     }
     
     public Model getRDFLinkedDataResponse(String url) throws IOException {
