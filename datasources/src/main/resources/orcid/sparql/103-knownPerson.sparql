@@ -36,7 +36,7 @@ CONSTRUCT {
     ?authorship vivo:relates ?knownperson .
     ?knownperson vivo:relatedBy ?authorship .
     ?knownperson a foaf:Person .
-    ?knownperson ocridcommon:label ?personLabel .
+    ?knownperson orcidcommon:label ?personLabel .
     ?knownperson vivo:orcidId ?orcidId .
     ?orcidId a owl:Thing .
 } WHERE {
