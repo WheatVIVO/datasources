@@ -13,18 +13,26 @@
 
   <build>
     <plugins>
+      <plugin>
+         <artifactId>maven-compiler-plugin</artifactId>
+         <configuration>
+            <source>1.7</source>
+            <target>1.7</target>
+            <encoding>UTF-8</encoding>
+          </configuration>
+      </plugin>
       <!-- use shade plugin below
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-	<artifactId>maven-jar-plugin</artifactId>
-	<configuration>
+	    <artifactId>maven-jar-plugin</artifactId>
+	    <configuration>
           <archive>
-	    <manifest>
-                <addClasspath>true</addClasspath>
-		<mainClass>org.wheatinitiative.vivo.datasource.LaunchIngest</mainClass>
-	    </manifest>
-	  </archive>
-	</configuration>
+	        <manifest>
+               <addClasspath>true</addClasspath>
+		       <mainClass>org.wheatinitiative.vivo.datasource.LaunchIngest</mainClass>
+	        </manifest>
+	      </archive>
+	    </configuration>
       </plugin>
       -->
       <plugin>
