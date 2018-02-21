@@ -192,6 +192,13 @@ public abstract class DataSourceBase {
         getSparqlEndpoint().writeModel(results, graphURI);
     }
     
+    protected void addToEndpoint(Model m, String graphURI) {
+        if(graphURI == null || graphURI.isEmpty()) {
+            throw new RuntimeException("Results graph URI cannot be null or empty");
+        }
+        getSparqlEndpoint().writeModel(m, graphURI);
+    }
+    
     protected void addToEndpoint(Model m) {
         String graphURI = getConfiguration().getResultsGraphURI();
         if(graphURI == null || graphURI.isEmpty()) {

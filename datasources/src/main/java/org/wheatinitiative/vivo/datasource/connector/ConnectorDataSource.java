@@ -1,13 +1,21 @@
 package org.wheatinitiative.vivo.datasource.connector;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wheatinitiative.vivo.datasource.DataSourceBase;
 import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
+import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
 
+import com.hp.hpl.jena.query.QuerySolution;
+import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Property;
@@ -60,13 +68,13 @@ public abstract class ConnectorDataSource extends DataSourceBase {
  
     @Override
     public void runIngest() {
+        Date currentDateTime = Calendar.getInstance().getTime();
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        String graphTimeSuffix = "-" + df.format(currentDateTime);
         log.debug("Processing a limit of " + this.getConfiguration().getLimit() + " records");
         log.debug("Processing in batches of " + getBatchSize() + " records");
-        if(activeEndpointForResults()) {
-            String graphURI = getConfiguration().getResultsGraphURI();
-            log.info("Clearing graph " + graphURI);
-            getSparqlEndpoint().clearGraph(graphURI);
-        } else {
+        String graphURI = getConfiguration().getResultsGraphURI();
+        if(!activeEndpointForResults()) {
             result = ModelFactory.createDefaultModel();
         }
         IteratorWithSize<Model> it = getSourceModelIterator();
@@ -87,7 +95,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
                     if(count % getBatchSize() == 0 || !it.hasNext() 
                             || count == this.getConfiguration().getLimit()) {
                         log.debug("Adding " + buffer.size() + " triples to endpoint");
-                        addToEndpoint(buffer);
+                        addToEndpoint(buffer, graphURI + graphTimeSuffix);
                         buffer.removeAll();
                     }
                 } else {
@@ -97,7 +105,37 @@ public abstract class ConnectorDataSource extends DataSourceBase {
                 log.error(e, e);
                 this.getStatus().setErrorRecords(this.getStatus().getErrorRecords() + 1);
             }
-        }        
+        }
+        if(activeEndpointForResults()) {
+            List<String> allVersionsOfSource = getGraphsWithBaseURI(graphURI, 
+                    getSparqlEndpoint());
+            for(String version : allVersionsOfSource) {
+                if(version.startsWith(graphURI) 
+                        && !version.endsWith(graphTimeSuffix)) {
+                    log.info("Clearing graph " + version);
+                    getSparqlEndpoint().clearGraph(version);
+                }
+            }
+        }
+    }
+    
+    protected List<String> getGraphsWithBaseURI(String baseURI, SparqlEndpoint endpoint) {
+        List<String> graphs = new ArrayList<String>();
+        String queryStr = "SELECT DISTINCT ?g WHERE { \n" +
+                          "    GRAPH ?g { ?s ?p ?o } \n" +
+                          "    FILTER(REGEX(STR(?g), \"^" + baseURI + "\")) \n" +
+                          "}";
+        ResultSet rs = endpoint.getResultSet(queryStr);
+        while(rs.hasNext()) {
+            QuerySolution qsoln = rs.next();
+            RDFNode n = qsoln.getResource("g");
+            if(n.isURIResource()) {
+                graphs.add(n.asResource().getURI());
+            } else if (n.isLiteral()) { // not supposed to be ...
+                graphs.add(n.asLiteral().getLexicalForm());
+            }
+        }
+        return graphs;
     }
     
     private boolean activeEndpointForResults() {
