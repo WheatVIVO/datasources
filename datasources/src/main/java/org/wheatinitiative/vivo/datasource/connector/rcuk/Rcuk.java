@@ -50,102 +50,22 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
             RCUK_TBOX_NS + "totalPages");
     private static final String NAMESPACE_ETC = RCUK_ABOX_NS + "n";
     private static final String SPARQL_RESOURCE_DIR = "/rcuk/sparql/";
-    private static final int MAX_SIZE = 25; // number of search results that can
+    private static final int MAX_PAGE_SIZE = 25; // number of search results that can
                                              // be retrieved in a single request
-    private static final int MAX_PAGES = 40;  // maximum number of pages to retrieve
-                                             // for any search term
     private static final int MIN_REST_MILLIS = 125; // ms to wait between
                                                     // subsequent API calls
     
     private HttpUtils httpUtils = new HttpUtils();
     private XmlToRdf xmlToRdf = new XmlToRdf();
-    private Model result;
-    
-    /**
-     *  Override top-level method to avoid single SPARQL update
-     */
-//    public void run() {
-//        this.getStatus().setRunning(true);
-//        try {
-//            log.info("Running ingest");
-//            runIngest();  
-//            log.info("Writing results to endpoint");
-//            if(this.getConfiguration().getEndpointParameters() != null) {
-//                // writeResultsToEndpoint(getResult());    
-//            } else {
-//                log.warn("Not writing results to remote endpoint because " +
-//                         "none is specified");
-//            }
-//        } catch (Exception e) {
-//            log.info(e, e);
-//            throw new RuntimeException(e);
-//        } finally {
-//            log.info("Finishing ingest");
-//            log.info(this.getStatus().getErrorRecords() + " errors");
-//            this.getStatus().setRunning(false);
-//        }
-//    }
-    
-    @Override
-    public void runIngest() {
-        // TODO progress percentage calculation from totals
-        try {
-            result = ModelFactory.createDefaultModel();
-            if(this.getConfiguration().getEndpointParameters() != null) {
-                String graphURI = getConfiguration().getResultsGraphURI();
-                log.info("Clearing graph " + graphURI);
-                getSparqlEndpoint().clearGraph(graphURI);
-            }
-            List<String> queryTerms = this.getConfiguration().getQueryTerms();
-            Model m = ModelFactory.createDefaultModel();
-            Set<String> retrievedURIs = new HashSet<String>();
-            for(String queryTerm : queryTerms) {
-                m.removeAll();
-                String projects = getProjects(queryTerm, 1);
-                Model projectsRdf = transformToRdf(projects);
-                m.add(projectsRdf);
-                updateResults(m, retrievedURIs);
-                int totalPages = getTotalPages(projectsRdf);
-                if (totalPages > this.getConfiguration().getLimit()) {
-                    totalPages = this.getConfiguration().getLimit();
-                }
-                if (totalPages > 1) {
-                    for (int page = 2; page <= totalPages ; page++) {
-                        m.removeAll();
-                        m.add(transformToRdf(getProjects(queryTerm, page)));
-                        updateResults(m, retrievedURIs);
-                    }
-                }
-            }
-            log.info(retrievedURIs.size() + " retrieved resources from API");
-            // result = m;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            log.info("interrupted");
-            // TODO any cleanup; running flag reset in finally block
-        }
-        log.info("done");
-    }
-    
-    private void updateResults(Model model, Set<String> retrievedURIs) 
+        
+    private Model updateResults(Model model, Set<String> retrievedURIs) 
             throws IOException, InterruptedException {
         model = pruneRedundantResources(model, retrievedURIs);
-        // TODO get total number of linked entities and use to update status
         model = addLinkedEntities(model, retrievedURIs);
         model = addSecondLevelLinkedEntities(model, retrievedURIs);
         model = mapToVIVO(model);
         model = pruneDeadendRelationships(model);
-        if(this.getConfiguration().getEndpointParameters() != null) {
-            log.info("Writing " + model.size() + " to endpoint");
-            String graphURI = getConfiguration().getResultsGraphURI();
-            log.info("Updating graph " + graphURI);
-            getSparqlEndpoint().writeModel(model, graphURI);
-        } else {
-            this.result.add(model);
-        }
+        return model;
     }
     
     private Model pruneRedundantResources(Model m, Set<String> retrievedURIs) {
@@ -206,17 +126,13 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
             }
         }
         return totalPages;
-    }
-    
-    public Model getResult() {
-        return this.result;
-    }
+    }    
     
     private String getProjects(String queryTerm, int pageNum) 
             throws URISyntaxException {
         URIBuilder builder = new URIBuilder(API_URL + "projects");
         builder.addParameter("q", queryTerm);
-        builder.addParameter("s", Integer.toString(MAX_SIZE, 10));
+        builder.addParameter("s", Integer.toString(MAX_PAGE_SIZE, 10));
         builder.addParameter("p", Integer.toString(pageNum, 10));
         String url = builder.build().toString();
         try {
@@ -331,7 +247,7 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
                 Thread.sleep(MIN_REST_MILLIS);
             } catch (Exception e) {
                 log.error("Error fetching " + uri, e);
-                // TODO add increment method
+                // TODO let bubble up to connector level?
                 this.getStatus().setErrorRecords(this.getStatus().getErrorRecords() + 1);
             }
         }
@@ -397,8 +313,85 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
 
     @Override
     protected IteratorWithSize<Model> getSourceModelIterator() {
-        // not (yet) used; runIngest() itself is currently overridden
-        return null;
+        try {
+            return new RcukIterator();
+        } catch (Exception e) {
+            log.error(e, e);
+            throw new RuntimeException(e);
+        }
     }  
+    
+    private class RcukIterator implements IteratorWithSize<Model> {
+
+        private Map<String, Integer> pageTotals = new HashMap<String, Integer>();
+        private Map<String, Model> models = new HashMap<String, Model>();
+        private Set<String> retrievedURIs = new HashSet<String>();
+        private List<String> queryTerms;
+        private int currentQueryTerm = 0;
+        private int currentPageOfTerm = 1;
+        private int size = 0;
+        
+        public RcukIterator() {
+            try {
+                queryTerms = getConfiguration().getQueryTerms();
+                for(String queryTerm : queryTerms) {
+                    String projects = getProjects(queryTerm, 1);
+                    Model projectsRdf = transformToRdf(projects);
+                    models.put(queryTerm, projectsRdf);
+                    int totalPages = getTotalPages(projectsRdf);
+                    if (totalPages > getConfiguration().getLimit()) {
+                        totalPages = getConfiguration().getLimit();
+                    }
+                    pageTotals.put(queryTerm, totalPages);
+                    size += totalPages;
+                }
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        public boolean hasNext() {
+            if(size == 0) {
+                return false;
+            } else {
+               return ( (currentQueryTerm < queryTerms.size()) 
+                       && (currentPageOfTerm <= pageTotals.get(
+                               queryTerms.get(currentQueryTerm))));
+            }
+        }
+
+        public Model next() {
+            try {
+                String queryTerm = queryTerms.get(currentQueryTerm);
+                Model m = null;
+                if(currentPageOfTerm == 1) {
+                    m = models.get(queryTerms.get(currentQueryTerm));
+                } else {
+                    String projects = getProjects(queryTerm, currentPageOfTerm);
+                    m = transformToRdf(projects);
+                }
+                m = updateResults(m, retrievedURIs);
+                if(currentPageOfTerm < pageTotals.get(queryTerm)) {
+                    currentPageOfTerm++;
+                } else {
+                    currentQueryTerm++;
+                    currentPageOfTerm = 0;
+                }
+                log.info(retrievedURIs.size() + " retrieved resources from API");
+                return m;
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public Integer size() {
+            return size;
+        }
+        
+    }
     
 }
