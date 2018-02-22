@@ -74,8 +74,9 @@ public class Publisher extends DataSourceBase implements DataSource {
     @Override
     protected void runIngest() {
         SparqlEndpoint sourceEndpoint = getSourceEndpoint();
-        Set<String> functionalPropertyURIs = getFunctionalPropertyURIs();      
-        emptyDestination();
+        SparqlEndpoint destinationEndpoint = getSparqlEndpoint();
+        Set<String> functionalPropertyURIs = getFunctionalPropertyURIs();  
+        emptyDestination(sourceEndpoint, destinationEndpoint);
         log.info("Getting graph preference list");
         List<String> graphURIPreferenceList = getGraphURIPreferenceList(
                 sourceEndpoint);
@@ -90,6 +91,13 @@ public class Publisher extends DataSourceBase implements DataSource {
             if(graphURI == null) {
                 continue;
             }
+            List<String> sourceGraphURIs = this.getGraphsWithBaseURI(graphURI, sourceEndpoint);
+            if(sourceGraphURIs.size() == 0) {
+                continue;
+            }
+            Collections.sort(sourceGraphURIs);
+            String lastestVersionURI = sourceGraphURIs.get(sourceGraphURIs.size() - 1);
+            graphURI = lastestVersionURI;         
             IndividualURIIterator indIt = new IndividualURIIterator(
                     sourceEndpoint, graphURI);
             while(indIt.hasNext()) {
@@ -136,6 +144,7 @@ public class Publisher extends DataSourceBase implements DataSource {
                 }
             }
         }
+        cleanUpDestination(sourceEndpoint, destinationEndpoint);
         log.info("ending");
     }
     
@@ -192,7 +201,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         if(sameAsCache.containsKey(individualURI)) {
             return sameAsCache.get(individualURI);
         }
-        long start = System.currentTimeMillis();
+        //long start = System.currentTimeMillis();
         String uriToMapTo = individualURI;
         Model sameAsModel = getSameAsModel(individualURI, endpoint);
         StmtIterator sit = sameAsModel.listStatements(
@@ -257,48 +266,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         }
         log.debug("Home graph for " + individualURI + " is " + graphURI);
         return graphURI;
-    }
-    
-    /**
-     * @param endpoint
-     * @return map of individual URI to URI of the highest-priority graph in 
-     * which it has a type declaration
-     */
-    private Map<String, String> getHomeGraphMap(SparqlEndpoint endpoint, 
-            List<String> graphURIPreferenceList) {
-        Map<String, String> individualToGraphMap = new HashMap<String, String>();
-        String homeGraphQuery = "SELECT ?ind ?graph WHERE { \n" +
-                   "    { ?ind <" + OWL.sameAs.getURI() + "> ?something } \n" +
-                   "    UNION \n" +
-                   "    { ?something2 <" + OWL.sameAs.getURI() + "> ?ind } \n" +
-                   "    GRAPH ?graph { ?ind a ?typeDeclaration } \n" +
-                   "} \n";
-        ResultSet homeGraphRs = endpoint.getResultSet(homeGraphQuery);
-        while(homeGraphRs.hasNext()) {
-            QuerySolution qsoln = homeGraphRs.next();
-            RDFNode n = qsoln.get("ind");
-            if(!n.isURIResource()) {
-                continue;
-            }
-            String ind = n.asResource().getURI();
-            RDFNode g = qsoln.get("graph");
-            if(!g.isURIResource()) {
-                continue;
-            }
-            String graph = g.asResource().getURI();
-            String currentGraph = individualToGraphMap.get(ind);
-            if(currentGraph == null) {
-                individualToGraphMap.put(ind, graph);
-            } else {
-                if(isHigherPriorityThan(graph, currentGraph, 
-                        graphURIPreferenceList)) {
-                    individualToGraphMap.put(ind, graph);
-                }
-            }
-            
-        }
-        return individualToGraphMap;
-    }
+    }  
     
     /**
      * @param graphURI1
@@ -409,19 +377,45 @@ public class Publisher extends DataSourceBase implements DataSource {
         return predSet;
     }
     
-    private void emptyDestination() {
+    private void emptyDestination(SparqlEndpoint sourceEndpoint, 
+            SparqlEndpoint destinationEndpoint) {
+        // need to empty the destination only of graphs that exist in BOTH
+        // the source and the destination
+        List<String> sourceGraphURIs = getGraphURIsInEndpoint(sourceEndpoint);
+        List<String> destinationGraphURIs = getGraphURIsInEndpoint(destinationEndpoint);
+        for(String destGraphURI : destinationGraphURIs) {
+            if(sourceGraphURIs.contains(destGraphURI)) {
+                log.info("Clearing destination graph " + destGraphURI);
+                destinationEndpoint.clearGraph(destGraphURI);                                         
+            }
+        }
+    }
+    
+    private void cleanUpDestination(SparqlEndpoint sourceEndpoint, SparqlEndpoint destinationEndpoint) {
+        // after main loop, clear any destination graphs that do not 
+        // exist in the source (except kb2)
+        List<String> sourceGraphURIs = getGraphURIsInEndpoint(sourceEndpoint);
+        List<String> destinationGraphURIs = getGraphURIsInEndpoint(destinationEndpoint);
+        for(String destGraphURI : destinationGraphURIs) {
+            if(!sourceGraphURIs.contains(destGraphURI)) {
+                log.info("Clearing destination graph " + destGraphURI);
+                destinationEndpoint.clearGraph(destGraphURI);                                         
+            }
+        }
+    }
+    
+    private List<String> getGraphURIsInEndpoint(SparqlEndpoint endpoint) {
+        List<String> graphURIs = new ArrayList<String>();
         String graphQuery = "SELECT DISTINCT ?g WHERE { \n" +
-                            "    GRAPH ?g { ?s ?p ?o } \n" +
-                            GRAPH_FILTER + 
-                            "} \n";
+                "    GRAPH ?g { ?s ?p ?o } \n" +
+                GRAPH_FILTER + 
+                "} \n";
         ResultSet rs = getSparqlEndpoint().getResultSet(graphQuery);
         while(rs.hasNext()) {
             QuerySolution qsoln = rs.next();
-            String graphURI = qsoln.get("g").asResource().getURI();
-            log.info("Clearing destination graph " + graphURI);
-            getSparqlEndpoint().clearGraph(graphURI);
+            graphURIs.add(qsoln.get("g").asResource().getURI());
         }
-                            
+        return graphURIs;
     }
 
     private void addQuadStoreToBuffer(Map<String, Model> quadStore, 
@@ -670,26 +664,67 @@ public class Publisher extends DataSourceBase implements DataSource {
         return sameAsURIs;        
     }
     
-    private List<String> getSameAsURIs(String individualURI, 
-            Map<String, Model> quadStore) {
-        List<String> sameAsURIs = new ArrayList<String>();
-        for(Model model : quadStore.values()) {
-            NodeIterator nit = model.listObjectsOfProperty(
-                    model.getResource(individualURI), OWL.sameAs);
-            while(nit.hasNext()) {
-                RDFNode node = nit.next();
-                if(node.isURIResource()) {
-                    sameAsURIs.add(node.asResource().getURI());
-                }
-            }
-        }
-        return sameAsURIs;
-    }
+//    /**
+//     * @param endpoint
+//     * @return map of individual URI to URI of the highest-priority graph in 
+//     * which it has a type declaration
+//     */ 
+//    private Map<String, String> getHomeGraphMap(SparqlEndpoint endpoint, 
+//          List<String> graphURIPreferenceList) {
+//      Map<String, String> individualToGraphMap = new HashMap<String, String>();
+//      String homeGraphQuery = "SELECT ?ind ?graph WHERE { \n" +
+//                 "    { ?ind <" + OWL.sameAs.getURI() + "> ?something } \n" +
+//                 "    UNION \n" +
+//                 "    { ?something2 <" + OWL.sameAs.getURI() + "> ?ind } \n" +
+//                 "    GRAPH ?graph { ?ind a ?typeDeclaration } \n" +
+//                 "} \n";
+//      ResultSet homeGraphRs = endpoint.getResultSet(homeGraphQuery);
+//      while(homeGraphRs.hasNext()) {
+//          QuerySolution qsoln = homeGraphRs.next();
+//          RDFNode n = qsoln.get("ind");
+//          if(!n.isURIResource()) {
+//              continue;
+//          }
+//          String ind = n.asResource().getURI();
+//          RDFNode g = qsoln.get("graph");
+//          if(!g.isURIResource()) {
+//              continue;
+//          }
+//          String graph = g.asResource().getURI();
+//          String currentGraph = individualToGraphMap.get(ind);
+//          if(currentGraph == null) {
+//              individualToGraphMap.put(ind, graph);
+//          } else {
+//              if(isHigherPriorityThan(graph, currentGraph, 
+//                      graphURIPreferenceList)) {
+//                  individualToGraphMap.put(ind, graph);
+//              }
+//          }
+//          
+//      }
+//      return individualToGraphMap;
+//  }
+    
+//    private List<String> getSameAsURIs(String individualURI, 
+//            Map<String, Model> quadStore) {
+//        List<String> sameAsURIs = new ArrayList<String>();
+//        for(Model model : quadStore.values()) {
+//            NodeIterator nit = model.listObjectsOfProperty(
+//                    model.getResource(individualURI), OWL.sameAs);
+//            while(nit.hasNext()) {
+//                RDFNode node = nit.next();
+//                if(node.isURIResource()) {
+//                    sameAsURIs.add(node.asResource().getURI());
+//                }
+//            }
+//        }
+//        return sameAsURIs;
+//    }
     
     @Override
     public Model getResult() {
-        // TODO Auto-generated method stub
-        return null;
+        // This method is not used with this data source.
+        return ModelFactory.createDefaultModel();
     }
 
 }

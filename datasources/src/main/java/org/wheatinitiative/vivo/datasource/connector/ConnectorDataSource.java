@@ -119,25 +119,6 @@ public abstract class ConnectorDataSource extends DataSourceBase {
         }
     }
     
-    protected List<String> getGraphsWithBaseURI(String baseURI, SparqlEndpoint endpoint) {
-        List<String> graphs = new ArrayList<String>();
-        String queryStr = "SELECT DISTINCT ?g WHERE { \n" +
-                          "    GRAPH ?g { ?s ?p ?o } \n" +
-                          "    FILTER(REGEX(STR(?g), \"^" + baseURI + "\")) \n" +
-                          "}";
-        ResultSet rs = endpoint.getResultSet(queryStr);
-        while(rs.hasNext()) {
-            QuerySolution qsoln = rs.next();
-            RDFNode n = qsoln.getResource("g");
-            if(n.isURIResource()) {
-                graphs.add(n.asResource().getURI());
-            } else if (n.isLiteral()) { // not supposed to be ...
-                graphs.add(n.asLiteral().getLexicalForm());
-            }
-        }
-        return graphs;
-    }
-    
     private boolean activeEndpointForResults() {
         return (this.getConfiguration().getEndpointParameters() != null);
     }
