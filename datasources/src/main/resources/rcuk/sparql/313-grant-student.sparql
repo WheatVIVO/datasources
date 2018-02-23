@@ -27,10 +27,10 @@ PREFIX rcukpj:   <http://gtr.rcuk.ac.uk/gtr/api/project/>
 
 CONSTRUCT {
     ?grant vivo:relates ?person .
-    ?grant vivo:relates _:role .
-    _:role a obo:ERO_0000783 .
-    _:role obo:RO_0000052 ?person .
-    _:role obo:BFO_0000054 ?project
+    ?grant vivo:relates ?role .
+    ?role a obo:ERO_0000783 .
+    ?role obo:RO_0000052 ?person .
+    ?role obo:BFO_0000054 ?project
 } WHERE {
     ?link rcuk:rel "STUDENT_PER" .
     ?links rcuk:link ?link .
@@ -39,4 +39,5 @@ CONSTRUCT {
     ?grant vivo:fundingVehicleFor ?project .
     ?link vivo:relates ?person .
     FILTER NOT EXISTS { ?person a vivo:Project }
+    BIND(IRI(CONCAT(STR(?project), "-student-", STRAFTER(STR(?person), "/api/"))) AS ?role)
 }

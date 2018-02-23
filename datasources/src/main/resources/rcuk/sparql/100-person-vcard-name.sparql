@@ -27,13 +27,13 @@ PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
 
 CONSTRUCT {
     ?x a foaf:Person .
-    ?x obo:ARG_2000028 _:vcard .
-    _:vcard a vcard:Individual .
-    _:vcard vcard:hasName _:name .
-    _:name a vcard:Name .
-    _:name vcard:familyName ?lastName .
-    _:name vcard:givenName ?firstName .
-    _:name vivo:middleName ?middleName .
+    ?x obo:ARG_2000028 ?vcard .
+    ?vcard a vcard:Individual .
+    ?vcard vcard:hasName ?name .
+    ?name a vcard:Name .
+    ?name vcard:familyName ?lastName .
+    ?name vcard:givenName ?firstName .
+    ?name vivo:middleName ?middleName .
 } WHERE {
     ?x a rcukp:person .
     ?x rcukp:surname ?lastName .
@@ -42,4 +42,6 @@ CONSTRUCT {
         ?x rcukp:otherNames ?middleName 
         FILTER(isLiteral(?middleName))
     }
+    BIND(IRI(CONCAT(STR(?x), "-vcard")) AS ?vcard)
+    BIND(IRI(CONCAT(STR(?x), "-vcard-name")) AS ?name)
 }

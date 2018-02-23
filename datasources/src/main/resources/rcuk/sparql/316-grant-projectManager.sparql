@@ -27,12 +27,12 @@ PREFIX rcukpj:   <http://gtr.rcuk.ac.uk/gtr/api/project/>
 
 CONSTRUCT {
     ?grant vivo:relates ?person .
-    ?grant vivo:relates _:role .
+    ?grant vivo:relates ?role .
     # not perfect mapping in core: using LeaderRole for now since 
     # interface assumes AdministratorRole inheres in an organization
-    _:role a vivo:LeaderRole . 
-    _:role obo:RO_0000052 ?person .
-    _:role obo:BFO_0000054 ?project .
+    ?role a vivo:LeaderRole . 
+    ?role obo:RO_0000052 ?person .
+    ?role obo:BFO_0000054 ?project .
 } WHERE {
     ?link rcuk:rel "PM_PER" .
     ?links rcuk:link ?link .
@@ -41,4 +41,5 @@ CONSTRUCT {
     ?grant vivo:fundingVehicleFor ?project .
     ?link vivo:relates ?person .
     FILTER NOT EXISTS { ?person a vivo:Project }
+    BIND(IRI(CONCAT(STR(?project), "-projectManager-", STRAFTER(STR(?person), "/api/"))) AS ?role)
 }

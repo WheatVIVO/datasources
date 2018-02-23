@@ -26,17 +26,17 @@ PREFIX rcuko:    <http://gtr.rcuk.ac.uk/gtr/api/organisation/>
 PREFIX rcukpj:   <http://gtr.rcuk.ac.uk/gtr/api/project/>
 
 CONSTRUCT {
-    ?grant vivo:dateTimeInterval _:dti .
-    ?project vivo:dateTimeInterval _:dti .
-    _:dti a vivo:DateTimeInterval .
-    _:dti vivo:start _:start .
-    _:start a vivo:DateTimeValue .
-    _:start vivo:dateTime ?start .
-    _:start vivo:dateTimePrecision vivo:yearMonthDayPrecision .
-     _:dti vivo:end _:end .
-    _:end a vivo:DateTimeValue .
-    _:end vivo:dateTime ?end .
-    _:end vivo:dateTimePrecision vivo:yearMonthDayPrecision .
+    ?grant vivo:dateTimeInterval ?dti .
+    ?project vivo:dateTimeInterval ?dti .
+    ?dti a vivo:DateTimeInterval .
+    ?dti vivo:start ?dtistart .
+    ?dtistart a vivo:DateTimeValue .
+    ?stistart vivo:dateTime ?start .
+    ?dtistart vivo:dateTimePrecision vivo:yearMonthDayPrecision .
+    ?dti vivo:end ?dtiend .
+    ?dtiend a vivo:DateTimeValue .
+    ?dtiend vivo:dateTime ?end .
+    ?dtiend vivo:dateTimePrecision vivo:yearMonthDayPrecision .
 } WHERE {
     ?project a vivo:Project .
     ?project rcuk:links ?links .
@@ -47,4 +47,7 @@ CONSTRUCT {
     ?link rcuk:end ?rcukEnd .
     BIND(xsd:dateTime(?rcukEnd) AS ?end)
     ?grant vivo:fundingVehicleFor ?project
+    BIND(IRI(CONCAT(STR(?project), "-dti")) AS ?dti)
+    BIND(IRI(CONCAT(STR(?project), "-dti-start")) AS ?dtistart)
+    BIND(IRI(CONCAT(STR(?project), "-dti-end")) AS ?dtiend)
 }

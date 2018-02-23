@@ -29,12 +29,13 @@ CONSTRUCT {
     ?y a vivo:Project .
     ?y rdfs:label ?title .
     ?y vivo:description ?abstractText .
-    _:grant a vivo:Grant .
-    _:grant vivo:fundingVehicleFor ?y .
-    _:grant rdfs:label ?title .
-    _:grant vivo:description ?abstractText .
+    ?grant a vivo:Grant .
+    ?grant vivo:fundingVehicleFor ?y .
+    ?grant rdfs:label ?title .
+    ?grant vivo:description ?abstractText .
 } WHERE {
     ?x rcukpj:project ?y .
     ?y rcukpj:title ?title .
     OPTIONAL { ?y rcukpj:abstractText ?abstractText }
+    BIND(IRI(CONCAT(STR(?y), "-grant")) AS ?grant)
 }

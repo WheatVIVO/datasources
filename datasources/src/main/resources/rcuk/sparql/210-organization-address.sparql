@@ -25,15 +25,15 @@ PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
 PREFIX rcuko:    <http://gtr.rcuk.ac.uk/gtr/api/organisation/>
 
 CONSTRUCT {
-    ?x obo:ARG_2000028 _:vcard .
-    _:vcard a vcard:Organization .
-    _:vcard vcard:hasAddress _:address .
-    _:address a vcard:Address .
-    _:address vcard:streetAddress ?streetAddress .
-    _:address vcard:locality ?locality .
-    _:address vcard:region ?region .
-    _:address vcard:postalCode ?postalCode .
-    _:address vcard:country ?country .
+    ?x obo:ARG_2000028 ?vcard .
+    ?vcard a vcard:Organization .
+    ?vcard vcard:hasAddress ?vcardaddress .
+    ?vcardaddress a vcard:Address .
+    ?vcardaddress vcard:streetAddress ?streetAddress .
+    ?vcardaddress vcard:locality ?locality .
+    ?vcardaddress vcard:region ?region .
+    ?vcardaddress vcard:postalCode ?postalCode .
+    ?vcardaddress vcard:country ?country .
 } WHERE {
     ?x a rcuko:organisation .
     ?x rcuko:addresses ?addresses .
@@ -48,4 +48,7 @@ CONSTRUCT {
     OPTIONAL { ?address rcuk:county ?region }
     OPTIONAL { ?address rcuk:postCode ?postalCode }
     OPTIONAL { ?address rcuk:country ?country }
+    BIND(IRI(CONCAT(STR(?x), "-vcard")) AS ?vcard)
+    BIND(IRI(CONCAT(STR(?x), "-vcard-address")) AS ?vcardaddress)
+
 }
