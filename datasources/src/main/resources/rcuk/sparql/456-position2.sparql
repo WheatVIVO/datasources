@@ -21,21 +21,17 @@ PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX rcuk:     <http://gtr.rcuk.ac.uk/gtr/api/>
+PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
+PREFIX rcuko:    <http://gtr.rcuk.ac.uk/gtr/api/organisation/>
+PREFIX rcukoc:   <http://gtr.rcuk.ac.uk/gtr/api/project/outcome/>
 
 CONSTRUCT {
-    ?relationship vivo:relates ?x .
-    ?relationship vivo:relates ?y .
-    ?relationship a rcuk:Link .
-    ?relationship a vivo:Relationship .
-    ?relationship rdfs:label ?rel .
-    ?links rcuk:link ?relationship .
-    ?relationship rcuk:href ?href .
-    ?relationship rcuk:rel ?rel .
+    ?x a vivo:Position .
 } WHERE {
-    ?y rcuk:links ?links .
-    ?links rcuk:link ?link .
-    ?link  rcuk:href ?href .
-    ?link  rcuk:rel ?rel .
-    BIND(IRI(CONCAT(STR(?y), STRAFTER(STR(?href), ?rel, "/api/"))) AS ?relationship
-    BIND(IRI(?href) AS ?x)
+    ?x a vivo:Relationship .
+    ?x rcuk:rel "EMPLOYED" .
+    # ?x vivo:relates ?person .
+    # ?person a foaf:Person .
+    # ?x vivo:relates ?org .
+    # ?org a foaf:Organization .
 }

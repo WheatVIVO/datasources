@@ -35,6 +35,7 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.util.ResourceUtils;
+import com.hp.hpl.jena.vocabulary.RDF;
 
 public class Rcuk extends ConnectorDataSource implements DataSource {
 
@@ -150,7 +151,7 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
      */
     @Override
     protected Model mapToVIVO(Model m) {
-        List<String> queries = Arrays.asList("002-linkRelates.sparql", 
+        List<String> queries = Arrays.asList( "002-linkRelates.sparql",
                 "100-person-vcard-name.sparql", 
                 "105-person-label.sparql",
                 "200-organization-name.sparql",
@@ -174,7 +175,8 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
                 "418-publication-Database.sparql",
                 "430-publication-properties.sparql",
                 "440-publication-supportedInformationResource.sparql",
-                "455-position.sparql");
+                "455-position.sparql",
+                "456-position2.sparql");
         for(String query : queries) {
             construct(SPARQL_RESOURCE_DIR + query, m, NAMESPACE_ETC);
         }
@@ -305,10 +307,25 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
         return m;
     }
 
+    private static final String FILTER_OUT = "gtr.rcuk.ac.uk";
+    
     @Override
     protected Model filter(Model model) {
-        // nothing to do, for now
-        return model;
+        Model filtered = ModelFactory.createDefaultModel();
+        StmtIterator sit = model.listStatements();
+        while(sit.hasNext()) {
+            Statement stmt = sit.next();
+            if( (RDF.type.equals(stmt.getPredicate()))
+                        && (stmt.getObject().isURIResource())
+                        && (stmt.getObject().asResource().getURI().contains(FILTER_OUT)) ) {                                   
+                continue;     
+            } 
+            if(stmt.getPredicate().getURI().contains(FILTER_OUT)) {
+                continue;
+            }
+            filtered.add(stmt);
+        }
+        return filtered;
     }
 
     @Override
