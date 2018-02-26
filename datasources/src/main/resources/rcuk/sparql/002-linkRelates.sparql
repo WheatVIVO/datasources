@@ -36,6 +36,6 @@ CONSTRUCT {
     ?links rcuk:link ?link .
     ?link  rcuk:href ?href .
     ?link  rcuk:rel ?rel .
-    BIND(IRI(CONCAT(STR(?y), STRAFTER(STR(?href), ?rel, "/api/"))) AS ?relationship
+    BIND(IRI(CONCAT(STR(?y), STRAFTER(STR(?href), ?rel, "/api/"))) AS ?relationship)
     BIND(IRI(?href) AS ?x)
 }

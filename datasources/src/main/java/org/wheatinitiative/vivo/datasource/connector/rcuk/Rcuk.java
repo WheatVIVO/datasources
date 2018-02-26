@@ -378,8 +378,8 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
         }
 
         public Model next() {
+            String queryTerm = queryTerms.get(currentQueryTerm);
             try {
-                String queryTerm = queryTerms.get(currentQueryTerm);
                 Model m = null;
                 if(currentPageOfTerm == 1) {
                     m = models.get(queryTerms.get(currentQueryTerm));
@@ -387,14 +387,7 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
                     String projects = getProjects(queryTerm, currentPageOfTerm);
                     m = transformToRdf(projects);
                 }
-                m = updateResults(m, retrievedURIs);
-                if(currentPageOfTerm < pageTotals.get(queryTerm)) {
-                    currentPageOfTerm++;
-                } else {
-                    currentQueryTerm++;
-                    currentPageOfTerm = 0;
-                }
-                log.info(retrievedURIs.size() + " retrieved resources from API");
+                m = updateResults(m, retrievedURIs);                
                 return m;
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
@@ -402,6 +395,14 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
                 throw new RuntimeException(e);
             } catch (IOException e) {
                 throw new RuntimeException(e);
+            } finally {
+                if(currentPageOfTerm < pageTotals.get(queryTerm)) {
+                    currentPageOfTerm++;
+                } else {
+                    currentQueryTerm++;
+                    currentPageOfTerm = 0;
+                }
+                log.info(retrievedURIs.size() + " retrieved resources from API");
             }
         }
 
