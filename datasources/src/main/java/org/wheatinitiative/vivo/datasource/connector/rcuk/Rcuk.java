@@ -308,6 +308,7 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
     }
 
     private static final String FILTER_OUT = "gtr.rcuk.ac.uk";
+    private static final String FILTER_OUT_SUBJ = "individual/n";
     
     @Override
     protected Model filter(Model model) {
@@ -321,6 +322,10 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
                 continue;     
             } 
             if(stmt.getPredicate().getURI().contains(FILTER_OUT)) {
+                continue;
+            }
+            if(stmt.getSubject().isURIResource() 
+                    && stmt.getSubject().getURI().contains(FILTER_OUT_SUBJ)) {
                 continue;
             }
             filtered.add(stmt);
