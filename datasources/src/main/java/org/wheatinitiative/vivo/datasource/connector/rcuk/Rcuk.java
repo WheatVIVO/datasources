@@ -308,7 +308,7 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
     }
 
     private static final String FILTER_OUT = "gtr.rcuk.ac.uk";
-    private static final String FILTER_OUT_SUBJ = "individual/n";
+    private static final String FILTER_OUT_RES = "individual/n";
     
     @Override
     protected Model filter(Model model) {
@@ -325,12 +325,16 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
                 continue;
             }
             if(stmt.getSubject().isURIResource() 
-                    && stmt.getSubject().getURI().contains(FILTER_OUT_SUBJ)) {
+                    && stmt.getSubject().getURI().contains(FILTER_OUT_RES)) {
+                continue;
+            }
+            if(stmt.getObject().isURIResource() 
+                    && stmt.getObject().asResource().getURI().contains(FILTER_OUT_RES)) {
                 continue;
             }
             filtered.add(stmt);
         }
-        return filtered;
+        return pruneDeadendRelationships(filtered);
     }
 
     @Override

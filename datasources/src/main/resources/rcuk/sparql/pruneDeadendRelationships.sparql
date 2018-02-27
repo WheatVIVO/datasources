@@ -29,6 +29,7 @@ CONSTRUCT {
     ?link vivo:relates ?y
     FILTER NOT EXISTS {
         ?y a ?type
+	FILTER (?type != owl:Thing)
     }
     ?link ?p ?o
    # ?y rcuk:links ?links .
