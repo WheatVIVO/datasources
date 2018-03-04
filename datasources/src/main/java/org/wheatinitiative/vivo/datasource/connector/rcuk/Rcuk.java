@@ -175,8 +175,7 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
                 "418-publication-Database.sparql",
                 "430-publication-properties.sparql",
                 "440-publication-supportedInformationResource.sparql",
-                "455-position.sparql",
-                "456-position2.sparql");
+                "456-position.sparql");
         for(String query : queries) {
             construct(SPARQL_RESOURCE_DIR + query, m, NAMESPACE_ETC);
         }

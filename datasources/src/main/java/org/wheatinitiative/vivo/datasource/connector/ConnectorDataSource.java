@@ -86,6 +86,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
         while(it.hasNext() && count < this.getConfiguration().getLimit()) {
             try {
                 count++;
+                // TODO this.getStatus().set
                 Model model = mapToVIVO(it.next());
                 log.debug(model.size() + " statements before filtering");
                 model = filter(model);

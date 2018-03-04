@@ -37,6 +37,9 @@ CONSTRUCT {
     ?dtiend a vivo:DateTimeValue .
     ?dtiend vivo:dateTime ?end .
     ?dtiend vivo:dateTimePrecision vivo:yearMonthDayPrecision .
+    ?fundingOrg a vivo:FundingOrganization .
+    ?grant vivo:assignedBy ?fundingOrg .
+    ?fundingOrg vivo:assigns ?grant .
 } WHERE {
     ?project a vivo:Project .
     ?project rcuk:links ?links .
@@ -46,7 +49,12 @@ CONSTRUCT {
     BIND(xsd:dateTime(?rcukStart) AS ?start)
     ?link rcuk:end ?rcukEnd .
     BIND(xsd:dateTime(?rcukEnd) AS ?end)
-    ?grant vivo:fundingVehicleFor ?project
+    ?grant vivo:fundingVehicleFor ?project .
+    ?link vivo:relates ?fund .
+    ?funderRelationship vivo:relates ?fund .
+    ?funderRelationship rcuk:rel "FUNDER" .
+    ?funderRelationship vivo:relates ?fundingOrg .
+    FILTER(REGEX(STR(?fundingOrg), "organisations"))
     BIND(IRI(CONCAT(STR(?project), "-dti")) AS ?dti)
     BIND(IRI(CONCAT(STR(?project), "-dti-start")) AS ?dtistart)
     BIND(IRI(CONCAT(STR(?project), "-dti-end")) AS ?dtiend)

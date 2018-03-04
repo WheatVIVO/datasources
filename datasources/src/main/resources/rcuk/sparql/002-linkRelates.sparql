@@ -27,15 +27,15 @@ CONSTRUCT {
     ?relationship vivo:relates ?y .
     ?relationship a rcuk:Link .
     ?relationship a vivo:Relationship .
-    ?relationship rdfs:label ?rel .
+    ?relationship rdfs:comment ?rel .
     ?links rcuk:link ?relationship .
-    ?relationship rcuk:href ?href .
-    ?relationship rcuk:rel ?rel .
+    ?relationship ?linkP ?linkO .
 } WHERE {
     ?y rcuk:links ?links .
     ?links rcuk:link ?link .
     ?link  rcuk:href ?href .
     ?link  rcuk:rel ?rel .
+    ?link ?linkP ?linkO .
     BIND(IRI(CONCAT(STR(?y), "-", ?rel, "-", STRAFTER(STR(?href), "/api/"))) AS ?relationship)
     BIND(IRI(?href) AS ?x)
 }

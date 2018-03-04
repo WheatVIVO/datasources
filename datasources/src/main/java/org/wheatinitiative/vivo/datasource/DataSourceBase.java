@@ -99,7 +99,9 @@ public abstract class DataSourceBase {
      * @return model with new data added by CONSTRUCT query
      */
     protected Model construct(String queryName, Model m, String namespaceEtc) {
-        m.add(constructQuery(queryName, m, namespaceEtc, null));
+        Model n = constructQuery(queryName, m, namespaceEtc, null);
+        log.debug("Query " + queryName + " constructed " + n.size() + " triples.");
+        m.add(n);
         return m;
     }
     
