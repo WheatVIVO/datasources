@@ -26,26 +26,13 @@ PREFIX rcuko:    <http://gtr.rcuk.ac.uk/gtr/api/organisation/>
 PREFIX rcukpj:   <http://gtr.rcuk.ac.uk/gtr/api/project/>
 
 CONSTRUCT {
-    ?y a vivo:Project .
-    ?y rdfs:label ?title .
-    ?y vivo:description ?abstractText .
-    ?y <http://vivo.wheatinitiative.org/ontology/grant/status> ?status .
-    ?grant a vivo:Grant .
-    ?grant vivo:fundingVehicleFor ?y .
-    ?grant rdfs:label ?title .
-    ?grant vivo:description ?abstractText .
-    ?grant vivo:sponsorAwardId ?sponsorAwardId .
+    ?project obo:RO_0002234 ?output .
+    ?output a obo:IAO_0000030 .
 } WHERE {
-    ?x rcukpj:project ?y .
-    ?y rcukpj:title ?title .
-    OPTIONAL {
-        ?y rcukpj:status ?status
-    }
-    OPTIONAL {
-        ?y rcukpj:identifiers ?identifiers .
-	?identifiers rcukpj:identifier ?identifier .
-	?identifier vitro:value ?sponsorAwardId .
-    }
-    OPTIONAL { ?y rcukpj:abstractText ?abstractText }
-    BIND(IRI(CONCAT(STR(?y), "-grant")) AS ?grant)
+    { ?link rcuk:rel "PUBLICATION" } UNION { ?link rcuk:rel "RESEARCH_DATABASE_AND_MODEL" } UNION { ?link rcuk:rel "SOFTWARE_AND_TECHNICAL_PRODUCT" }.
+    ?links rcuk:link ?link .
+    ?project rcuk:links ?links .
+    ?project a vivo:Project .
+    ?link vivo:relates ?output .
+    FILTER NOT EXISTS { ?output a vivo:Project }
 }

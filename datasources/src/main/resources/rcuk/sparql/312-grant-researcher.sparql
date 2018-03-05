@@ -26,26 +26,18 @@ PREFIX rcuko:    <http://gtr.rcuk.ac.uk/gtr/api/organisation/>
 PREFIX rcukpj:   <http://gtr.rcuk.ac.uk/gtr/api/project/>
 
 CONSTRUCT {
-    ?y a vivo:Project .
-    ?y rdfs:label ?title .
-    ?y vivo:description ?abstractText .
-    ?y <http://vivo.wheatinitiative.org/ontology/grant/status> ?status .
-    ?grant a vivo:Grant .
-    ?grant vivo:fundingVehicleFor ?y .
-    ?grant rdfs:label ?title .
-    ?grant vivo:description ?abstractText .
-    ?grant vivo:sponsorAwardId ?sponsorAwardId .
+    ?grant vivo:relates ?person .
+    ?grant vivo:relates ?role .
+    ?role a vivo:InvestigatorRole .
+    ?role obo:RO_0000052 ?person .
+    ?role obo:BFO_0000054 ?project
 } WHERE {
-    ?x rcukpj:project ?y .
-    ?y rcukpj:title ?title .
-    OPTIONAL {
-        ?y rcukpj:status ?status
-    }
-    OPTIONAL {
-        ?y rcukpj:identifiers ?identifiers .
-	?identifiers rcukpj:identifier ?identifier .
-	?identifier vitro:value ?sponsorAwardId .
-    }
-    OPTIONAL { ?y rcukpj:abstractText ?abstractText }
-    BIND(IRI(CONCAT(STR(?y), "-grant")) AS ?grant)
+    ?link rcuk:rel "RESEARCH_PER" .
+    ?links rcuk:link ?link .
+    ?project rcuk:links ?links .
+    ?project a vivo:Project .
+    ?grant vivo:fundingVehicleFor ?project .
+    ?link vivo:relates ?person .
+    FILTER NOT EXISTS { ?person a vivo:Project }
+    BIND(IRI(CONCAT(STR(?project), "-copi-", STRAFTER(STR(?person), "/api/"))) AS ?role)
 }

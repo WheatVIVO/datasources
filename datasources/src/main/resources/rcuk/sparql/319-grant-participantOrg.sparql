@@ -34,7 +34,7 @@ CONSTRUCT {
     _:role obo:RO_0000052 ?org .
     _:role obo:BFO_0000054 ?project .
 } WHERE {
-    ?link rcuk:rel "PARTICIPANT_ORG" .
+    { ?link rcuk:rel "PARTICIPANT_ORG" } UNION { ?link rcuk:rel "PP_ORG" } UNION { ?link rcuk:rel "COLLAB_ORG" }
     ?links rcuk:link ?link .
     ?project rcuk:links ?links .
     ?project a vivo:Project .
