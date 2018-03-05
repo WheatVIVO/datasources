@@ -10,14 +10,14 @@ PREFIX obo:		<http://purl.obolibrary.org/obo/>
 CONSTRUCT {
 
 	# entity "has contact info" 
-	?project obo:ARG_2000028 _:vcard .
-	?grant obo:ARG_2000028 _:vcard .
+	?project obo:ARG_2000028 ?vcard .
+	?grant obo:ARG_2000028 ?vcard .
 	
-	_:vcard vcard:hasURL _:url .
+	?vcard vcard:hasURL ?url .
 	
-    _:url a vcard:URL .
-    _:url vcard:url ?project_url .
-    _:url rdfs:label ?project_url_str .
+    ?url a vcard:URL .
+    ?url vcard:url ?project_url .
+    ?url rdfs:label ?project_url_str .
     
 } WHERE {
 
@@ -31,11 +31,15 @@ CONSTRUCT {
         ?project cordis:url ?project_url_str . 
 	FILTER(REGEX(STR(?project_url_str), "^http"))
         BIND ( xsd:anyURI( ?project_url_str ) AS ?project_url )
+	BIND(IRI(CONCAT(STR(?project), "-vcard")) AS ?vcard)
+	BIND(IRI(CONCAT(STR(?project), "-vcard-url")) AS ?url)
     }
     
     OPTIONAL {
         ?project cordis:url ?project_url_str . 
 	FILTER(!REGEX(STR(?project_url_str), "^http"))
         BIND ( xsd:anyURI( CONCAT("http://", STR(?project_url_str)) ) AS ?project_url )
+	BIND(IRI(CONCAT(STR(?project), "-vcard")) AS ?vcard)
+	BIND(IRI(CONCAT(STR(?project), "-vcard-url")) AS ?url)
     }
 }

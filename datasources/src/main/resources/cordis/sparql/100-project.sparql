@@ -12,13 +12,13 @@ CONSTRUCT {
 	?project vivo:description ?objective .
 	?project vivo:identifier ?project_id .
 	
-	_:grant a vivo:Grant .
-    _:grant rdfs:label ?title .
-    _:grant vivo:description ?objective .
-    _:grant vivo:identifier ?grant_id .
-    _:grant vivo:totalAwardAmount ?project_cost .
+	?grant a vivo:Grant .
+    ?grant rdfs:label ?title .
+    ?grant vivo:description ?objective .
+    ?grant vivo:identifier ?grant_id .
+    ?grant vivo:totalAwardAmount ?project_cost .
     
-    _:grant vivo:fundingVehicleFor ?project .
+    ?grant vivo:fundingVehicleFor ?project .
     
 } WHERE {
 
@@ -32,5 +32,6 @@ CONSTRUCT {
 	
 	?project cordis:reference ?project_id .
         BIND(CONCAT("grant-", STR(?project_id)) AS ?grant_id) 	
+	BIND(IRI(CONCAT(STR(?project), "-grant")) AS ?grant)
 	?project cordis:totalCost ?project_cost .
 }

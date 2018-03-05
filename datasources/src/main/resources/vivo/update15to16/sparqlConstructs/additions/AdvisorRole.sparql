@@ -3,15 +3,16 @@ PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 
 CONSTRUCT {
-    ?advisor <http://purl.obolibrary.org/obo/RO_0000053> _:AdvisorRole .
-    _:AdvisorRole <http://purl.obolibrary.org/obo/RO_0000052> ?advisor .
-    _:AdvisorRole a vivo:AdvisorRole .
-    _:AdvisorRole vivo:relatedBy ?advisingRelationship .
-    ?advisingRelationship vivo:relates _:AdvisorRole .
+    ?advisor <http://purl.obolibrary.org/obo/RO_0000053> ?advisorRole .
+    ?advisorRole <http://purl.obolibrary.org/obo/RO_0000052> ?advisor .
+    ?advisorRole a vivo:AdvisorRole .
+    ?advisorRole vivo:relatedBy ?advisingRelationship .
+    ?advisingRelationship vivo:relates ?advisorRole .
     ?advisingRelationship vivo:relates ?advisor .
     ?advisor vivo:relatedBy ?advisingRelationship .
 } WHERE {
     ?advisor vivo:advisorIn ?advisingRelationship .
+    BIND(IRI(CONCAT(STR(?advisingRelationship), "-advisorRole")) AS ?advisorRole)
     FILTER NOT EXISTS {
         ?advisor <http://purl.obolibrary.org/obo/RO_0000053> ?advisorRoleNode .
         ?advisorRoleNode vivo:relatedBy ?advisingRelationship .

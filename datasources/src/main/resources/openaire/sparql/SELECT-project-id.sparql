@@ -7,7 +7,7 @@ SELECT DISTINCT ?projectId
 
 WHERE {
 
-    _:x oaf:result ?pub .
+    ?x oaf:result ?pub .
     
     ?pub ingest:rels ?rels .
     ?rels ingest:rel ?rel .

@@ -5,11 +5,12 @@ PREFIX vivo: <http://vivoweb.org/ontology/core#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
 CONSTRUCT {
-    ?s arg:ARG_2000028 _:vcard .
-    _:vcard arg:ARG_2000029 ?s .
-    _:vcard a v:Kind .
+    ?s arg:ARG_2000028 ?vcard .
+    ?vcard arg:ARG_2000029 ?s .
+    ?vcard a v:Kind .
 } WHERE {
     ?s a owl:Thing
+    BIND(IRI(CONCAT(STR(?s), "-vcard")) AS ?vcard)
     FILTER ( 
         EXISTS { ?s vivo:email ?email } || 
         EXISTS { ?s vivo:primaryEmail ?primaryEmail } ||

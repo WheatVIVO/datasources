@@ -8,14 +8,14 @@ PREFIX vivo:    <http://vivoweb.org/ontology/core#>
 
 CONSTRUCT {
     
-    _:journal a bibo:Journal .
-    _:journal rdfs:label ?journalName .
+    ?journal a bibo:Journal .
+    ?journal rdfs:label ?journalName .
     
-    _:journal bibo:issn ?issn .
-    _:journal bibo:eissn ?eissn .
+    ?journal bibo:issn ?issn .
+    ?journal bibo:eissn ?eissn .
     
-    _:journal vivo:publicationVenueFor ?pub .
-    ?pub vivo:hasPublicationVenue _:journal .
+    ?journal vivo:publicationVenueFor ?pub .
+    ?pub vivo:hasPublicationVenue ?journal .
     
 } WHERE {
 
@@ -23,6 +23,8 @@ CONSTRUCT {
     
     ?pub ingest:journal ?journal .
     ?journal vitro:value ?journalName .
+
+    BIND(IRI(CONCAT(STR(?pub), "-journal")) AS ?journal)
     
     OPTIONAL {
        ?journal ingest:issn ?issn .

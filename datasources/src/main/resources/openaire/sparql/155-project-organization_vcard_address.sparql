@@ -11,17 +11,17 @@ PREFIX foaf:    <http://xmlns.com/foaf/0.1/>
 CONSTRUCT {
 
     # org "has contact info" 
-    ?org obo:ARG_2000028 _:vcard .
+    ?org obo:ARG_2000028 ?vcard .
     
-    _:vcard a vcard:Organization .
-    _:vcard vcard:hasAddress _:address .
+    ?vcard a vcard:Organization .
+    ?vcard vcard:hasAddress ?address .
     
-    _:address vivo:Country ?org_country_name .
+    ?address vivo:Country ?org_country_name .
     
-    _:vcard vcard:hasURL _:url .
-    _:url a vcard:URL .
-    _:url vcard:url ?org_url .
-    _:url rdfs:label ?org_url_str .
+    ?vcard vcard:hasURL ?url .
+    ?url a vcard:URL .
+    ?url vcard:url ?org_url .
+    ?url rdfs:label ?org_url_str .
 
 } WHERE {
 
@@ -36,4 +36,8 @@ CONSTRUCT {
     BIND ( xsd:anyURI( ?org_url_str ) AS ?org_url )
     
     ?org a foaf:Organization .
+
+    BIND(IRI(CONCAT(STR(?org), "-vcard")) AS ?vcard)
+    BIND(IRI(CONCAT(STR(?org), "-vcard-address")) AS ?address)
+    BIND(IRI(CONCAT(STR(?org), "-vcard-url")) AS ?url)
 }

@@ -7,20 +7,23 @@ PREFIX rdfs:	<http://www.w3.org/2000/01/rdf-schema#>
 
 CONSTRUCT {
 	
-	_:org a foaf:Organization .
-	_:org rdfs:label ?title .
+	?org a foaf:Organization .
+	?org rdfs:label ?title .
 	
-	_:org obo:RO_0000053 _:role .
+	?org obo:RO_0000053 ?role .
 	# An organazation has (_53) a role
 	
-	_:role a obo:ERO_0000224 .
+	?role a obo:ERO_0000224 .
 	# That role is a _224 (funding) role
 	
-	_:role obo:BFO_0000054 ?proj .
+	?role obo:BFO_0000054 ?proj .
 	# This role gets realised (_54) in the project
 	
 } WHERE {
 	
 	?project a acti:ImpactProject .
 	?project acti:otherFedResearchFunding ?title .
+	BIND(IRI(CONCAT(STR(?project), "-org")) AS ?org)
+	BIND(IRI(CONCAT(STR(?project), "-org-role")) AS ?role)
+
 }

@@ -10,11 +10,11 @@ PREFIX vitro:    <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>
 CONSTRUCT {
 
     ?grant vivo:relates ?org .
-    ?grant vivo:relates _:role .
+    ?grant vivo:relates ?role .
     
-    _:role a vivo:AdministratorRole . 
-    _:role obo:RO_0000052 ?org .
-    _:role obo:BFO_0000054 ?project .
+    ?role a vivo:AdministratorRole . 
+    ?role obo:RO_0000052 ?org .
+    ?role obo:BFO_0000054 ?project .
 
 } WHERE {
 
@@ -28,4 +28,6 @@ CONSTRUCT {
     
     ?org a foaf:Organization .
     ?org ingest:type "coordinator" .
+
+    BIND(IRI(CONCAT(STR(?project), "-coordinator-", STRAFTER(STR(?org), "://"))) AS ?role)
 }

@@ -4,13 +4,14 @@ PREFIX v:   <http://www.w3.org/2006/vcard/ns#>
 PREFIX vivo: <http://vivoweb.org/ontology/core#> 
 
 CONSTRUCT {
-    ?vcard v:hasEmail _:primaryEmail .
-    _:primaryEmail a v:Email .
-    _:primaryEmail a v:Work .
-    _:primaryEmail v:email ?primaryEmail . 
+    ?vcard v:hasEmail ?primaryEmailRes .
+    ?primaryEmailRes a v:Email .
+    ?primaryEmailRes a v:Work .
+    ?primaryEmailRes v:email ?primaryEmail . 
 } WHERE {
      ?s vivo:primaryEmail ?primaryEmail .
      ?s arg:ARG_2000028 ?vcard .
+     BIND(IRI(CONCAT(STR(?vcard), "-primaryEmail")) AS ?primaryEmailRes)
      FILTER NOT EXISTS {
          ?vcard v:hasEmail ?email .
          ?email a v:Work .

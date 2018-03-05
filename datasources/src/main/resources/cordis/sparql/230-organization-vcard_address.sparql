@@ -11,19 +11,19 @@ PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
 CONSTRUCT {
 
 	# org "has contact info" 
-    ?org obo:ARG_2000028 _:vcard .
+        ?org obo:ARG_2000028 ?vcard .
     
-    _:vcard a vcard:Organization .
-    _:vcard vcard:hasAddress _:address .
-    _:address vcard:streetAddress ?org_street .
-	_:address vcard:locality ?org_city .
-	_:address vcard:postalCode ?org_post .
-	_:address vivo:Country ?org_country_name .
+        ?vcard a vcard:Organization .
+        ?vcard vcard:hasAddress ?address .
+        ?address vcard:streetAddress ?org_street .
+	?address vcard:locality ?org_city .
+	?address vcard:postalCode ?org_post .
+	?address vivo:Country ?org_country_name .
 	
-	_:vcard vcard:hasURL _:url .
-	_:url a vcard:URL .
-	_:url vcard:url ?org_url .
-	_:url rdfs:label ?org_url_str .
+	?vcard vcard:hasURL ?url .
+	?url a vcard:URL .
+	?url vcard:url ?org_url .
+	?url rdfs:label ?org_url_str .
 	
 } WHERE {
 
@@ -39,16 +39,21 @@ CONSTRUCT {
 	    ?adr cordis:url ?org_url_str .
 	    FILTER(REGEX(STR(?org_url_str), "^http"))
 	    BIND ( xsd:anyURI( ?org_url_str ) AS ?org_url )
+	    BIND(IRI(CONCAT(STR(?org), "-vcard-url")) AS ?url)
         }
 	
         OPTIONAL {
 	    ?adr cordis:url ?org_url_str .
 	    FILTER(!REGEX(STR(?org_url_str), "^http"))
 	    BIND ( xsd:anyURI( CONCAT("http://", STR(?org_url_str)) ) AS ?org_url )
+	    BIND(IRI(CONCAT(STR(?org), "-vcard-url")) AS ?url)
         }
 
 	?org cordis:relations ?rel .
 	?rel cordis:regions ?reg_pl .
 	?reg_pl cordis:region ?reg .
 	?reg cordis:name ?org_country_name .
+	    
+	BIND(IRI(CONCAT(STR(?org), "-vcard")) AS ?vcard)
+	BIND(IRI(CONCAT(STR(?org), "-vcard-address")) AS ?address)
 }

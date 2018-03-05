@@ -4,11 +4,12 @@ PREFIX v:   <http://www.w3.org/2006/vcard/ns#>
 PREFIX vivo: <http://vivoweb.org/ontology/core#> 
 
 CONSTRUCT {
-    ?s arg:ARG_2000028 _:vcard .
-    _:vcard arg:ARG_2000029 ?s .
-    _:vcard a v:Group .
+    ?s arg:ARG_2000028 ?vcard .
+    ?vcard arg:ARG_2000029 ?s .
+    ?vcard a v:Group .
 } WHERE {
     ?s a foaf:Group
+    BIND(IRI(CONCAT(STR(?s), "-vcard")) AS ?vcard)
     FILTER ( 
         EXISTS { ?s vivo:email ?email } || 
         EXISTS { ?s vivo:primaryEmail ?primaryEmail } ||

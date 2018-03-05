@@ -3,12 +3,13 @@ PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 
 CONSTRUCT {
-    ?person vivo:relatedBy _:Editorship .
-    _:Editorship a vivo:Editorship .
-    _:Editorship vivo:relates ?person .
-    _:Editorship vivo:relates ?document .
-    ?document vivo:relatedBy _:Editorship .
+    ?person vivo:relatedBy ?editorship .
+    ?editorship a vivo:Editorship .
+    ?editorship vivo:relates ?person .
+    ?editorship vivo:relates ?document .
+    ?document vivo:relatedBy ?editorship .
 } WHERE {
+    BIND(IRI(CONCAT(STR(?document), "-editorship-", STRAFTER(STR(?person), "://"))) AS ?editorship)
     { 
       ?person vivo:editorOf ?document
     } UNION {

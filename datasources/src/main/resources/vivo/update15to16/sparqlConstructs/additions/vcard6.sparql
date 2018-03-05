@@ -4,14 +4,15 @@ PREFIX v:   <http://www.w3.org/2006/vcard/ns#>
 PREFIX vivo: <http://vivoweb.org/ontology/core#> 
 
 CONSTRUCT {
-    ?vcard v:hasTelephone _:primaryTelephone .
-    _:primaryTelephone a v:Telephone .
-    _:primaryTelephone a v:Voice .
-    _:primaryTelephone a v:Work .
-    _:primaryTelephone v:telephone ?primaryPhoneNumber .
+    ?vcard v:hasTelephone ?primaryTelephone .
+    ?primaryTelephone a v:Telephone .
+    ?primaryTelephone a v:Voice .
+    ?primaryTelephone a v:Work .
+    ?primaryTelephone v:telephone ?primaryPhoneNumber .
 } WHERE {
     ?s vivo:primaryPhoneNumber ?primaryPhoneNumber .
     ?s arg:ARG_2000028 ?vcard .
+    BIND(IRI(CONCAT(STR(?vcard), "-primaryTelephone-", REPLACE(?primaryPhoneNumber, "\\W", ""))) AS ?primaryTelephone)
     FILTER NOT EXISTS {
         ?vcard v:hasTelephone ?telephoneNode .
         ?vcard a v:Work .

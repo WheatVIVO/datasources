@@ -6,20 +6,20 @@ PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
 
 CONSTRUCT {
 
-    ?project vivo:dateTimeInterval _:dti .
-    ?grant vivo:dateTimeInterval _:dti .
+    ?project vivo:dateTimeInterval ?dti .
+    ?grant vivo:dateTimeInterval ?dti .
     
-    _:dti a vivo:DateTimeInterval .
+    ?dti a vivo:DateTimeInterval .
     
-    _:dti vivo:start _:start .
-    _:start a vivo:DateTimeValue .
-    _:start vivo:dateTime ?start_date .
-    _:start vivo:dateTimePrecision vivo:yearMonthDayPrecision .
+    ?dti vivo:start ?start .
+    ?start a vivo:DateTimeValue .
+    ?start vivo:dateTime ?start_date .
+    ?start vivo:dateTimePrecision vivo:yearMonthDayPrecision .
     
-    _:dti vivo:end _:end .
-    _:end a vivo:DateTimeValue .
-    _:end vivo:dateTime ?end_date .
-    _:end vivo:dateTimePrecision vivo:yearMonthDayPrecision .
+    ?dti vivo:end ?end .
+    ?end a vivo:DateTimeValue .
+    ?end vivo:dateTime ?end_date .
+    ?end vivo:dateTimePrecision vivo:yearMonthDayPrecision .
     
 } WHERE {
 
@@ -32,4 +32,8 @@ CONSTRUCT {
     
     ?project ingest:enddate ?projEnd .
     BIND ( xsd:dateTime( CONCAT ( ?projEnd, "T00:00:00Z") ) AS ?end_date)
+
+    BIND(IRI(CONCAT(STR(?project), "-dti")) AS ?dti)
+    BIND(IRI(CONCAT(STR(?project), "-dti-start")) AS ?start)
+    BIND(IRI(CONCAT(STR(?project), "-dti-end")) AS ?end)
 }

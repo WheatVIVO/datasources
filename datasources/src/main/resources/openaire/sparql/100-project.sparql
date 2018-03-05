@@ -10,14 +10,15 @@ CONSTRUCT {
     ?project a vivo:Project .
     ?project vivo:identifier ?project_id .
     
-    _:grant a vivo:Grant .
-    _:grant vivo:identifier ?project_id .
-    _:grant vivo:fundingVehicleFor ?project .
+    ?grant a vivo:Grant .
+    ?grant vivo:identifier ?project_id .
+    ?grant vivo:fundingVehicleFor ?project .
 
 } WHERE {
 
-    _:x oaf:project ?project .
-    
+    ?x oaf:project ?project .
+    BIND(IRI(CONCAT(STR(?project), "-grant")) AS ?grant)
+
     OPTIONAL {
 	# Not all projects are guaranteed to have an identifier.
 		?project ingest:code ?project_id .

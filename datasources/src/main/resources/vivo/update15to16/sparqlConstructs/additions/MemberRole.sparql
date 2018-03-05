@@ -3,12 +3,13 @@ PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 
 CONSTRUCT {
-    ?person <http://purl.obolibrary.org/obo/RO_0000053> _:memberRole .
-    _:memberRole <http://purl.obolibrary.org/obo/RO_0000052> ?person .
-    _:memberRole a vivo:MemberRole .
-    _:memberRole vivo:roleContributesTo ?org .
-    ?org vivo:contributingRole _:memberRole .
+    ?person <http://purl.obolibrary.org/obo/RO_0000053> ?memberRole .
+    ?memberRole <http://purl.obolibrary.org/obo/RO_0000052> ?person .
+    ?memberRole a vivo:MemberRole .
+    ?memberRole vivo:roleContributesTo ?org .
+    ?org vivo:contributingRole ?memberRole .
 } WHERE {
+     BIND(IRI(CONCAT(STR(?person), "-memberRole-", STRAFTER(STR(?org), "://"))) AS ?memberRole)
      {  ?person vivo:currentMemberOf ?org }
        UNION 
      { ?org vivo:hasCurrentMember ?person 

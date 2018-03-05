@@ -8,13 +8,13 @@ PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
 
 CONSTRUCT {
 
-    ?pers obo:ARG_2000028 _:vcard .
+    ?pers obo:ARG_2000028 ?vcard .
     
-    _:vcard a vcard:Individual .
-    _:vcard vcard:hasName _:name .
-    _:name a vcard:Name .
-    _:name vcard:familyName ?lastName .
-    _:name vcard:givenName ?firstName .
+    ?vcard a vcard:Individual .
+    ?vcard vcard:hasName ?name .
+    ?name a vcard:Name .
+    ?name vcard:familyName ?lastName .
+    ?name vcard:givenName ?firstName .
     
 } WHERE {
 
@@ -23,4 +23,7 @@ CONSTRUCT {
 
     BIND( STRBEFORE( ?fullname, "," ) as ?lastName )
     BIND( STRAFTER( ?fullname, ", " ) as ?firstName )
+
+    BIND(IRI(CONCAT(STR(?pers), "-vcard")) AS ?vcard)
+    BIND(IRI(CONCAT(STR(?pers), "-vcard-name")) AS ?name)
 }

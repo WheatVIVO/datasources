@@ -24,7 +24,7 @@ CONSTRUCT {
     
 } WHERE {
 
-    _:x oaf:result ?pub .
+    ?x oaf:result ?pub .
     
     ?pub ingest:title ?title .
     ?title vitro:value ?titleStr .

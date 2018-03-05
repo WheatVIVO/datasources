@@ -10,12 +10,12 @@ PREFIX obo:		<http://purl.obolibrary.org/obo/>
 CONSTRUCT {
 
 	# entity "has contact info" 
-    ?pub obo:ARG_2000028 _:vcard .
+    ?pub obo:ARG_2000028 ?vcard .
 
-    _:vcard vcard:hasURL _:url .
-    _:url a vcard:URL .
-    _:url vcard:url ?pubUrl .
-    _:url rdfs:label ?pubUrlStr .
+    ?vcard vcard:hasURL ?url .
+    ?url a vcard:URL .
+    ?url vcard:url ?pubUrl .
+    ?url rdfs:label ?pubUrlStr .
 
 } WHERE {
 
@@ -26,4 +26,6 @@ CONSTRUCT {
     ?res ingest:url ?pubUrlStr .
     
     BIND ( xsd:anyURI( ?pubUrlStr ) AS ?pubUrl )
+    BIND(IRI(CONCAT(STR(?pub), "-vcard")) AS ?vcard)
+    BIND(IRI(CONCAT(STR(?pub), "-vcard-url")) AS ?vcard)
 }

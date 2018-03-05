@@ -3,14 +3,15 @@ PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 
 CONSTRUCT {
-    ?agent <http://purl.obolibrary.org/obo/RO_0000053> _:adminRole .
-    _:adminRole a vivo:AdministratorRole .
-    _:adminRole <http://purl.obolibrary.org/obo/RO_0000052> ?agent .
-    _:adminRole vivo:relatedBy ?grant .
-    ?grant vivo:relates _:adminRole .
+    ?agent <http://purl.obolibrary.org/obo/RO_0000053> ?adminRole .
+    ?adminRole a vivo:AdministratorRole .
+    ?adminRole <http://purl.obolibrary.org/obo/RO_0000052> ?agent .
+    ?adminRole vivo:relatedBy ?grant .
+    ?grant vivo:relates ?adminRole .
     ?grant vivo:relates ?agent .
     ?agent vivo:relatedBy ?grant .
 } WHERE {
+    BIND(IRI(CONCAT(STR(?grant), "-adminRole-", STRAFTER(STR(?agent), "://"))) AS ?adminRole)
     { ?agent vivo:administers ?grant }
       UNION
     { ?grant vivo:administeredBy ?agent 

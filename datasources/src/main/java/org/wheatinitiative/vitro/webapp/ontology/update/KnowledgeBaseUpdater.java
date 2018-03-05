@@ -154,7 +154,12 @@ public class KnowledgeBaseUpdater {
                 } catch (QueryParseException e) {
                     // we don't really know anymore what might be a directory
                     log.info("Skipping SPARQL file " + sparqlFile);
-                    log.debug(e, e);
+                    if(sparqlFile.endsWith(".rq") || sparqlFile.endsWith(".sparql")) {
+                        log.error(e, e);    
+                    } else {
+                        log.debug(e, e);
+                    }
+                    
                 }
                 
                 long num = anonModel.size();

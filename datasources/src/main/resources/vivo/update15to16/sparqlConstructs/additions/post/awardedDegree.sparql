@@ -3,15 +3,15 @@ PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 
 CONSTRUCT {
-    ?educationalProcess <http://purl.obolibrary.org/obo/RO_0002234>  _:awardedDegree .
-    _:awardedDegree <http://purl.obolibrary.org/obo/RO_0002353> ?educationalProcess .
-    _:awardedDegree a vivo:AwardedDegree .
-    _:awardedDegree vivo:relates ?degree .
-    ?degree vivo:relatedBy _:awardedDegree .
-    _:awardedDegree vivo:relates ?person .
-    ?person vivo:relatedBy _:awardedDegree .
-    _:awardedDegree vivo:assignedBy ?org .
-    ?org vivo:assigns _:awardedDegree .
+    ?educationalProcess <http://purl.obolibrary.org/obo/RO_0002234>  ?awardedDegree .
+    ?awardedDegree <http://purl.obolibrary.org/obo/RO_0002353> ?educationalProcess .
+    ?awardedDegree a vivo:AwardedDegree .
+    ?awardedDegree vivo:relates ?degree .
+    ?degree vivo:relatedBy ?awardedDegree .
+    ?awardedDegree vivo:relates ?person .
+    ?person vivo:relatedBy ?awardedDegree .
+    ?awardedDegree vivo:assignedBy ?org .
+    ?org vivo:assigns ?awardedDegree .
 } WHERE {
     ?person <http://purl.obolibrary.org/obo/RO_0000056> ?educationalProcess .
     ?person a foaf:Person .
@@ -26,4 +26,5 @@ CONSTRUCT {
         ?educationalProcess <http://purl.obolibrary.org/obo/RO_0002234>  ?awardedDegreeNode .
         ?person vivo:relatedBy ?awardedDegreeNode .
     }
+    BIND(IRI(CONCAT(STR(?educationalProcess), "-awardedDegree")) AS ?awardedDegree)
 }
