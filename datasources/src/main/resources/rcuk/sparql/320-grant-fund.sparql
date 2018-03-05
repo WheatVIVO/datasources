@@ -33,11 +33,11 @@ CONSTRUCT {
     ?dti vivo:start ?dtistart .
     ?dtistart a vivo:DateTimeValue .
     ?dtistart vivo:dateTime ?start .
-    ?dtistart vivo:dateTimePrecision vivo:yearMonthPrecision .
+    ?dtistart vivo:dateTimePrecision vivo:yearMonthDayPrecision .
     ?dti vivo:end ?dtiend .
     ?dtiend a vivo:DateTimeValue .
     ?dtiend vivo:dateTime ?end .
-    ?dtiend vivo:dateTimePrecision vivo:yearMonthPrecision .
+    ?dtiend vivo:dateTimePrecision vivo:yearMonthDayPrecision .
     ?fundingOrg a vivo:FundingOrganization .
     ?grant vivo:assignedBy ?fundingOrg .
     ?fundingOrg vivo:assigns ?grant .
@@ -48,9 +48,9 @@ CONSTRUCT {
     ?links rcuk:link ?link .
     ?link rcuk:rel "FUND" .
     ?link rcuk:start ?rcukStart .
-    BIND(xsd:dateTime(?rcukStart) AS ?start)
+    BIND(xsd:dateTime(CONCAT(STRBEFORE(?rcukStart, "T"), "T00:00:00Z")) AS ?start)
     ?link rcuk:end ?rcukEnd .
-    BIND(xsd:dateTime(?rcukEnd) AS ?end)
+    BIND(xsd:dateTime(CONCAT(STRBEFORE(?rcukEnd, "T"), "T00:00:00Z")) AS ?end)
     ?grant vivo:fundingVehicleFor ?project .
     ?link vivo:relates ?fund .
     ?funderRelationship vivo:relates ?fund .

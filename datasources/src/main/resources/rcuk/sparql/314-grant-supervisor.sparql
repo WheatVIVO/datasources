@@ -28,8 +28,8 @@ PREFIX rcukpj:   <http://gtr.rcuk.ac.uk/gtr/api/project/>
 CONSTRUCT {
     ?grant vivo:relates ?person .
     ?grant vivo:relates ?role .
-    # not perfect mapping in core: using AdvisorRole because no SupervisorRole
-    ?role a vivo:AdvisorRole . 
+    # not perfect mapping in core: using LeaderRole because no SupervisorRole
+    ?role a vivo:LeaderRole . 
     ?role obo:RO_0000052 ?person .
     ?role obo:BFO_0000054 ?project .
 } WHERE {

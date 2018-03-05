@@ -39,5 +39,5 @@ CONSTRUCT {
     ?grant vivo:fundingVehicleFor ?project .
     ?link vivo:relates ?person .
     FILTER NOT EXISTS { ?person a vivo:Project }
-    BIND(IRI(CONCAT(STR(?project), "-copi-", STRAFTER(STR(?person), "/api/"))) AS ?role)
+    BIND(IRI(CONCAT(STR(?project), "-researcher-", STRAFTER(STR(?person), "/api/"))) AS ?role)
 }
