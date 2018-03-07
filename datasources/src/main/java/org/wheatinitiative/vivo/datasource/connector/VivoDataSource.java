@@ -302,18 +302,18 @@ public class VivoDataSource extends ConnectorDataSource {
         }
 
         public Model next() {
-            log.info("*********************************************** NEXT **");
+            log.debug("*********************************************** NEXT **");
             String uri = searchResultIterator.next();
             Model uriModel = (fetchLOD(uri));
             if (isDocument(uri, uriModel)) {
-               log.info("Adding persons to document");                
+               log.debug("Adding persons to document");                
                 Model authorsModel = addRelatedResources(fetchRelatedResources(
                         uriModel, VivoVocabulary.AUTHORSHIP), 
                         VivoVocabulary.PERSON);
                 authorsModel.add(fetchPersonPubsAndAffiliations(authorsModel));
                 uriModel.add(authorsModel);
             } else if(isProject(uri, uriModel) || isGrant(uri, uriModel)) {
-                log.info("Adding stuff to grant/project.");
+                log.debug("Adding stuff to grant/project.");
                 // get persons related to grants/projects
                 Model roleModel = fetchRelatedResources(uriModel,
                         VivoVocabulary.ROLE);
@@ -328,26 +328,26 @@ public class VivoDataSource extends ConnectorDataSource {
                 uriModel.add(relevantPersonModel);
                 uriModel.add(relevantOrganizationModel);
             }
-            log.info("Adding date/time intervals");
+            log.debug("Adding date/time intervals");
             uriModel.add(addRelatedResources(fetchRelatedResources(
                     uriModel, VivoVocabulary.DATETIME_INTERVAL)));            
             // add any DateTimeValues
-            log.info("Adding date/time values");
+            log.debug("Adding date/time values");
             uriModel.add(addRelatedResources(
                     uriModel, VivoVocabulary.DATETIME_VALUE));            
             // add any skos:Concepts
-            log.info("Adding concepts");
+            log.debug("Adding concepts");
             uriModel.add(fetchRelatedResources(
                     uriModel, VivoVocabulary.CONCEPT));
             // add any Journals
-            log.info("Adding journals");
+            log.debug("Adding journals");
             uriModel.add(fetchRelatedResources(
                     uriModel, VivoVocabulary.JOURNAL));
             // get any vCards we can
-            log.info("Adding vcards");
+            log.debug("Adding vcards");
             uriModel.add(addRelatedResources(fetchRelatedResources(
                     uriModel, VivoVocabulary.VCARD_KIND)));
-            log.info("Adding addresses");
+            log.debug("Adding addresses");
             // any pre-ISF addresses we can
             uriModel.add(addRelatedResources(fetchRelatedResources(
                     uriModel, VivoVocabulary.OLD_ADDRESS)));
@@ -358,7 +358,7 @@ public class VivoDataSource extends ConnectorDataSource {
 //            log.info("Adding orgs");
 //            uriModel.add(fetchRelatedResources(uriModel, 
 //                    VivoVocabulary.ORGANIZATION));
-            log.info("Adding ancestry");
+            log.debug("Adding ancestry");
             uriModel.add(organizationAncestry(uriModel));
             return uriModel;
         }
@@ -546,7 +546,7 @@ public class VivoDataSource extends ConnectorDataSource {
                 }
             }
             if(missingTypes.size() > 0) {
-                log.info("Adding " + missingTypes.size() + " missing type statements");
+                log.debug("Adding " + missingTypes.size() + " missing type statements");
             }
             return missingTypes;
         }
@@ -608,15 +608,16 @@ public class VivoDataSource extends ConnectorDataSource {
                 }
             }
             if(related.isEmpty()) {
-                // TODO change log level
                 if(type != null) {
-                    log.info("Found no type " + type.getURI());
+                    log.debug("Found no type " + type.getURI());
                 } else {
-                    log.info("Found no related resources ");
+                    log.debug("Found no related resources ");
                 }
-                StringWriter sw = new StringWriter();
-                model.write(sw, "TTL");
-                log.info("... in model " + sw.toString());
+                if(log.isDebugEnabled()) {
+                    StringWriter sw = new StringWriter();
+                    model.write(sw, "TTL");
+                    log.debug("... in model " + sw.toString());
+                }
             }
             return related;
         }
