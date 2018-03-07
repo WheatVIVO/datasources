@@ -58,6 +58,10 @@ public class VivoVocabulary {
             VIVO + "relates");
     public static final Property RELATEDBY = ResourceFactory.createProperty(
             VIVO + "relatedBy");
+    public static final Property REALIZED_IN = ResourceFactory.createProperty(
+            OBO + "BFO_0000054");
+    public static final Property REALIZES = ResourceFactory.createProperty(
+            OBO + "BFO_0000055");
     public static final Property PART_OF = ResourceFactory.createProperty(
             OBO + "BFO_0000050");
     public static final Property HAS_PART = ResourceFactory.createProperty(
