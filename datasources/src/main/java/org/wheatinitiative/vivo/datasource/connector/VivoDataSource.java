@@ -2,6 +2,7 @@ package org.wheatinitiative.vivo.datasource.connector;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -27,6 +28,10 @@ import org.wheatinitiative.vivo.datasource.util.xml.XmlToRdf;
 
 import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.ontology.OntModelSpec;
+import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.query.QueryExecutionFactory;
+import com.hp.hpl.jena.query.QuerySolution;
+import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.NodeIterator;
@@ -279,6 +284,7 @@ public class VivoDataSource extends ConnectorDataSource {
         
         private Set<String> retrievedURIs = new HashSet<String>();
         private Map<String, Model> lodModelCache = new HashMap<String, Model>();
+        private Map<String, Model> resourceTypeCache = new HashMap<String, Model>();
         
         public VivoModelIterator() throws IOException, URISyntaxException {
             for (String filterTerm : getConfiguration().getQueryTerms()) {
@@ -462,6 +468,7 @@ public class VivoDataSource extends ConnectorDataSource {
                 retrievedURIs.add(uri);
                 try {
                     lodModel.read(uri);
+                    lodModel.add(getMissingTypes(lodModel));
                 } catch (RiotNotFoundException e) {
                     log.warn("Linked data resource not found: " + uri);
                     tryAlternative(uri, lodModel);
@@ -483,6 +490,65 @@ public class VivoDataSource extends ConnectorDataSource {
                 }            
             }   
             return lodModel;
+        }
+        
+        /*
+         * The VIVO connector relies on having the types of related individuals
+         * in object returned with the linked data request for a given subject.
+         * This is not (necessarily) the case with pre-1.6 VIVOs.  So, to be 
+         * sure, we will look for any resources in object position (that are 
+         * not the object of rdf:type), issue a request for those, and add any
+         * triples with the predicate rdf:type to the original model.
+         */
+        private Model getMissingTypes(Model lodModel) {
+            Model missingTypes = ModelFactory.createDefaultModel();
+            String query = "PREFIX rdf: <" + RDF.getURI() + "> \n" +
+                           "SELECT DISTINCT ?o WHERE { \n" +
+                           "  ?s ?p ?o . \n" +
+                           "  FILTER(isURI(?o)) \n" +
+                           "  FILTER(?p != rdf:type) \n" +
+                           "  FILTER NOT EXISTS { \n" +
+                           "    ?o a ?something \n" +
+                           "  } \n" +
+                           "} \n";
+            QueryExecution qe = QueryExecutionFactory.create(query, lodModel);
+            try {
+                ResultSet rs = qe.execSelect();
+                while(rs.hasNext()) {
+                    QuerySolution qsoln = rs.next();
+                    Resource res = qsoln.getResource("o");
+                    String uri = res.getURI();
+                    Model tmp = ModelFactory.createDefaultModel();
+                    if(resourceTypeCache.keySet().contains(uri)) {
+                        log.info("Retrieving " + uri + " from types cache");
+                        missingTypes.add(clone(resourceTypeCache.get(uri)));
+                    } else {
+                        log.info("Reading URI " + uri);
+                        try {
+                            tmp.read(uri);
+                        } catch (Exception e) {
+                            log.info("Unable to add types for " + uri);
+                            log.debug(e, e);
+                        }
+                    }
+                    Model typesOnly = ModelFactory.createDefaultModel();
+                    StmtIterator sit = tmp.listStatements(res, RDF.type, (Resource) null);
+                    while(sit.hasNext()) {                        
+                        Statement stmt = sit.next();
+                        typesOnly.add(stmt);
+                    }
+                    resourceTypeCache.put(uri, clone(typesOnly));
+                    missingTypes.add(typesOnly);
+                }
+            } finally {
+                if(qe != null) {
+                    qe.close();
+                }
+            }
+            if(missingTypes.size() > 0) {
+                log.info("Adding " + missingTypes.size() + " missing type statements");
+            }
+            return missingTypes;
         }
         
         private void tryAlternative(String uri, Model model) {
@@ -540,6 +606,17 @@ public class VivoDataSource extends ConnectorDataSource {
                         log.error("Error retrieving " + r.getURI(), e);
                     }
                 }
+            }
+            if(related.isEmpty()) {
+                // TODO change log level
+                if(type != null) {
+                    log.info("Found no type " + type.getURI());
+                } else {
+                    log.info("Found no related resources ");
+                }
+                StringWriter sw = new StringWriter();
+                model.write(sw, "TTL");
+                log.info("... in model " + sw.toString());
             }
             return related;
         }
