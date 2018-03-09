@@ -43,7 +43,7 @@ CONSTRUCT {
         ?x vivo:assigns ?grant .
 	?grant a vivo:Grant .
     }
-    FILTER NOT EXISTS 
+    FILTER NOT EXISTS {
         ?x a foaf:Organization .
 	?grant vivo:assignedBy ?x .
 	?grant a vivo:Grant .
