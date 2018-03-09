@@ -355,9 +355,9 @@ public class VivoDataSource extends ConnectorDataSource {
             // filling the repository with confusing university-specific
             // department names
             // get orgs related to grants/projects
-//            log.info("Adding orgs");
-//            uriModel.add(fetchRelatedResources(uriModel, 
-//                    VivoVocabulary.ORGANIZATION));
+            log.info("Adding orgs");
+            uriModel.add(fetchRelatedResources(uriModel, 
+                    VivoVocabulary.ORGANIZATION));
             log.debug("Adding ancestry");
             uriModel.add(organizationAncestry(uriModel));
             return uriModel;
