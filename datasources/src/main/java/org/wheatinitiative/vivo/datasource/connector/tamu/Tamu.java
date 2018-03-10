@@ -9,7 +9,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 
 public class Tamu extends VivoDataSource implements DataSource {
 
-    private static final String TAMU_VIVO_URL = "http://scholars.library.tamu.edu/";
+    private static final String TAMU_VIVO_URL = "http://scholars.library.tamu.edu/vivo/";
    
     
     @Override 

@@ -46,7 +46,7 @@ import com.hp.hpl.jena.vocabulary.RDF;
 
 public class VivoDataSource extends ConnectorDataSource {
 
-    private static final String SEARCH_CONTROLLER = "/search";
+    private static final String SEARCH_CONTROLLER = "search";
     private static final String QUERYTEXT_PARAM = "querytext";
     private static final String XML_PARAM = "xml";
     private static final String XML_VALUE = "1";
@@ -124,7 +124,14 @@ public class VivoDataSource extends ConnectorDataSource {
             String querytext, String classgroupURI) throws URISyntaxException, 
                 IOException {
         List<String> resultUris = new ArrayList<String>();
-        URIBuilder builder = new URIBuilder(vivoUrl + SEARCH_CONTROLLER);
+        URIBuilder builder = new URIBuilder(vivoUrl);
+        if(builder.getPath() != null && builder.getPath().endsWith("/")) {
+            builder.setPath(builder.getPath() + SEARCH_CONTROLLER);    
+        } else if (builder.getPath() != null){
+            builder.setPath(builder.getPath() + "/" + SEARCH_CONTROLLER);
+        } else {
+            builder.setPath(SEARCH_CONTROLLER);
+        }        
         builder.addParameter(QUERYTEXT_PARAM, querytext);
         builder.addParameter(XML_PARAM, XML_VALUE);
         builder.addParameter(HITS_PER_PAGE_PARAM, HITS_PER_PAGE);
@@ -161,7 +168,13 @@ public class VivoDataSource extends ConnectorDataSource {
                 // VIVO seems to have a bug where the classgroup filter 
                 // isn't retained in the next page URL, so we
                 // have to put it back in (yay!)
-                URIBuilder nextPageBuilder = new URIBuilder(vivoUrl + nextPage);
+                if(!nextPage.startsWith("/")) {
+                    nextPage = "/" + nextPage;
+                }
+                URIBuilder partsGetter = new URIBuilder("http://example.com" + nextPage);
+                URIBuilder nextPageBuilder = new URIBuilder(vivoUrl);
+                nextPageBuilder.setPath(partsGetter.getPath());
+                nextPageBuilder.setParameters(partsGetter.getQueryParams());
                 if(classgroupURI != null) {
                     nextPageBuilder.addParameter(CLASSGROUP_PARAM, 
                             classgroupURI);
@@ -355,7 +368,7 @@ public class VivoDataSource extends ConnectorDataSource {
             // filling the repository with confusing university-specific
             // department names
             // get orgs related to grants/projects
-            log.info("Adding orgs");
+            log.debug("Adding orgs");
             uriModel.add(fetchRelatedResources(uriModel, 
                     VivoVocabulary.ORGANIZATION));
             log.debug("Adding ancestry");
@@ -520,14 +533,14 @@ public class VivoDataSource extends ConnectorDataSource {
                     String uri = res.getURI();
                     Model tmp = ModelFactory.createDefaultModel();
                     if(resourceTypeCache.keySet().contains(uri)) {
-                        log.info("Retrieving " + uri + " from types cache");
+                        log.debug("Retrieving " + uri + " from types cache");
                         missingTypes.add(clone(resourceTypeCache.get(uri)));
                     } else {
                         log.info("Reading URI " + uri);
                         try {
                             tmp.read(uri);
                         } catch (Exception e) {
-                            log.info("Unable to add types for " + uri);
+                            log.debug("Unable to add types for " + uri);
                             log.debug(e, e);
                         }
                     }
