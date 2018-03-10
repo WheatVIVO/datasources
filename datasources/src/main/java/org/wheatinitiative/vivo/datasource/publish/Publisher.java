@@ -410,7 +410,7 @@ public class Publisher extends DataSourceBase implements DataSource {
                 "    GRAPH ?g { ?s ?p ?o } \n" +
                 GRAPH_FILTER + 
                 "} \n";
-        ResultSet rs = getSparqlEndpoint().getResultSet(graphQuery);
+        ResultSet rs = endpoint.getResultSet(graphQuery);
         while(rs.hasNext()) {
             QuerySolution qsoln = rs.next();
             graphURIs.add(qsoln.get("g").asResource().getURI());
