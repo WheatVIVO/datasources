@@ -529,8 +529,17 @@ public class VivoDataSource extends ConnectorDataSource {
                 ResultSet rs = qe.execSelect();
                 while(rs.hasNext()) {
                     QuerySolution qsoln = rs.next();
-                    Resource res = qsoln.getResource("o");
+                    Resource res = qsoln.getResource("o");                    
                     String uri = res.getURI();
+                    try {
+                    URIBuilder builder = new URIBuilder(uri);
+                        if(!getRemoteVivoURL().contains(builder.getHost())) {
+                            // don't retrieve stuff from off site 
+                            continue;
+                        }
+                    } catch (URISyntaxException e) {
+                        continue;
+                    }
                     Model tmp = ModelFactory.createDefaultModel();
                     if(resourceTypeCache.keySet().contains(uri)) {
                         log.debug("Retrieving " + uri + " from types cache");
