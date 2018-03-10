@@ -9,12 +9,17 @@ import com.hp.hpl.jena.rdf.model.Model;
 
 public class Tamu extends VivoDataSource implements DataSource {
 
-    private static final String TAMU_VIVO_URL = "http://scholars.library.tamu.edu/vivo";
+    private static final String TAMU_VIVO_URL = "http://scholars.library.tamu.edu/";
    
     
     @Override 
     protected String getRemoteVivoURL() {
-        return TAMU_VIVO_URL;
+        String url =  this.getConfiguration().getServiceURI();
+        if(url != null) {
+            return url;
+        } else {
+            return TAMU_VIVO_URL;
+        }
     }
     
     
