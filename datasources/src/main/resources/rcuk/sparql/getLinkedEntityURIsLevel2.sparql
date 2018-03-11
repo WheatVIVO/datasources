@@ -33,4 +33,4 @@ SELECT DISTINCT ?x WHERE {
     FILTER (?xuri != <http://gtr.rcuk.ac.uk:80/gtr/api/organisations/>)
     # FILTER (!REGEX(STR(?x), "/persons/"))
     FILTER (REGEX(STR(?x), "organisations")) # only get organizations for people affiliations
-} ORDER BY ?x LIMIT 1000
+} ORDER BY ?x 

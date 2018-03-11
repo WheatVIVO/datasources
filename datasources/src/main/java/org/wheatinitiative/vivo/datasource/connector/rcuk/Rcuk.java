@@ -61,7 +61,7 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
         
     private Model updateResults(Model model, Set<String> retrievedURIs) 
             throws IOException, InterruptedException {
-        model = pruneRedundantResources(model, retrievedURIs);
+        //model = pruneRedundantResources(model, retrievedURIs);
         model = addLinkedEntities(model, retrievedURIs);
         model = addSecondLevelLinkedEntities(model, retrievedURIs);
         model = mapToVIVO(model);
@@ -239,6 +239,8 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
         for (String uri : linkedURIs) {
             try {
                 if(retrievedURIs.contains(uri)) {
+                    // add dummy type to prevent the pruner from pruning this
+                    m.add(m.getResource(uri), RDF.type, m.getResource("rcuk:retrieved"));
                     log.info("Skipping already-retrieved resource " + uri);
                     continue;
                 }
