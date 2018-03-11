@@ -80,7 +80,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         log.info("Getting graph preference list");
         List<String> graphURIPreferenceList = getGraphURIPreferenceList(
                 sourceEndpoint);
-        log.debug("Graph URI preference list: " + graphURIPreferenceList);
+        log.info("Graph URI preference list: " + graphURIPreferenceList);
         //OntModel sameAsModel = getSameAsModel(sourceEndpoint);
         log.info("Starting to publish");        
         // iterate through data source graphs in order of priority
@@ -90,14 +90,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         for(String graphURI : graphURIPreferenceList) {
             if(graphURI == null) {
                 continue;
-            }
-            List<String> sourceGraphURIs = this.getGraphsWithBaseURI(graphURI, sourceEndpoint);
-            if(sourceGraphURIs.size() == 0) {
-                continue;
-            }
-            Collections.sort(sourceGraphURIs);
-            String lastestVersionURI = sourceGraphURIs.get(sourceGraphURIs.size() - 1);
-            graphURI = lastestVersionURI;         
+            }                     
             IndividualURIIterator indIt = new IndividualURIIterator(
                     sourceEndpoint, graphURI);
             while(indIt.hasNext()) {
@@ -164,6 +157,13 @@ public class Publisher extends DataSourceBase implements DataSource {
                 sourceEndpoint).listDataSources()) {
             String graphURI = 
                     dataSource.getConfiguration().getResultsGraphURI();
+            List<String> sourceGraphURIs = this.getGraphsWithBaseURI(graphURI, sourceEndpoint);
+            if(sourceGraphURIs.size() == 0) {
+                continue;
+            }
+            Collections.sort(sourceGraphURIs);
+            String lastestVersionURI = sourceGraphURIs.get(sourceGraphURIs.size() - 1);
+            graphURI = lastestVersionURI;
             if(graphURI != null) {
                 graphURIPreferenceList.add(graphURI);
             } else {
