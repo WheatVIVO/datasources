@@ -34,8 +34,10 @@ import com.hp.hpl.jena.vocabulary.RDFS;
 
 public class MergeDataSource extends DataSourceBase implements DataSource {
 
-    // number of neighboring alphabetically-sorted strings to compare
-    private static final int WINDOW_SIZE = 11 * 10; 
+    // Number of neighboring alphabetically-sorted strings to compare.
+    // Will need to be roughly at least (Total persons / 26) 
+    // for accurate initial-only comparisons.
+    private static final int WINDOW_SIZE = 50 * 10; 
     
     private static final Log log = LogFactory.getLog(MergeDataSource.class);
     private static final String VIVO = "http://vivoweb.org/ontology/core#";
@@ -91,20 +93,22 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         }
         Collections.sort(mergeRules, new AffectedClassRuleComparator(getSparqlEndpoint()));        
         Map<String, Long> statistics = new HashMap<String, Long>();
-        for(MergeRule rule : mergeRules) {
-            String mergeRuleURI = rule.getURI();
-            // TODO flush to endpoint and repeat rules until quiescent?
-            log.info("Processing rule " + mergeRuleURI);                         
-            Model ruleResult = getSameAs(rule, fauxPropertyContextModel, sparqlEndpoint);
-            if(isSuspicious(ruleResult)) {
-                log.warn(mergeRuleURI + " produced a suspiciously large number (" + 
-                        ruleResult.size() + ") of triples." );
+        for(int i = 0; i <= 2; i++) {
+            for(MergeRule rule : mergeRules) {
+                String mergeRuleURI = rule.getURI();
+                // TODO flush to endpoint and repeat rules until quiescent?
+                log.info("Processing rule " + mergeRuleURI);                         
+                Model ruleResult = getSameAs(rule, fauxPropertyContextModel, sparqlEndpoint);
+                if(isSuspicious(ruleResult)) {
+                    log.warn(mergeRuleURI + " produced a suspiciously large number (" + 
+                            ruleResult.size() + ") of triples." );
+                }
+                filterObviousResults(ruleResult);
+                //result.add(ruleResult);
+                statistics.put(mergeRuleURI, ruleResult.size());
+                log.info("Rule results size: " + ruleResult.size());            
+                getSparqlEndpoint().writeModel(ruleResult, mergeRuleURI); 
             }
-            filterObviousResults(ruleResult);
-            //result.add(ruleResult);
-            statistics.put(mergeRuleURI, ruleResult.size());
-            log.info("Rule results size: " + ruleResult.size());            
-            getSparqlEndpoint().writeModel(ruleResult, mergeRuleURI); 
         }
         getSparqlEndpoint().clearGraph(getConfiguration().getResultsGraphURI()); 
         log.info("Merging relationships");
