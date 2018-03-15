@@ -15,22 +15,18 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 public class ConceptDataSource extends ConnectorDataSource implements DataSource {
 
     private static final String SPARQL_RESOURCE_DIR = "/concept/sparql/";
-    private static final String NAMESPACE_ETC = "http://vivo.wheatinitiative.org/individual/concept-";
     private static final Log log = LogFactory.getLog(ConceptDataSource.class);
     private Model result = ModelFactory.createDefaultModel();
 
     @Override
     public void runIngest() {
         log.info("Starting concept processing");
-        getSparqlEndpoint();
         List<String> queries = Arrays.asList("keywordConceptQuery.sparql");
         getSparqlEndpoint().clearGraph(this.getConfiguration().getResultsGraphURI());
         for(String query : queries) {
-            Model model = ModelFactory.createDefaultModel();
-            log.debug("Executing query " + query);
-            log.debug("Pre-query model size: " + model.size());
-            construct(SPARQL_RESOURCE_DIR + query, model, NAMESPACE_ETC);
-            log.debug("Post-query model size: " + model.size());
+            log.info("Executing query " + query);
+            Model model = getSparqlEndpoint().construct(loadQuery(SPARQL_RESOURCE_DIR + query));
+            log.info("Post-query model size: " + model.size());
             getSparqlEndpoint().writeModel(model, this.getConfiguration().getResultsGraphURI());
         }
     }

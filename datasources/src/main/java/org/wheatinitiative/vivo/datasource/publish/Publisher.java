@@ -1,6 +1,7 @@
 package org.wheatinitiative.vivo.datasource.publish;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -61,6 +62,7 @@ public class Publisher extends DataSourceBase implements DataSource {
     private static final String DATETIMEVALUE = "http://vivoweb.org/ontology/core#dateTimeValue";
     private static final String DATETIMEINTERVAL = "http://vivoweb.org/ontology/core#dateTimeInterval";
     private static final String HASCONTACTINFO = "http://purl.obolibrary.org/obo/ARG_2000028";
+    private static final String POSTMERGE_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/postmerge";
     
     private DataSourceDao dataSourceDao;
     
@@ -138,6 +140,7 @@ public class Publisher extends DataSourceBase implements DataSource {
             }
         }
         cleanUpDestination(sourceEndpoint, destinationEndpoint);
+        runPostmergeQueries(destinationEndpoint);
         log.info("ending");
     }
     
@@ -662,6 +665,24 @@ public class Publisher extends DataSourceBase implements DataSource {
             }
         }
         return sameAsURIs;        
+    }
+ 
+    protected void runPostmergeQueries(SparqlEndpoint destinationEndpoint) {
+        log.info("Starting postmerge processing");
+        List<String> queries = Arrays.asList(
+                "geoqueries.sparql",
+                "participatesIn.sparql",
+                "secondTierLocatedIn.sparql",
+                "externalToWheatPublicationsQuery.sparql",
+                "externalToWheatPeopleQuery.sparql",
+                "externalToWheatOrganizationsQuery.sparql"
+                );
+        destinationEndpoint.clearGraph(POSTMERGE_GRAPH);
+        for(String query : queries) {            
+            Model model = destinationEndpoint.construct(loadQuery("/postmerge/sparql/" + query));
+            log.info("Postmerge query " + query + " constructed " + model.size());
+            destinationEndpoint.writeModel(model, POSTMERGE_GRAPH);
+        }
     }
     
 //    /**
