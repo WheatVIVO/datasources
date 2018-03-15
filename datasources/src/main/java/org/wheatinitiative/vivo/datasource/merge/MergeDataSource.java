@@ -34,12 +34,10 @@ import com.hp.hpl.jena.vocabulary.RDFS;
 
 public class MergeDataSource extends DataSourceBase implements DataSource {
 
-    // Number of neighboring alphabetically-sorted strings to compare.
-    // Will need to be roughly at least (Total persons / 26) 
-    // for accurate initial-only comparisons.
-    private static final int WINDOW_SIZE = 50 * 10; 
-    
     private static final Log log = LogFactory.getLog(MergeDataSource.class);
+    private static final String SPARQL_RESOURCE_DIR = "/merge/sparql/";
+    // default size of window of adjacent values for fuzzy string comparisons
+    private static final int DEFAULT_WINDOW_SIZE = 100;     
     private static final String VIVO = "http://vivoweb.org/ontology/core#";
     private static final String RELATIONSHIP = VIVO + "Relationship";
     private static final String ROLE = "http://purl.obolibrary.org/obo/BFO_0000023";
@@ -79,11 +77,20 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         log.info("Starting merge " + dataSourceURI);
         Model rulesModel = retrieveMergeRulesFromEndpoint(this.getSparqlEndpoint());
         Model fauxPropertyContextModel = ModelFactory.createDefaultModel();
-        String fauxPropertyModelURI = this.getConfiguration().getServiceURI() 
-                + "fauxPropertyContexts";
+        String serviceURI = this.getConfiguration().getServiceURI(); 
+        if(serviceURI == null) {
+            throw new RuntimeException("Service URI must be set to the base" 
+                    + "URL of this adminapp installation, e.g. "
+                    + "http://localhost:8080/wheatvivo-adminapp/");
+        }
+        if(!serviceURI.endsWith("/")) {
+            serviceURI += "/";
+        }
+        String fauxPropertyModelURI = serviceURI + "fauxPropertyContexts";
         log.info("Retrieving faux property contexts from " + fauxPropertyModelURI);
         fauxPropertyContextModel.read(fauxPropertyModelURI);
         log.info(fauxPropertyContextModel.size() + " faux property context statements.");
+        int windowSize = getWindowSize(this.getSparqlEndpoint());
         addBasicSameAsAssertions(this.getSparqlEndpoint());
         log.info("Clearing previous merge state");
         List<MergeRule> mergeRules = new ArrayList<MergeRule>();
@@ -98,7 +105,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 String mergeRuleURI = rule.getURI();
                 // TODO flush to endpoint and repeat rules until quiescent?
                 log.info("Processing rule " + mergeRuleURI);                         
-                Model ruleResult = getSameAs(rule, fauxPropertyContextModel, sparqlEndpoint);
+                Model ruleResult = getSameAs(rule, fauxPropertyContextModel, 
+                        this.getSparqlEndpoint(), windowSize);
                 if(isSuspicious(ruleResult)) {
                     log.warn(mergeRuleURI + " produced a suspiciously large number (" + 
                             ruleResult.size() + ") of triples." );
@@ -110,10 +118,16 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 getSparqlEndpoint().writeModel(ruleResult, mergeRuleURI); 
             }
         }
-        getSparqlEndpoint().clearGraph(getConfiguration().getResultsGraphURI()); 
+        String resultsGraphURI = getConfiguration().getResultsGraphURI();
+        SparqlEndpoint endpoint = getSparqlEndpoint();
+        getSparqlEndpoint().clearGraph(resultsGraphURI); 
         log.info("Merging relationships");
         result.add(getRelationshipSameAs());
         log.info(result.size() + " after merged relationships");
+        Model vcardSameAs = getVcardSameAs(endpoint);
+        endpoint.writeModel(vcardSameAs, resultsGraphURI);
+        result.add(vcardSameAs);
+        result.add(getVcardPartsSameAs(endpoint));
         log.info("======== Final Results ========");
         for(String ruleURI : statistics.keySet()) {            
             log.info("Rule " + ruleURI + " added " + statistics.get(ruleURI));
@@ -182,7 +196,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     }
     
     private Model getSameAs(MergeRule rule, Model fauxPropertyContextModel, 
-            SparqlEndpoint sparqlEndpoint) {
+            SparqlEndpoint sparqlEndpoint, int windowSize) {
         Model sameAsModel = null;
         for (MergeRuleAtom atom : rule.getAtoms()) {
             log.debug("Processing atom " + atom.getMergeDataPropertyURI() + " ; " 
@@ -190,7 +204,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                     + atom.getMatchDegree());
             if(atom.getMatchDegree() < 100) {
                 sameAsModel = join(sameAsModel, getFuzzySameAs(
-                        rule, atom, fauxPropertyContextModel));
+                        rule, atom, fauxPropertyContextModel, windowSize));
                 sameAsModel = supplementFuzzySameAs(sameAsModel, sparqlEndpoint);
             } else {
                 String queryStr = null;
@@ -744,7 +758,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     }
     
     protected Model getFuzzySameAs(MergeRule rule, MergeRuleAtom atom, 
-            Model fauxPropertyContextModel) {
+            Model fauxPropertyContextModel, int windowSize) {
         Model fuzzySameAs = ModelFactory.createDefaultModel();
         String fuzzyQueryStr = getFuzzyQueryStr(
                 rule, atom, fauxPropertyContextModel);
@@ -752,14 +766,14 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         ResultSet rs = getSparqlEndpoint().getResultSet(fuzzyQueryStr);
         log.debug("Processing matches");
         LinkedList<QuerySolution> window = new LinkedList<QuerySolution>();
-        window = prepopulate(window, rs);
+        window = prepopulate(window, rs, windowSize);
         log.debug("Window prepopulated.");
         fuzzySameAs.add(getMatches(window, atom.getMatchDegree()));
         log.debug("Initial window processed");
         if(!rs.hasNext()) {
             return fuzzySameAs;
         }
-        int pos = WINDOW_SIZE / 2;
+        int pos = windowSize / 2;
         while(rs.hasNext()) {
             window.add(rs.next()); // add one
             window.poll(); // drop one
@@ -861,8 +875,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     }
     
     private LinkedList<QuerySolution> prepopulate(
-            LinkedList<QuerySolution> window, ResultSet rs) {
-        int limit = WINDOW_SIZE;
+            LinkedList<QuerySolution> window, ResultSet rs, int windowSize) {
+        int limit = windowSize;
         while(limit > 0 && rs.hasNext()) {
             window.add(rs.next());
             limit--;
@@ -980,6 +994,52 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             }
         }
         return m;
+    }
+    
+    protected Model getVcardSameAs(SparqlEndpoint endpoint) {
+        Model m = endpoint.construct(loadQuery(SPARQL_RESOURCE_DIR + "mergeVcards.rq"));
+        log.info("Constructed " + m.size() + " vcard-related sameAs triples");
+        return m;
+    }
+  
+    protected Model getVcardPartsSameAs(SparqlEndpoint endpoint) {
+        Model m = endpoint.construct(loadQuery(SPARQL_RESOURCE_DIR + "mergeVcardParts.rq"));
+        log.info("Constructed " + m.size() + " vcard-parts-related sameAs triples");
+        return m;
+    }
+  
+    /*
+     * Find the minimum size of the comparison window for fuzzy string matches.
+     * Because we will likely want to do initial-only matches on vcard:givenName,
+     * this value needs to be at least as large as the letter that begins the
+     * greatest number of vcard:givenName values.
+     */
+    protected int getWindowSize(SparqlEndpoint sparqlEndpoint) {
+        int windowSize = DEFAULT_WINDOW_SIZE;
+        for(char i = 'A'; i < 'Z'; i++) {
+            String query = "SELECT (COUNT(DISTINCT ?x) AS ?count) WHERE { \n" +
+                           "    ?x <" + VCARD + "givenName> ?value \n" +
+                           "    FILTER(REGEX(STR(?value), \"^" + i + "\", \"i\")) \n" +
+                           "} \n";
+            ResultSet rs = sparqlEndpoint.getResultSet(query);
+            while(rs.hasNext()) {
+                QuerySolution qsoln = rs.next();
+                RDFNode node = qsoln.get("count");
+                if(node.isLiteral()) {
+                    try {
+                        int count = node.asLiteral().getInt();
+                        if(count > windowSize) {
+                            windowSize = count;
+                        }
+                    } catch (Exception e) {
+                        log.error(e, e);
+                    }
+                }
+            }
+        }
+        windowSize = windowSize + 3;  // pad for any possible off-by-one errors
+        log.info("Using fuzzy sting comparison window size of " + windowSize);
+        return windowSize;
     }
     
     private class AffectedClassRuleComparator implements Comparator<MergeRule> {
