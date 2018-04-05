@@ -21,8 +21,8 @@ CONSTRUCT {
 
     ?pub a bibo:Article .
     
-    ?pub ingest:journal ?journal .
-    ?journal vitro:value ?journalName .
+    ?pub ingest:journal ?jrnl .
+    ?jrnl vitro:value ?journalName .
 
     BIND(IRI(CONCAT(STR(?pub), "-journal")) AS ?journal)
     

@@ -27,5 +27,5 @@ CONSTRUCT {
     
     BIND ( xsd:anyURI( ?pubUrlStr ) AS ?pubUrl )
     BIND(IRI(CONCAT(STR(?pub), "-vcard")) AS ?vcard)
-    BIND(IRI(CONCAT(STR(?pub), "-vcard-url")) AS ?vcard)
+    BIND(IRI(CONCAT(STR(?pub), "-vcard-url")) AS ?url)
 }
