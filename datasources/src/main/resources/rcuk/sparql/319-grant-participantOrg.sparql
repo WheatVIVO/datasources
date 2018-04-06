@@ -20,10 +20,10 @@ PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>
 PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
-PREFIX rcuk:     <http://gtr.rcuk.ac.uk/gtr/api/>
-PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
-PREFIX rcuko:    <http://gtr.rcuk.ac.uk/gtr/api/organisation/>
-PREFIX rcukpj:   <http://gtr.rcuk.ac.uk/gtr/api/project/>
+PREFIX rcuk:     <http://gtr.ukri.org/gtr/api/>
+PREFIX rcukp:    <http://gtr.ukri.org/gtr/api/person/>
+PREFIX rcuko:    <http://gtr.ukri.org/gtr/api/organisation/>
+PREFIX rcukpj:   <http://gtr.ukri.org/gtr/api/project/>
 
 CONSTRUCT {
     ?grant vivo:relates ?org .

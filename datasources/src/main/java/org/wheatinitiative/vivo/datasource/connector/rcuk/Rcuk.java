@@ -40,7 +40,7 @@ import com.hp.hpl.jena.vocabulary.RDF;
 public class Rcuk extends ConnectorDataSource implements DataSource {
 
     private static final Log log = LogFactory.getLog(Rcuk.class);
-    private static final String API_URL = "http://gtr.rcuk.ac.uk/gtr/api/";
+    private static final String API_URL = "http://gtr.ukri.org/gtr/api/";
     private static final String RCUK_TBOX_NS = API_URL;
     private static final String RCUK_ABOX_NS = API_URL + "individual/";
     private static final Property HREF = ResourceFactory.createProperty(
@@ -310,7 +310,7 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
         return m;
     }
 
-    private static final String FILTER_OUT = "gtr.rcuk.ac.uk";
+    private static final String FILTER_OUT = "gtr.ukri.org";
     private static final String FILTER_OUT_RES = "individual/n";
     
     @Override

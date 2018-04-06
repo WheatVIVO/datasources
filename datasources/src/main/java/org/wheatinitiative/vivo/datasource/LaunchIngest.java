@@ -74,7 +74,7 @@ public class LaunchIngest {
         } else if("rcuk".equals(connectorName)) {
             connector = new Rcuk();
             connector.getConfiguration().setServiceURI(
-                    "http://gtr.rcuk.ac.uk/gtr/api/");
+                    "http://gtr.ukri.org/gtr/api/");
         } else if ("prodinra".equals(connectorName)) {
             connector = new Prodinra();
             connector.getConfiguration().setServiceURI(
