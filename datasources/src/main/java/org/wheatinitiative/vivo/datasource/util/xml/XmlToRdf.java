@@ -4,6 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.text.Normalizer;
+import java.text.Normalizer.Form;
 
 import javax.xml.transform.stream.StreamSource;
 
@@ -50,8 +52,8 @@ public class XmlToRdf {
      */
     public Model toRDF(String xmlString) {
         try {
-            InputStream xmlInputStream = new ByteArrayInputStream(
-                    xmlString.getBytes("UTF-8"));
+            InputStream xmlInputStream = new ByteArrayInputStream(                    
+                    Normalizer.normalize(xmlString, Form.NFC).getBytes("UTF-8"));
             return toRDF(xmlInputStream);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);

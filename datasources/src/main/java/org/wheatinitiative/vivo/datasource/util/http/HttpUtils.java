@@ -32,6 +32,7 @@ public class HttpUtils {
     
     public String getHttpResponse(String url) throws IOException {
         HttpGet get = new HttpGet(url);
+        get.setHeader("Accept-charset", "utf-8");
         HttpResponse response;
         try {
             response = httpClient.execute(get);
