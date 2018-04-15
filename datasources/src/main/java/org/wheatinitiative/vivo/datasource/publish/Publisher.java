@@ -405,11 +405,14 @@ public class Publisher extends DataSourceBase implements DataSource {
         // after main loop, clear any destination graphs that do not 
         // exist in the source (except kb2)
         List<String> sourceGraphURIs = getGraphURIsInEndpoint(sourceEndpoint);
+        sourceGraphURIs.add(ADMINAPP_ASSERTIONS);
         List<String> destinationGraphURIs = getGraphURIsInEndpoint(destinationEndpoint);
         for(String destGraphURI : destinationGraphURIs) {
             if(!sourceGraphURIs.contains(destGraphURI)) {
-                log.info("Clearing destination graph " + destGraphURI);
-                destinationEndpoint.clearGraph(destGraphURI);                                         
+                if(!KB2.equals(destGraphURI)) {
+                    log.info("Clearing destination graph " + destGraphURI);
+                    destinationEndpoint.clearGraph(destGraphURI);
+                }
             }
         }
     }
