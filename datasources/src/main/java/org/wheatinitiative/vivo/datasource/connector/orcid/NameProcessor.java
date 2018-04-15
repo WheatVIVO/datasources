@@ -1,28 +1,13 @@
 package org.wheatinitiative.vivo.datasource.connector.orcid;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.hp.hpl.jena.rdf.model.Literal;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.hp.hpl.jena.vocabulary.RDFS;
-
 public class NameProcessor {
 
-    private static final Property GIVEN_NAME = ResourceFactory.createProperty("http://www.w3.org/2006/vcard/ns#givenName");
-    private static final Property FAMILY_NAME = ResourceFactory.createProperty("http://www.w3.org/2006/vcard/ns#familyName");
-    private static final List<Character> UPPERCASE = Arrays.asList('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z');
     private static final Log log = LogFactory.getLog(NameProcessor.class);
     
     public Name parseName(String value) {
@@ -45,8 +30,7 @@ public class NameProcessor {
         } else {
             String[] tokens = value.split(" ");
             if(isLastNamePlusInitials(tokens)) {
-                name.setFamilyName(tokens[0]);
-                name.setGivenName(concatRemaining(tokens, 1));                
+                name = setLastNamePlusInitials(name, tokens);                
             } else {
                 StringBuffer givenNameBuff = new StringBuffer();
                 for(int i = 0; i < tokens.length; i++) {
@@ -62,12 +46,29 @@ public class NameProcessor {
         return fixCase(name);
     }
     
-    private String concatRemaining(String[] tokens, int start) {
-        StringBuffer buff = new StringBuffer();
-        for(int i = start; i < tokens.length; i++) {
-            buff.append(tokens[i]);
+    private Name setLastNamePlusInitials(Name name, String[] tokens) {
+        int pos = positionOfFirstInitial(tokens);
+        if(pos == -1) {
+            pos = tokens.length - 1; // shouldn't happen
         }
-        return buff.toString();
+        StringBuffer familyNameBuff = new StringBuffer();
+        StringBuffer givenNameBuff = new StringBuffer();
+        for(int i = 0; i < tokens.length; i++) {
+            if(i < pos) {
+                if(i > 0) {
+                    familyNameBuff.append(" ");
+                }
+                familyNameBuff.append(tokens[i]);
+            } else {
+                givenNameBuff.append(tokens[i]);
+                if(i < (tokens.length - 1)) {
+                    givenNameBuff.append(" ");
+                }
+            }
+        }
+        name.setFamilyName(familyNameBuff.toString());
+        name.setGivenName(givenNameBuff.toString());
+        return name;
     }
     
     private Name fixCase(Name name) {
@@ -112,7 +113,7 @@ public class NameProcessor {
         int letterCount = 0;
         for(int i = 0; i < token.length(); i++) {
             char c = token.charAt(i);
-            if(!UPPERCASE.contains(c) && c != '.') {
+            if(!Character.isUpperCase(c) && c != '.') {
                 return false;                
             } else if (c != '.') {
                 letterCount++;
@@ -122,28 +123,55 @@ public class NameProcessor {
     }
     
     private boolean isLastNamePlusInitials(String[] tokens) {
-        if(!isFirstTokenLongest(tokens) || tokens.length < 2) {
+        if( /* !isFirstTokenLongest(tokens) || */ tokens.length < 2) {
             return false;
         }
+        if(isInitials(tokens[0])) {
+            return false;
+        }
+        boolean initialsAlreadyFound = false;
         for(int i = 1; i < tokens.length; i++) {
-            if(!isInitials(tokens[i])) {
+            boolean isInitials = isInitials(tokens[i]);
+            if(!isInitials && initialsAlreadyFound) {
                 return false;
+            } else {
+                initialsAlreadyFound = isInitials;
             }
         }
-        return true;
+        return initialsAlreadyFound;
     }
     
-    private boolean isFirstTokenLongest(String[] tokens) {
-        if(tokens.length < 2) {
-            return true;
-        }
-        int len = tokens[0].length();
-        for(int i = 1; i < tokens.length; i++) {
-            if(tokens[i].length() >= len) {
-                return false;
+    private int positionOfFirstInitial(String[] tokens) {
+        for(int i = 0; i < tokens.length; i++) {
+            if (isInitials(tokens[i])) {
+                return i;
             }
         }
-        return true;
+        return -1; // shouldn't happen
     }
+    
+//    private boolean isFirstTokenLongest(String[] tokens) {
+//        if(tokens.length < 2) {
+//            return true;
+//        }
+//        int len = tokens[0].length();
+//        for(int i = 1; i < tokens.length; i++) {
+//            if(tokens[i].length() >= len) {
+//                return false;
+//            }
+//        }
+//        return true;
+//    }
+//    
+//    private String concatRemaining(String[] tokens, int start) {
+//        StringBuffer buff = new StringBuffer();
+//        for(int i = start; i < tokens.length; i++) {
+//            buff.append(tokens[i]);
+//            if(i < (tokens.length - 1)) {
+//                buff.append(" ");
+//            }
+//        }
+//        return buff.toString();
+//    }
     
 }

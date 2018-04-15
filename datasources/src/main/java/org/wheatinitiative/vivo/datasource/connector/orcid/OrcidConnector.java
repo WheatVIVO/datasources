@@ -12,11 +12,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
@@ -59,7 +60,7 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
     private static final String VCARD = "http://www.w3.org/2006/vcard/ns#";
     private static final String GIVEN_NAME = VCARD + "givenName";
     private static final String FAMILY_NAME = VCARD + "familyName";
-    private DefaultHttpClient httpClient;
+    private HttpClient httpClient;
     private NameProcessor nameProcessor = new NameProcessor();
     
     public OrcidConnector() {
@@ -82,8 +83,9 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
             throw new RuntimeException(
                     "ORCID client ID and client secret must be specified");
         }
-        httpClient = new DefaultHttpClient();
-        httpClient.setRedirectStrategy(new LaxRedirectStrategy());
+        httpClient = HttpClients.custom()
+                .setRedirectStrategy(new LaxRedirectStrategy())
+                .build();
     }
     
     @Override
@@ -192,7 +194,7 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
                 meth.setEntity(new UrlEncodedFormEntity(postParameters));
                 HttpResponse resp = httpClient.execute(meth);
                 String accessToken = "";
-                String orcid = "";
+                //String orcid = "";
                 try {
                     int status = resp.getStatusLine().getStatusCode();
                     log.debug("Status: " + status);
@@ -204,7 +206,7 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
                     }
                     //log.info("Response from ORCID: \n" + payload);
                     JSONObject json = new JSONObject(payload);
-                    orcid = json.get("orcid").toString();
+                    //orcid = json.get("orcid").toString();
                     accessToken = json.getString("access_token");
                     //log.info("The object type for the orcid is " + orcid.getClass().getSimpleName());
                     //log.info("The ORCID iD we're dealing with is " + orcid);
