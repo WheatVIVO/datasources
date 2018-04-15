@@ -56,6 +56,8 @@ public class Publisher extends DataSourceBase implements DataSource {
             "    FILTER(!regex(str(?g),\"kb-inf\")) \n";
     private static final String KB2 = 
             "http://vitro.mannlib.cornell.edu/default/vitro-kb-2";
+    private static final String ADMINAPP_ASSERTIONS = 
+            "http://vitro.mannlib.cornell.edu/default/adminappkb2";
     // number of individuals to process before writing results
     private static final int BATCH_SIZE = 250;
     private static final int PAUSE_BETWEEN_BATCHES = 3 * 1000; // ms
@@ -156,6 +158,7 @@ public class Publisher extends DataSourceBase implements DataSource {
             SparqlEndpoint sourceEndpoint) {
         List<String> graphURIPreferenceList = new ArrayList<String>();
         graphURIPreferenceList.add(KB2);
+        graphURIPreferenceList.add(ADMINAPP_ASSERTIONS);
         for(DataSourceDescription dataSource : new DataSourceDao(
                 sourceEndpoint).listDataSources()) {
             String graphURI = 
@@ -385,11 +388,15 @@ public class Publisher extends DataSourceBase implements DataSource {
         // need to empty the destination only of graphs that exist in BOTH
         // the source and the destination
         List<String> sourceGraphURIs = getGraphURIsInEndpoint(sourceEndpoint);
+        // KB2 will get rewritten as ADMINAPP_ASSERTIONS, thus pretend it exists
+        sourceGraphURIs.add(ADMINAPP_ASSERTIONS);
         List<String> destinationGraphURIs = getGraphURIsInEndpoint(destinationEndpoint);
         for(String destGraphURI : destinationGraphURIs) {
             if(sourceGraphURIs.contains(destGraphURI)) {
-                log.info("Clearing destination graph " + destGraphURI);
-                destinationEndpoint.clearGraph(destGraphURI);                                         
+                if(!KB2.equals(destGraphURI)) {
+                    log.info("Clearing destination graph " + destGraphURI);
+                    destinationEndpoint.clearGraph(destGraphURI);                                         
+                }
             }
         }
     }
@@ -520,6 +527,9 @@ public class Publisher extends DataSourceBase implements DataSource {
         while(quadResults.hasNext()) {
             QuerySolution quadSoln = quadResults.next();            
             String graphURI = quadSoln.get("g").asResource().getURI();
+            if(KB2.equals(graphURI)) {
+                graphURI = ADMINAPP_ASSERTIONS;
+            }
             String subjectURI = quadSoln.get("s").asResource().getURI();
             String predicateURI = quadSoln.get("p").asResource().getURI();
             RDFNode object = quadSoln.get("o");
