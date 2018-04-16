@@ -70,6 +70,11 @@ public class Usda extends VivoDataSource implements DataSource {
         model = model.add(additions);
         return model;
     }
+
+    @Override
+    protected String getPrefixName() {
+        return "usda";
+    }
     
     
 }

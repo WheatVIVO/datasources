@@ -324,4 +324,9 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
         return model;
     }
 
+    @Override
+    protected String getPrefixName() {
+        return "orcid";
+    }
+
 }

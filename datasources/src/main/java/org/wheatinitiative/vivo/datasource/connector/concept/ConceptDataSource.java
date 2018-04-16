@@ -51,4 +51,9 @@ public class ConceptDataSource extends ConnectorDataSource implements DataSource
         return model;
     }
 
+    @Override
+    protected String getPrefixName() {
+        return "concept";
+    }
+
 }

@@ -16,6 +16,8 @@ import org.wheatinitiative.vivo.datasource.DataSourceDescription;
 
 public abstract class DataSourceService extends HttpServlet {
     
+    private static final long serialVersionUID = 1L;
+
     private static final Log log = LogFactory.getLog(DataSourceService.class);
     
     protected volatile WeakReference<Thread> workerThread;

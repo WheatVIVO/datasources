@@ -29,5 +29,11 @@ public class Tamu extends VivoDataSource implements DataSource {
     	// VIVO Tamu has the latest ontology version.
     	return model;
     }
+
+
+    @Override
+    protected String getPrefixName() {
+        return "tamu";
+    }
     
 }

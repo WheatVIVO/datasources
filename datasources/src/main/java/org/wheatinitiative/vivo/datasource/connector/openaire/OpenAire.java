@@ -583,5 +583,11 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
         
         return subgraph;
     }
+
+
+    @Override
+    protected String getPrefixName() {
+        return "openaire";
+    }
     
 }

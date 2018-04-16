@@ -423,5 +423,10 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
         }
         
     }
+
+    @Override
+    protected String getPrefixName() {
+        return "rcuk";
+    }
     
 }

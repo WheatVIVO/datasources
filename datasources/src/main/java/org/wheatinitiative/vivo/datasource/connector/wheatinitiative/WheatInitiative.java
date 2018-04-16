@@ -87,5 +87,10 @@ public class WheatInitiative extends CsvDataSource implements DataSource {
         // nothing to do, for now
         return model;
     }
+
+    @Override
+    protected String getPrefixName() {
+        return "wi";
+    }
     
 }

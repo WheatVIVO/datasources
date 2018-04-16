@@ -91,6 +91,9 @@ public abstract class ConnectorDataSource extends DataSourceBase {
                 log.debug(model.size() + " statements before filtering");
                 model = filter(model);
                 log.debug(model.size() + " statements after filtering");
+                // TODO
+                //String defaultNamespace = getDefaultNamespace(this.getConfiguration());
+                //model = rewriteUris(defaultNamespace, getPrefixName());
                 if(activeEndpointForResults()) {
                     buffer.add(model);                
                     if(count % getBatchSize() == 0 || !it.hasNext() 
@@ -146,5 +149,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
         }
         return m;
     }
+    
+    protected abstract String getPrefixName();
     
 }

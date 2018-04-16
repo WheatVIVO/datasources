@@ -28,5 +28,11 @@ public class Florida extends VivoDataSource implements DataSource {
     	
         return model;
     }
+
+
+    @Override
+    protected String getPrefixName() {
+        return "ufl";
+    }
     
 }

@@ -370,5 +370,10 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
             throw new RuntimeException(e);
         }
     }
+
+    @Override
+    protected String getPrefixName() {
+        return "prodinra";
+    }
    
 }

@@ -373,8 +373,15 @@ public class Cordis extends ConnectorDataSource implements DataSource {
 	 */
 	@Override
 	protected Model filter(Model model) {
+	    // TODO possibly need to filter grants that don't match the initial query?
 		// No filtering is needed, since we retrieve already-filtered data.
 		return model;
 	}
+
+
+    @Override
+    protected String getPrefixName() {
+        return "cordis";
+    }
 	
 }

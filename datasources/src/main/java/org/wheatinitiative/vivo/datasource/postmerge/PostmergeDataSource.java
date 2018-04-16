@@ -62,4 +62,9 @@ public class PostmergeDataSource extends ConnectorDataSource implements DataSour
         return model;
     }
 
+    @Override
+    protected String getPrefixName() {
+        return "postmerge"; 
+    }
+
 }

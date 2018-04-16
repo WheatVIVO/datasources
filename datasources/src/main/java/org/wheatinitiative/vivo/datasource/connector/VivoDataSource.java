@@ -44,7 +44,7 @@ import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.vocabulary.OWL;
 import com.hp.hpl.jena.vocabulary.RDF;
 
-public class VivoDataSource extends ConnectorDataSource {
+public abstract class VivoDataSource extends ConnectorDataSource {
 
     private static final String SEARCH_CONTROLLER = "search";
     private static final String QUERYTEXT_PARAM = "querytext";

@@ -59,5 +59,11 @@ public class Cornell extends VivoDataSource implements DataSource {
     	
     	return model;
     }
+
+
+    @Override
+    protected String getPrefixName() {
+        return "cornell";
+    }
     
 }
