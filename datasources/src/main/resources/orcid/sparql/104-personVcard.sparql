@@ -24,6 +24,10 @@ PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX rcuk:     <http://gtr.rcuk.ac.uk/gtr/api/>
 PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
+PREFIX orcidwork:   <http://www.orcid.org/ns/work/>
+PREFIX orcidcommon: <http://www.orcid.org/ns/common/>
+PREFIX orcidrecord: <http://www.orcid.org/ns/record/>
+PREFIX orcidperson: <http://www.orcid.org/ns/person/>
 
 CONSTRUCT {
     ?x obo:ARG_2000028 ?vcard .

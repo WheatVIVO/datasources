@@ -108,5 +108,17 @@ public class NameProcessorTest extends TestCase {
         name = proc.parseName("Van Cleef MX");
         assertEquals("Van Cleef", name.getFamilyName());
         assertEquals("MX", name.getGivenName());
+        
+        name = proc.parseName("R.P. Gnanamalar .");
+        assertEquals("Gnanamalar", name.getFamilyName());
+        assertEquals("R.P.", name.getGivenName());
+        
+        name = proc.parseName("(Pat) Heslop-Harrison, J.S.");
+        assertEquals("Heslop-Harrison", name.getFamilyName());
+        assertEquals("J.S.", name.getGivenName());
+        
+        name = proc.parseName("Kenji Komatsu");
+        assertEquals("Komatsu", name.getFamilyName());
+        assertEquals("Kenji", name.getGivenName());
     }
 }

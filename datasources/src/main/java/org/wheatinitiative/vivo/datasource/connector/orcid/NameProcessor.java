@@ -1,6 +1,6 @@
 package org.wheatinitiative.vivo.datasource.connector.orcid;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -11,6 +11,7 @@ public class NameProcessor {
     private static final Log log = LogFactory.getLog(NameProcessor.class);
     
     public Name parseName(String value) {
+        value = removeParentheses(value);
         Name name = new Name();
         value = value.trim();
         if(value.contains(",")) {
@@ -29,6 +30,7 @@ public class NameProcessor {
             return fixCase(name);
         } else {
             String[] tokens = value.split(" ");
+            tokens = filterGarbageTokens(tokens);
             if(isLastNamePlusInitials(tokens)) {
                 name = setLastNamePlusInitials(name, tokens);                
             } else {
@@ -148,6 +150,28 @@ public class NameProcessor {
             }
         }
         return -1; // shouldn't happen
+    }
+    
+    private String[] filterGarbageTokens(String[] tokens) {
+        List<String> tokenList = new ArrayList<String>();
+        for(int i = 0; i < tokens.length; i++) {
+            boolean garbage = true;
+            String token = tokens[i];
+            for(int j = 0; j < token.length(); j++) {
+                char c = token.charAt(j);
+                if(Character.isLetter(c)) {
+                    garbage = false;
+                }
+            }
+            if(!garbage) {
+                tokenList.add(token);
+            }
+        }
+        return tokenList.toArray(new String[0]);
+    }
+    
+    private String removeParentheses(String string) {
+        return string.replaceAll("\\s*\\([^\\)]*\\)\\s*", " ");
     }
     
 //    private boolean isFirstTokenLongest(String[] tokens) {
