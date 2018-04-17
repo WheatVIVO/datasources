@@ -109,6 +109,8 @@ public class LaunchIngest {
             throw new RuntimeException("Connector not found: " 
                     + connectorName);
         }
+        connector.getConfiguration().getParameterMap().put(
+                "Vitro.defaultNamespace", "http://vivo.wheatinitiative.org/individual/");
         return connector;
     }
     

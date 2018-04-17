@@ -1,7 +1,8 @@
 package org.wheatinitiative.vivo.datasource.connector;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -11,19 +12,19 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wheatinitiative.vivo.datasource.DataSourceBase;
+import org.wheatinitiative.vivo.datasource.DataSourceConfiguration;
 import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
-import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
 
-import com.hp.hpl.jena.query.QuerySolution;
-import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.util.ResourceUtils;
+import com.hp.hpl.jena.vocabulary.RDF;
 
 public abstract class ConnectorDataSource extends DataSourceBase {
     
@@ -92,8 +93,10 @@ public abstract class ConnectorDataSource extends DataSourceBase {
                 model = filter(model);
                 log.debug(model.size() + " statements after filtering");
                 // TODO
-                //String defaultNamespace = getDefaultNamespace(this.getConfiguration());
-                //model = rewriteUris(defaultNamespace, getPrefixName());
+                String defaultNamespace = getDefaultNamespace(this.getConfiguration());
+                if(defaultNamespace != null && !(this instanceof VivoDataSource)) {
+                    model = rewriteUris(model, defaultNamespace, getPrefixName());
+                }
                 if(activeEndpointForResults()) {
                     buffer.add(model);                
                     if(count % getBatchSize() == 0 || !it.hasNext() 
@@ -123,6 +126,15 @@ public abstract class ConnectorDataSource extends DataSourceBase {
         }
     }
     
+    private String getDefaultNamespace(DataSourceConfiguration configuration) {
+        Object o = configuration.getParameterMap().get("Vitro.defaultNamespace");
+        if(o instanceof String) {
+            return (String) o;
+        } else {
+            return null;
+        }
+    }
+
     private boolean activeEndpointForResults() {
         return (this.getConfiguration().getEndpointParameters() != null);
     }
@@ -148,6 +160,39 @@ public abstract class ConnectorDataSource extends DataSourceBase {
                     res, namespace + localNamePrefix + idMap.get(res));
         }
         return m;
+    }
+    
+    protected Model rewriteUris(Model model, String namespace, String localNamePrefix) {
+        Model out = ModelFactory.createDefaultModel();
+        StmtIterator sit = model.listStatements();
+        while(sit.hasNext()) {
+            Statement stmt = sit.next();
+            Resource subj = rewriteResource(stmt.getSubject(), namespace, localNamePrefix);
+            RDFNode obj = stmt.getObject();
+            if( (!stmt.getPredicate().equals(RDF.type)) && (obj.isURIResource()) ) {
+                obj = rewriteResource(obj.asResource(), namespace, localNamePrefix);
+            }
+            out.add(subj, stmt.getPredicate(), obj);
+        }
+        return out;
+    }
+    
+    protected Resource rewriteResource(Resource res, String namespace, String localNamePrefix) {
+        if(!res.isURIResource()) {
+            return res;
+        }
+        if(res.getURI().startsWith(namespace)) {
+            return res;
+        }
+        try {
+            URI uri = new URI(res.getURI());
+            String newLocalName = localNamePrefix + uri.getPath();
+            newLocalName = newLocalName.replaceAll("/",  "-");
+            return ResourceFactory.createResource(namespace + newLocalName);
+        } catch (URISyntaxException e) {
+            log.debug(e, e);
+            return res;
+        }                
     }
     
     protected abstract String getPrefixName();
