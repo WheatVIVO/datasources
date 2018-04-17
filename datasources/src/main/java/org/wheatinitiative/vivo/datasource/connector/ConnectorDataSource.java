@@ -68,7 +68,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
     protected abstract Model mapToVIVO(Model model);
  
     @Override
-    public void runIngest() {
+    public void runIngest() throws InterruptedException {
         Date currentDateTime = Calendar.getInstance().getTime();
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
         String graphTimeSuffix = "-" + df.format(currentDateTime);
@@ -79,28 +79,45 @@ public abstract class ConnectorDataSource extends DataSourceBase {
             result = ModelFactory.createDefaultModel();
         }
         IteratorWithSize<Model> it = getSourceModelIterator();
-        if(it.size() != null) {
+        Integer totalRecords = it.size();
+        if(totalRecords != null) {
+            this.getStatus().setTotalRecords(totalRecords);
             log.info(it.size() + " total records");
         }        
         Model buffer = ModelFactory.createDefaultModel();
+        this.getStatus().setMessage("harvesting records");
+        boolean dataWrittenToEndpoint = false;
         int count = 0;
         while(it.hasNext() && count < this.getConfiguration().getLimit()) {
             try {
-                count++;
-                // TODO this.getStatus().set
+                if(this.getStatus().isStopRequested()) {
+                    throw new InterruptedException();
+                }
+                count++;                
                 Model model = mapToVIVO(it.next());
                 log.debug(model.size() + " statements before filtering");
+                if(this.getStatus().isStopRequested()) {
+                    throw new InterruptedException();
+                }
                 model = filter(model);
                 log.debug(model.size() + " statements after filtering");
-                // TODO
+                if(this.getStatus().isStopRequested()) {
+                    throw new InterruptedException();
+                }
                 String defaultNamespace = getDefaultNamespace(this.getConfiguration());
                 if(defaultNamespace != null && !(this instanceof VivoDataSource)) {
                     model = rewriteUris(model, defaultNamespace, getPrefixName());
+                }
+                if(this.getStatus().isStopRequested()) {
+                    throw new InterruptedException();
                 }
                 if(activeEndpointForResults()) {
                     buffer.add(model);                
                     if(count % getBatchSize() == 0 || !it.hasNext() 
                             || count == this.getConfiguration().getLimit()) {
+                        if(buffer.size() > 0) {
+                            dataWrittenToEndpoint = true;
+                        }
                         log.debug("Adding " + buffer.size() + " triples to endpoint");
                         addToEndpoint(buffer, graphURI + graphTimeSuffix);
                         buffer.removeAll();
@@ -108,15 +125,33 @@ public abstract class ConnectorDataSource extends DataSourceBase {
                 } else {
                     result.add(model);
                 }
+                this.getStatus().setProcessedRecords(count);                
+                if(totalRecords != null && totalRecords > 0) {
+                    this.getStatus().setCompletionPercentage((count / totalRecords) * 100);
+                }
+            } catch (InterruptedException e) {
+                throw(e); // this is the one exception we want to throw 
             } catch (Exception e) {
                 log.error(e, e);
                 this.getStatus().setErrorRecords(this.getStatus().getErrorRecords() + 1);
             }
         }
-        if(activeEndpointForResults()) {
+        boolean skipClearingOldData = false;
+        if(!dataWrittenToEndpoint) {
+            if(totalRecords == null) {
+                skipClearingOldData = true;
+            } else if (this.getStatus().getErrorRecords() > (totalRecords / 5)) {
+                skipClearingOldData = true;
+            }
+        }
+        if(activeEndpointForResults() && !skipClearingOldData) {
+            this.getStatus().setMessage("removing old data");
             List<String> allVersionsOfSource = getGraphsWithBaseURI(graphURI, 
                     getSparqlEndpoint());
             for(String version : allVersionsOfSource) {
+                if(this.getStatus().isStopRequested()) {
+                    throw new InterruptedException();
+                }
                 if(version.startsWith(graphURI) 
                         && !version.endsWith(graphTimeSuffix)) {
                     log.info("Clearing graph " + version);
@@ -181,7 +216,8 @@ public abstract class ConnectorDataSource extends DataSourceBase {
         if(!res.isURIResource()) {
             return res;
         }
-        if(res.getURI().startsWith(namespace)) {
+        // don't rewrite ORCID iDs or resources that are already in the default namespace
+        if(res.getURI().startsWith(namespace) || res.getURI().contains("orcid.org")) {
             return res;
         }
         try {

@@ -2,13 +2,14 @@ package org.wheatinitiative.vivo.datasource;
 
 public class DataSourceStatus {
 
-    private boolean ok;
+    private boolean ok = true;
     private String message;
     private boolean isRunning;
     private int completionPercentage;
     private int totalRecords;
     private int processedRecords;
     private int errorRecords;
+    private boolean stopRequested;
 
     public boolean isStatusOk() {
         return this.ok;
@@ -64,6 +65,14 @@ public class DataSourceStatus {
 
     public void setErrorRecords(int errorRecords) {
         this.errorRecords = errorRecords;
+    }
+
+    public boolean isStopRequested() {
+        return stopRequested;
+    }
+
+    public void setStopRequested(boolean stopRequested) {
+        this.stopRequested = stopRequested;
     }             
 
 }

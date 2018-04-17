@@ -143,16 +143,19 @@ public abstract class DataSourceService extends HttpServlet {
     }
     
     protected void stopWork(DataSource dataSource) {
-        if(workerThread == null || workerThread.get() == null 
-                && workerThread.get().isAlive()) {
-            // already stopped
-        } else {
-            try {
-                workerThread.get().interrupt();
-            } catch (NullPointerException e) {
-                // nothing to do; thread terminated while we weren't looking.
-            }
-        }
+        dataSource.getStatus().setStopRequested(true);
+        // interrupts are problematic because e.g. Riot catches them and
+        // rethrows a different exception
+//        if(workerThread == null || workerThread.get() == null 
+//                && workerThread.get().isAlive()) {
+//            // already stopped
+//        } else {
+//            try {
+//                workerThread.get().interrupt();
+//            } catch (NullPointerException e) {
+//                // nothing to do; thread terminated while we weren't looking.
+//            }
+//        }
     }
     
     /**

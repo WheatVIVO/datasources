@@ -40,7 +40,7 @@ public abstract class DataSourceBase {
     /**
      * Top level to be overridden by subclasses
      */
-    protected abstract void runIngest();
+    protected abstract void runIngest() throws InterruptedException;
     
     public DataSourceConfiguration getConfiguration() {
         return this.configuration;
@@ -55,14 +55,16 @@ public abstract class DataSourceBase {
         return this.status;
     }
     
-    public void terminate() {
-        this.stopRequested = true;
-    }
-    
     public void run() {
         this.getStatus().setRunning(true);
         try {
             log.info("Running ingest");
+            this.getStatus().setMessage("starting ingest");
+            this.getStatus().setStatusOk(true);
+            this.getStatus().setCompletionPercentage(0);
+            this.getStatus().setErrorRecords(0);
+            this.getStatus().setProcessedRecords(0);
+            this.getStatus().setTotalRecords(0);
             runIngest();  
             if(this.getConfiguration().getEndpointParameters() != null) {
                 // Don't clear the graph if the result is empty
@@ -74,12 +76,19 @@ public abstract class DataSourceBase {
                 log.info("Not writing results to remote endpoint because " +
                          "none is specified");
             }
+            this.getStatus().setMessage("ingest complete");
+        } catch (InterruptedException e) {
+            this.getStatus().setMessage("ingest stopped");
         } catch (Exception e) {
             log.info(e, e);
+            this.getStatus().setStatusOk(false);
+            this.getStatus().setMessage(e.getMessage());
+            this.getStatus().setMessage("ingest terminated due to error");
             throw new RuntimeException(e);
         } finally {
             log.info("Finishing ingest");
             log.info(this.getStatus().getErrorRecords() + " errors");
+            this.getStatus().setStopRequested(false);
             this.getStatus().setRunning(false);
         }
     }
