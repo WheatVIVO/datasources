@@ -32,7 +32,10 @@ CONSTRUCT {
     ?x vivo:relatedBy ?authorship .
     ?authorship vivo:relates ?author .
     ?author a foaf:Person .
-    ?author vivo:authorNameAsListed ?creditName
+    ?author orcidcommon:label ?creditName .
+    # preserve the original name in a property that won't be filtered
+    # so that we can examine it if necessary
+    ?author rdfs:comment ?creditName
 } WHERE {
     ?x orcidwork:contributors ?contributors .
     ?contributors orcidwork:contributor ?contributor .
