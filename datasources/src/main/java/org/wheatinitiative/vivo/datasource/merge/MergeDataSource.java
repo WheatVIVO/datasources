@@ -321,12 +321,21 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     }
     
     private String getSingleEndedVcardNameQuery(MergeRule rule, MergeRuleAtom atom) {
-        return  "SELECT ?x ?value WHERE { \n" +
+        String queryStr = "SELECT ?x ?value WHERE { \n" +
                 "    ?x a <" + rule.getMergeClassURI() + "> . \n" +
                 "    ?x <" + HASCONTACTINFO + "> ?vcard . \n" +
-                "    ?vcard <" + VCARD + "hasName> ?name . \n" +
+                "    ?vcard <" + VCARD + "hasName> ?name . \n";
+        if((VCARD + "givenName").equals(atom.getMergeDataPropertyURI())) {
+            queryStr +=        
+                    "    ?name <" + VCARD + "familyName> ?familyNameValue . \n" +
+                    "    ?name <" + atom.getMergeDataPropertyURI() + "> ?value . \n" +
+                    "} ORDER BY ?familyNameValue ?value \n" ;
+        } else {
+            queryStr +=        
                 "    ?name <" + atom.getMergeDataPropertyURI() + "> ?value . \n" +
-                "} ORDER BY ?value \n" ;
+                "} ORDER BY ?familyNameValue ?value \n" ;
+        }
+        return queryStr;
     }
     
     private String getDataPropertySameAs(MergeRule rule, MergeRuleAtom atom) {
@@ -1065,6 +1074,10 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
      * greatest number of vcard:givenName values.
      */
     protected int getWindowSize(SparqlEndpoint sparqlEndpoint) {
+        if(true) {
+            return 100; // the rest gets expensive
+        }
+        // TODO revisit
         int windowSize = DEFAULT_WINDOW_SIZE;
         for(char i = 'A'; i < 'Z'; i++) {
             String query = "SELECT (COUNT(DISTINCT ?x) AS ?count) WHERE { \n" +
