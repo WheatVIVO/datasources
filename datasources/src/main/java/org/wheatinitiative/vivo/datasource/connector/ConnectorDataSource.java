@@ -127,7 +127,9 @@ public abstract class ConnectorDataSource extends DataSourceBase {
                 }
                 this.getStatus().setProcessedRecords(count);                
                 if(totalRecords != null && totalRecords > 0) {
-                    this.getStatus().setCompletionPercentage((count / totalRecords) * 100);
+                    float completionPercentage = ((float) count / (float) totalRecords) * 100;
+                    log.info("Completion percentage " + completionPercentage);
+                    this.getStatus().setCompletionPercentage((int) completionPercentage);
                 }
             } catch (InterruptedException e) {
                 throw(e); // this is the one exception we want to throw 
