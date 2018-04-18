@@ -23,26 +23,27 @@ PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 
 CONSTRUCT {
     ?x a <http://vivo.wheatinitiative.org/ontology/ExternalToWheat>
-}
-#SELECT (count(distinct ?x) AS ?count)
-	WHERE {
-    ?x a foaf:Organization 
-    FILTER NOT EXISTS {
-        ?x vivo:relatedBy ?position .
-        ?position a vivo:Position .
-	?position vivo:relates ?person .
-        ?person a foaf:Person .
-	FILTER NOT EXISTS {
-            ?person a <http://vivo.wheatinitiative.org/ontology/ExternalToWheat> .
-        }
+} 
+#SELECT (COUNT(DISTINCT ?x) AS ?count)
+WHERE {
+    ?x a vivo:Grant .
+    ?x rdfs:label ?label 
+  FILTER (NOT EXISTS {
+        ?x rdfs:label ?value 
+      FILTER( 
+        (regex(str(?value), "wheat", "i")) ||
+        (regex(str(?value), "tritic", "i")) ||
+        (regex(str(?value), "blé", "i")) 
+      )
     }
-    FILTER NOT EXISTS {
-        ?x obo:RO_0000053 ?role .
-        ?role obo:RO_0000052 ?activity .
-        FILTER NOT EXISTS { ?activity a <http://vivo.wheatinitiative.org/ontology/ExternalToWheat> }
+    && NOT EXISTS {
+     ?x vivo:description ?value 
+      FILTER( 
+        (regex(str(?value), "wheat", "i")) ||
+        (regex(str(?value), "tritic", "i")) ||
+        (regex(str(?value), "blé", "i")) 
+      )
     }
-    FILTER NOT EXISTS {
-        ?x obo:RO_0000056 ?activity .
-        FILTER NOT EXISTS { ?activity a <http://vivo.wheatinitiative.org/ontology/ExternalToWheat> }
-    }
+  )  
+  
 }

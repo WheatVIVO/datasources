@@ -29,6 +29,8 @@ public class PostmergeDataSource extends ConnectorDataSource implements DataSour
                 "secondTierLocatedIn.sparql",
                 "externalToWheatPublicationsQuery.sparql",
                 "externalToWheatPeopleQuery.sparql",
+                "externalToWheatProjectsQuery.sparql",
+                "externalToWheatGrantsQuery.sparql",
                 "externalToWheatOrganizationsQuery.sparql"
                 );
         getSparqlEndpoint().clearGraph(this.getConfiguration().getResultsGraphURI());

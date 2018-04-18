@@ -124,6 +124,13 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         log.info("Merging relationships");
         result.add(getRelationshipSameAs());
         log.info(result.size() + " after merged relationships");
+        try {
+            log.info("Merging roles");
+            result.add(getRoleSameAs());
+            log.info(result.size() + " after merged relationships");
+        } catch (Exception e) {
+            log.error(e, e);
+        }
         Model vcardSameAs = getVcardSameAs(endpoint);
         endpoint.writeModel(vcardSameAs, resultsGraphURI);
         result.add(vcardSameAs);
@@ -991,6 +998,49 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             count++;
             if(count % 1000 == 0) {
                 log.info("Processed " + count + " relationships");
+            }
+        }
+        return m;
+    }
+    
+    protected Model getRoleSameAs() {
+        Model m = ModelFactory.createDefaultModel();
+        String relationshipListQuery = "SELECT ?x WHERE { \n" +
+                " ?x a <" + ROLE + "> \n" +
+                "} \n";
+        ResultSet rs = getSparqlEndpoint().getResultSet(relationshipListQuery);
+        int count = 0;
+        while(rs.hasNext()) {
+            QuerySolution qsoln = rs.next();
+            RDFNode xnode = qsoln.get("x");
+            if(xnode.isURIResource()) {
+                String x = xnode.asResource().getURI();
+                log.debug("Processing x= " + x);
+                String query = "CONSTRUCT { ?x1 <"+ OWL.sameAs.getURI() + "> ?y1 } WHERE { \n" +
+                        "    <" + x + "> a <" + ROLE + "> . \n" +
+                        "    <" + x + "> <" + INHERES_IN + "> ?a . \n" +
+                        "    <" + x + "> <" + REALIZED_IN + "> ?b . \n" +
+                        "    <" + x + "> <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#mostSpecificType> ?mst . \n" +
+                        " FILTER NOT EXISTS { <" + x + "> <" + VIVO + "dateTimeInterval> ?dti } \n" +
+                        " FILTER NOT EXISTS { <" + x + "> <" + RDFS.label + "> ?label } \n" +
+                        " FILTER (?a != ?b) \n" +
+                        "    ?a <" + OWL.sameAs.getURI() + "> ?a1 . \n" +
+                        "    ?b <" + OWL.sameAs.getURI() + "> ?b1 . \n" +
+                        "    ?y <" + REALIZED_IN + "> ?b1 . \n" +
+                        "    ?y <" + INHERES_IN + "> ?a1 . \n" +
+                        "    ?y a <" + ROLE + "> . \n" +
+                        "    ?y <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#mostSpecificType> ?mst . \n" +
+                        " FILTER NOT EXISTS { ?y <" + VIVO + "dateTimeInterval> ?dti } \n" +
+                        " FILTER NOT EXISTS { ?y <" + RDFS.label + "> ?label } \n" +  
+                        " FILTER (<" + x + "> != ?y) \n" +  
+                        " <" + x + "> <" + OWL.sameAs.getURI() + "> ?x1 . \n" +
+                        " ?y <" + OWL.sameAs.getURI() + "> ?y1 . \n" +
+                        "} \n";
+                m.add(getSparqlEndpoint().construct(query));                     
+            }
+            count++;
+            if(count % 1000 == 0) {
+                log.info("Processed " + count + " roles");
             }
         }
         return m;
