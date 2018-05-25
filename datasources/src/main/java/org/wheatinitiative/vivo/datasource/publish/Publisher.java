@@ -205,7 +205,8 @@ public class Publisher extends DataSourceBase implements DataSource {
             }
             if(!uris.contains(individualURI)) {
                 uris.add(individualURI);
-            }                
+            }    
+            uriSetCache.put(individualURI, uris);
             return uris;
         }
     }
