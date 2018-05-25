@@ -261,7 +261,7 @@ public class SparqlEndpoint implements ModelConstructor {
      */
     public void clearGraph(String graphURI) {
         // retrieve individual URIs in batches of 1000
-        int batchSize = 1000;
+        int batchSize = 100;
         log.info("Clearing graph " + graphURI + " in batches of " + batchSize + 
                 " individuals");
         boolean getNextBatch = true;
@@ -306,11 +306,6 @@ public class SparqlEndpoint implements ModelConstructor {
         // (e.g. blank nodes)
         //log.info("Clearing graph " + graphURI);
         log.info("Calling final clear");
-        update("CLEAR GRAPH <" + graphURI + ">");
-    }
-    
-    public void clear(String graphURI) {
-        log.info("Clearing graph " + graphURI);
         update("CLEAR GRAPH <" + graphURI + ">");
     }
     

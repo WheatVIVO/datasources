@@ -95,7 +95,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         log.info("Clearing previous merge state");
         List<MergeRule> mergeRules = new ArrayList<MergeRule>();
         for(String mergeRuleURI : getMergeRuleURIs(dataSourceURI)) {
-            getSparqlEndpoint().clear(mergeRuleURI); 
+            getSparqlEndpoint().clearGraph(mergeRuleURI); 
             mergeRules.add(getMergeRule(mergeRuleURI, rulesModel));
         }
         Collections.sort(mergeRules, new AffectedClassRuleComparator(getSparqlEndpoint()));        
@@ -126,7 +126,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         }
         String resultsGraphURI = getConfiguration().getResultsGraphURI();
         SparqlEndpoint endpoint = getSparqlEndpoint();
-        getSparqlEndpoint().clear(resultsGraphURI); 
+        getSparqlEndpoint().clearGraph(resultsGraphURI); 
         log.info("Merging relationships");
         Model tmp = getRelationshipSameAs();
         log.info(tmp.size() + " sameAs from merged relationships");
@@ -155,7 +155,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
      */
     protected void addBasicSameAsAssertions(SparqlEndpoint endpoint) {
         log.info("Clearing " + BASIC_SAMEAS_GRAPH);
-        endpoint.clear(BASIC_SAMEAS_GRAPH);
+        endpoint.clearGraph(BASIC_SAMEAS_GRAPH);
         // Not necessary if we're not materializing all inferrable sameAs
 //        String queryStr = "CONSTRUCT { ?x <" + OWL.sameAs.getURI() + "> ?x } WHERE { \n" +
 //                "    ?x a ?thing \n" +
