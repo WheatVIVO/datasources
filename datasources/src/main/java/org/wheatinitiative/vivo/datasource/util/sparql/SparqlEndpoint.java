@@ -44,7 +44,7 @@ public class SparqlEndpoint implements ModelConstructor {
     
     private SparqlEndpointParams endpointParams;
     
-    private static final DefaultHttpClient httpClientfclear;
+    private static final DefaultHttpClient httpClient;
 
     static {
         PoolingClientConnectionManager cm = new PoolingClientConnectionManager();
