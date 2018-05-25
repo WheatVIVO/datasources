@@ -121,7 +121,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 }
                 
                 log.info("Rule results size: " + ruleResult.size());            
-                //getSparqlEndpoint().writeModel(ruleResult, mergeRuleURI); 
+                getSparqlEndpoint().writeModel(ruleResult, mergeRuleURI); 
             }
         }
         String resultsGraphURI = getConfiguration().getResultsGraphURI();
@@ -130,20 +130,20 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         log.info("Merging relationships");
         Model tmp = getRelationshipSameAs();
         log.info(tmp.size() + " sameAs from merged relationships");
-        //getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
+        getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
         try {
             log.info("Merging roles");
             tmp = getRoleSameAs();
             log.info(result.size() + " sameAs from merged roles");
-            //getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
+            getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
         } catch (Exception e) {
             log.error(e, e);
         }
         tmp = getVcardSameAs(endpoint);
         log.info(tmp.size() + " sameAs from merged vCards");
-        //getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
+        getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
         tmp = getVcardPartsSameAs(endpoint);
-        //getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
+        getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
         log.info("======== Final Results ========");
         for(String ruleURI : statistics.keySet()) {            
             log.info("Rule " + ruleURI + " added " + statistics.get(ruleURI));
