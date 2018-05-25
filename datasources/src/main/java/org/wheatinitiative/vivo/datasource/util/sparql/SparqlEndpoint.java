@@ -160,6 +160,45 @@ public class SparqlEndpoint implements ModelConstructor {
             }
         }
     }
+    
+    /**
+     * Uses the SPARQL UPDATE endpoint to remove a model to VIVO.
+     * The model is split into individual requests of size CHUNK_SIZE to 
+     * avoid error responses from VIVO.
+     * @param model
+     */
+    public void deleteModel(Model model, String graphURI) {
+        List<Model> modelChunks = new ArrayList<Model>();
+        StmtIterator sit = model.listStatements();
+        int i = 0;
+        Model currentChunk = null;
+        while(sit.hasNext()) {
+            if(i % CHUNK_SIZE == 0) {
+                if (currentChunk != null) {
+                    modelChunks.add(currentChunk);
+                }
+                currentChunk = ModelFactory.createDefaultModel();
+            }
+            currentChunk.add(sit.nextStatement());
+            i++;
+        }
+        if (currentChunk != null) {
+            modelChunks.add(currentChunk);
+        }
+        long total = model.size();
+        long written = 0;
+        log.debug("Deleting " + total + " statements from VIVO");
+        for (Model chunk : modelChunks) {
+            deleteChunk(chunk, graphURI);
+            written += chunk.size();
+            if(log.isDebugEnabled()) {
+                int percentage = Math.round(
+                        ((float)written/ (float)total) * 100);
+                log.debug("\t" + written + " out of " + total + 
+                        " triples deleted (" + percentage + "%)");
+            }
+        }
+    }
 
     public void update(String updateString) {
         HttpPost post = new HttpPost(endpointParams.getEndpointUpdateURI());
@@ -208,6 +247,24 @@ public class SparqlEndpoint implements ModelConstructor {
         chunk.write(out, "N-TRIPLE");
         StringBuffer reqBuff = new StringBuffer();
         reqBuff.append("INSERT DATA { GRAPH <" + graphURI + "> { \n");
+        reqBuff.append(out);
+        reqBuff.append(" } } \n");
+        String reqStr = reqBuff.toString();     
+        long startTime = System.currentTimeMillis();
+        update(reqStr);
+        log.debug("\t" + (System.currentTimeMillis() - startTime) / 1000 + 
+                " seconds to insert " + chunk.size() + " triples");
+    }
+    
+    /**
+     * Uses the SPARQL UPDATE endpoint to delete a model from VIVO
+     * @param chunk
+     */
+    private void deleteChunk(Model chunk, String graphURI) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        chunk.write(out, "N-TRIPLE");
+        StringBuffer reqBuff = new StringBuffer();
+        reqBuff.append("DELETE DATA { GRAPH <" + graphURI + "> { \n");
         reqBuff.append(out);
         reqBuff.append(" } } \n");
         String reqStr = reqBuff.toString();     
@@ -305,6 +362,20 @@ public class SparqlEndpoint implements ModelConstructor {
         // Finally, issue the regular CLEAR to flush out anything remaining
         // (e.g. blank nodes)
         //log.info("Clearing graph " + graphURI);
+        log.info("Calling final clear");
+        update("CLEAR GRAPH <" + graphURI + ">");
+    }
+    
+    /**
+     * An alternative to CLEAR, which is very inefficient with VIVO-based 
+     * endpoints
+     * @param graphURI
+     */
+    public void clear(String graphURI) {
+        log.info("Deleting contents from graph " + graphURI);
+        Model toDelete = this.construct("CONSTRUCT { ?s ?p ?o } WHERE { GRAPH <" 
+                + graphURI + "> { ?s ?p ?o } }");
+        deleteModel(toDelete, graphURI);
         log.info("Calling final clear");
         update("CLEAR GRAPH <" + graphURI + ">");
     }
