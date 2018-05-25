@@ -185,19 +185,38 @@ public class Publisher extends DataSourceBase implements DataSource {
      * @return OntModel with reasoned transitive closure of owl:sameAs statements
      * from endpoint
      */
-    private OntModel getSameAsModel(String individualURI, 
-            SparqlEndpoint endpoint) {
+    private OntModel getSameAsModel(String individualURI, SparqlEndpoint endpoint) {
         OntModel ontModel = ModelFactory.createOntologyModel(
-                OntModelSpec.OWL_MEM);
+            OntModelSpec.OWL_MEM);
+        Set<String> visited = new HashSet<String>();
+        visited.add(individualURI);
+        getSameAsModel(individualURI, ontModel, visited, endpoint);
+        return ontModel;
+    }
+    
+    /**
+     * 
+     * @return OntModel with transitive closure of owl:sameAs statements
+     * from endpoint
+     */
+    private void getSameAsModel(String individualURI, OntModel ontModel,
+            Set<String> visited, SparqlEndpoint endpoint) {
         String sameAsQuery = "CONSTRUCT { \n" +
-                "    <" + individualURI + "> a <" + OWL.Thing + "> . \n" +
-                "    ?ind2 a <" + OWL.Thing + "> . \n" +
                 "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
                 "} WHERE { \n" +
                 "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
                 "} \n";
-        ontModel.add(endpoint.construct(sameAsQuery));
-        return ontModel;
+        Model model = endpoint.construct(sameAsQuery);
+        NodeIterator objectIt = model.listObjects();
+        while(objectIt.hasNext()) {
+            RDFNode object = objectIt.next();
+            if(object.isURIResource() && !visited.contains(object.asResource().getURI())) {
+                visited.add(object.asResource().getURI());
+                getSameAsModel(object.asResource().getURI(), ontModel, visited, endpoint);
+            }
+        }
+        ontModel.listObjects();
+        ontModel.add(model);
     }
     
     private static Map<String, String> sameAsCache = new HashMap<String, String>();
