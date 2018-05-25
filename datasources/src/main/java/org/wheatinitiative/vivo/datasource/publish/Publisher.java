@@ -22,8 +22,6 @@ import org.wheatinitiative.vivo.datasource.SparqlEndpointParams;
 import org.wheatinitiative.vivo.datasource.dao.DataSourceDao;
 import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
 
-import com.hp.hpl.jena.ontology.OntModel;
-import com.hp.hpl.jena.ontology.OntModelSpec;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -31,7 +29,6 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.NodeIterator;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
@@ -98,6 +95,7 @@ public class Publisher extends DataSourceBase implements DataSource {
             IndividualURIIterator indIt = new IndividualURIIterator(
                     sourceEndpoint, graphURI);
             while(indIt.hasNext()) {
+                long start = System.currentTimeMillis();
                 individualCount++;
                 String individualURI = indIt.next();
                 if(completedIndividuals.contains(individualURI)) {
@@ -113,7 +111,7 @@ public class Publisher extends DataSourceBase implements DataSource {
                 addQuadsToStore(
                         rewrite(individualQuads, graphURIPreferenceList, 
                                 sourceEndpoint), quadStore);
-                List<String> sameAsURIs = getSameAsURIs(individualURI, sourceEndpoint);
+                List<String> sameAsURIs = getSameAsURIList(individualURI, sourceEndpoint);
                 report(quadStore);
                 log.debug("same as URIs " + sameAsURIs);
                 // don't waste memory recording an individual if we won't 
@@ -122,6 +120,7 @@ public class Publisher extends DataSourceBase implements DataSource {
                     completedIndividuals.add(individualURI);
                 }
                 for (String sameAsURI : sameAsURIs) {
+                    sameAsCache.put(sameAsURI, individualURI);
                     log.debug("Adding " + sameAsURI + " to store");
                     completedIndividuals.add(sameAsURI);
                     List<Quad> sameAsQuads = getIndividualQuads(
@@ -136,6 +135,10 @@ public class Publisher extends DataSourceBase implements DataSource {
                 filterIrrelevantGraphs(quadStore, graphURIPreferenceList);
                 // TODO filter non-VIVO predicate namespaces?
                 addQuadStoreToBuffer(quadStore, buffer);
+                long duration = System.currentTimeMillis() - start;
+                if (duration > 100) {
+                    log.info(duration + " ms to process individual " + individualURI);
+                }
                 if(individualCount % BATCH_SIZE == 0 || !indIt.hasNext()) {
                     flushBufferToDestination(buffer);    
                 }
@@ -180,18 +183,31 @@ public class Publisher extends DataSourceBase implements DataSource {
         return graphURIPreferenceList;
     }
     
+    Map<String, List<String>> uriSetCache = new HashMap<String, List<String>>();
+    
     /**
      * 
-     * @return OntModel with reasoned transitive closure of owl:sameAs statements
+     * @return list via reasoned transitive closure of owl:sameAs statements
      * from endpoint
      */
-    private OntModel getSameAsModel(String individualURI, SparqlEndpoint endpoint) {
-        OntModel ontModel = ModelFactory.createOntologyModel(
-            OntModelSpec.OWL_MEM);
-        Set<String> visited = new HashSet<String>();
-        visited.add(individualURI);
-        getSameAsModel(individualURI, ontModel, visited, endpoint);
-        return ontModel;
+    private List<String> getSameAsURIList(String individualURI, SparqlEndpoint endpoint) {
+        if(uriSetCache.containsKey(individualURI)) {
+            return uriSetCache.get(individualURI);            
+        } else {
+            Model m = getSameAsModel(individualURI, endpoint);
+            NodeIterator nit = m.listObjects();
+            List<String> uris = new ArrayList<String>();
+            while(nit.hasNext()) {
+                RDFNode node = nit.next();
+                if(node.isURIResource()) {
+                    uris.add(node.asResource().getURI());    
+                }
+            }
+            if(!uris.contains(individualURI)) {
+                uris.add(individualURI);
+            }                
+            return uris;
+        }
     }
     
     /**
@@ -199,24 +215,13 @@ public class Publisher extends DataSourceBase implements DataSource {
      * @return OntModel with transitive closure of owl:sameAs statements
      * from endpoint
      */
-    private void getSameAsModel(String individualURI, OntModel ontModel,
-            Set<String> visited, SparqlEndpoint endpoint) {
+    private Model getSameAsModel(String individualURI, SparqlEndpoint endpoint) {
         String sameAsQuery = "CONSTRUCT { \n" +
                 "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
                 "} WHERE { \n" +
-                "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
+                "    <" + individualURI + "> <" + OWL.sameAs.getURI() + ">* ?ind2 \n" +
                 "} \n";
-        Model model = endpoint.construct(sameAsQuery);
-        NodeIterator objectIt = model.listObjects();
-        while(objectIt.hasNext()) {
-            RDFNode object = objectIt.next();
-            if(object.isURIResource() && !visited.contains(object.asResource().getURI())) {
-                visited.add(object.asResource().getURI());
-                getSameAsModel(object.asResource().getURI(), ontModel, visited, endpoint);
-            }
-        }
-        ontModel.listObjects();
-        ontModel.add(model);
+        return endpoint.construct(sameAsQuery);
     }
     
     private static Map<String, String> sameAsCache = new HashMap<String, String>();
@@ -228,16 +233,9 @@ public class Publisher extends DataSourceBase implements DataSource {
         }
         //long start = System.currentTimeMillis();
         String uriToMapTo = individualURI;
-        Model sameAsModel = getSameAsModel(individualURI, endpoint);
-        StmtIterator sit = sameAsModel.listStatements(
-                sameAsModel.getResource(individualURI), OWL.sameAs, (Resource) null);
+        List<String> sameAsURISet = getSameAsURIList(individualURI, endpoint);
         List<String> sameAsURIs = new ArrayList<String>();
-        while(sit.hasNext()) {
-            Statement stmt = sit.next();
-            if(stmt.getObject().isAnon()) {
-                continue;
-            }
-            String sameAsURI = stmt.getObject().asResource().getURI();
+        for(String sameAsURI : sameAsURISet) {
             String currentGraph = getHomeGraph(uriToMapTo, endpoint, graphURIPreferenceList);
             String candidateGraph = getHomeGraph(sameAsURI, endpoint, graphURIPreferenceList);
             log.debug(candidateGraph + (isHigherPriorityThan(candidateGraph, currentGraph, 
@@ -682,21 +680,6 @@ public class Publisher extends DataSourceBase implements DataSource {
         funcPropSet.add(DATETIMEINTERVAL);
         funcPropSet.add(HASCONTACTINFO);
         return funcPropSet;
-    }
-    
-    private List<String> getSameAsURIs(String individualURI, 
-            SparqlEndpoint endpoint) {
-        List<String> sameAsURIs = new ArrayList<String>();
-        Model sameAsModel = getSameAsModel(individualURI, endpoint);
-        NodeIterator nit = sameAsModel.listObjectsOfProperty(
-                sameAsModel.getResource(individualURI), OWL.sameAs);
-        while(nit.hasNext()) {
-            RDFNode node = nit.next();
-            if(node.isURIResource()) {
-                sameAsURIs.add(node.asResource().getURI());
-            }
-        }
-        return sameAsURIs;        
     }
  
     protected void runPostmergeQueries(SparqlEndpoint destinationEndpoint) {
