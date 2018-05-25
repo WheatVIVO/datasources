@@ -100,10 +100,10 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         }
         Collections.sort(mergeRules, new AffectedClassRuleComparator(getSparqlEndpoint()));        
         Map<String, Long> statistics = new HashMap<String, Long>();
-        // repeat twice; could repeat indefinitely until quiescent
         for(int i = 0; i <= 2; i++) {
             for(MergeRule rule : mergeRules) {
                 String mergeRuleURI = rule.getURI();
+                // TODO flush to endpoint and repeat rules until quiescent?
                 log.info("Processing rule " + mergeRuleURI);                         
                 Model ruleResult = getSameAs(rule, fauxPropertyContextModel, 
                         this.getSparqlEndpoint(), windowSize);
@@ -112,6 +112,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                             ruleResult.size() + ") of triples." );
                 }
                 filterObviousResults(ruleResult);
+                //result.add(ruleResult);
                 statistics.put(mergeRuleURI, ruleResult.size());
                 log.info("Rule results size: " + ruleResult.size());            
                 getSparqlEndpoint().writeModel(ruleResult, mergeRuleURI); 
@@ -121,23 +122,19 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         SparqlEndpoint endpoint = getSparqlEndpoint();
         getSparqlEndpoint().clearGraph(resultsGraphURI); 
         log.info("Merging relationships");
-        Model tmp = getRelationshipSameAs();
-        log.info(tmp.size() + " relationship sameAs");
-        endpoint.writeModel(tmp, resultsGraphURI);
+        result.add(getRelationshipSameAs());
+        log.info(result.size() + " after merged relationships");
         try {
             log.info("Merging roles");
-            tmp = getRoleSameAs();
-            log.info(tmp.size() + " role sameAs");
-            endpoint.writeModel(tmp, resultsGraphURI);
+            result.add(getRoleSameAs());
+            log.info(result.size() + " after merged relationships");
         } catch (Exception e) {
             log.error(e, e);
         }
-        tmp = getVcardSameAs(endpoint);
-        log.info(tmp.size() + "vCard sameAs");
-        endpoint.writeModel(tmp, resultsGraphURI);
-        tmp = getVcardPartsSameAs(endpoint);
-        log.info(tmp.size() + "vCard parts sameAs");
-        endpoint.writeModel(tmp, resultsGraphURI);
+        Model vcardSameAs = getVcardSameAs(endpoint);
+        endpoint.writeModel(vcardSameAs, resultsGraphURI);
+        result.add(vcardSameAs);
+        result.add(getVcardPartsSameAs(endpoint));
         log.info("======== Final Results ========");
         for(String ruleURI : statistics.keySet()) {            
             log.info("Rule " + ruleURI + " added " + statistics.get(ruleURI));
@@ -238,50 +235,21 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                             "    ?x1 <" + OWL.sameAs.getURI() + "> ?y1 . \n" +
                             "    ?y1 <" + OWL.sameAs.getURI() + "> ?x1  \n" +
                             "} WHERE { \n"
-//                            + "  FILTER NOT EXISTS { ?x <" + OWL.sameAs + "> ?y } \n"
-                            + queryStr +                           
+//                            + "  FILTER NOT EXISTS { ?x <" + OWL.sameAs + "> ?y } \n" 
+                            + queryStr +
                             "    ?x <" + OWL.sameAs.getURI() + "> ?x1 . \n" +
                             "    ?y <" + OWL.sameAs.getURI() + "> ?y1 . \n" +
                             "    FILTER NOT EXISTS { ?x <" + OWL.differentFrom.getURI() + "> ?y } \n" +
                             "    FILTER NOT EXISTS { ?y <" + OWL.differentFrom.getURI() + "> ?x } \n" +
                             "} \n";
-                    log.info("Generated sameAs query: \n" + queryStr);  
-                    if(isComplexQuery(queryStr)) {
-                        Model tmp = ModelFactory.createDefaultModel();
-                        ResultSet rs = sparqlEndpoint.getResultSet(
-                                "SELECT DISTINCT ?x WHERE { ?x a <" 
-                                        + rule.getMergeClassURI() + "> }");
-                        int count = 0;
-                        while(rs.hasNext()) {                            
-                            QuerySolution qsoln = rs.next();                            
-                            Resource x = qsoln.getResource("x");
-                            if(x.isURIResource()) {
-                                String boundQueryStr = queryStr.replaceAll(
-                                        "\\?x\\W", "<" + x.getURI() +">");
-                                if(count < 5) {
-                                    log.info("Individual-by-individual query:\n" + boundQueryStr);
-                                }
-                                count++;
-                                tmp.add(sparqlEndpoint.construct(boundQueryStr));
-                                if(count % 1000 == 0) {
-                                    log.info("Processed " + count + " individual-by-individual queries");
-                                }
-                            }                                                       
-                        }
-                        sameAsModel = join(sameAsModel, tmp);
-                    } else {                    
-                        sameAsModel = join(sameAsModel, sparqlEndpoint.construct(
-                                queryStr));
-                    }
+                    log.info("Generated sameAs query: \n" + queryStr);                    
+                    sameAsModel = join(sameAsModel, sparqlEndpoint.construct(
+                            queryStr));
                 }
             }
         }         
         return sameAsModel;
     } 
-    
-    private boolean isComplexQuery(String query) {
-        return query.split("\\n").length > 9;
-    }
     
     private Model join(Model sameAsModel, Model atomModel) {
         if(sameAsModel == null) {
