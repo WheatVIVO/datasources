@@ -95,12 +95,12 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         log.info("Clearing previous merge state");
         List<MergeRule> mergeRules = new ArrayList<MergeRule>();
         for(String mergeRuleURI : getMergeRuleURIs(dataSourceURI)) {
-            getSparqlEndpoint().clearGraph(mergeRuleURI); 
+            getSparqlEndpoint().clear(mergeRuleURI); 
             mergeRules.add(getMergeRule(mergeRuleURI, rulesModel));
         }
         Collections.sort(mergeRules, new AffectedClassRuleComparator(getSparqlEndpoint()));        
         Map<String, Long> statistics = new HashMap<String, Long>();
-        for(int i = 0; i <= 2; i++) {
+        for(int i = 0; i < 2; i++) {
             for(MergeRule rule : mergeRules) {
                 String mergeRuleURI = rule.getURI();
                 // TODO flush to endpoint and repeat rules until quiescent?
@@ -113,32 +113,37 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 }
                 filterObviousResults(ruleResult);
                 //result.add(ruleResult);
-                statistics.put(mergeRuleURI, ruleResult.size());
+                Long stat = statistics.get(mergeRuleURI);
+                if(stat == null) {
+                    statistics.put(mergeRuleURI, ruleResult.size());    
+                } else {
+                    statistics.put(mergeRuleURI, stat + ruleResult.size());
+                }
+                
                 log.info("Rule results size: " + ruleResult.size());            
-                getSparqlEndpoint().writeModel(ruleResult, mergeRuleURI); 
+                //getSparqlEndpoint().writeModel(ruleResult, mergeRuleURI); 
             }
         }
         String resultsGraphURI = getConfiguration().getResultsGraphURI();
         SparqlEndpoint endpoint = getSparqlEndpoint();
-        getSparqlEndpoint().clearGraph(resultsGraphURI); 
+        getSparqlEndpoint().clear(resultsGraphURI); 
         log.info("Merging relationships");
         Model tmp = getRelationshipSameAs();
         log.info(tmp.size() + " sameAs from merged relationships");
-        getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
+        //getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
         try {
             log.info("Merging roles");
             tmp = getRoleSameAs();
             log.info(result.size() + " sameAs from merged roles");
-            getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
+            //getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
         } catch (Exception e) {
             log.error(e, e);
         }
         tmp = getVcardSameAs(endpoint);
         log.info(tmp.size() + " sameAs from merged vCards");
-        endpoint.writeModel(tmp, resultsGraphURI);
-        getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
+        //getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
         tmp = getVcardPartsSameAs(endpoint);
-        getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
+        //getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
         log.info("======== Final Results ========");
         for(String ruleURI : statistics.keySet()) {            
             log.info("Rule " + ruleURI + " added " + statistics.get(ruleURI));
@@ -150,7 +155,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
      */
     protected void addBasicSameAsAssertions(SparqlEndpoint endpoint) {
         log.info("Clearing " + BASIC_SAMEAS_GRAPH);
-        endpoint.clearGraph(BASIC_SAMEAS_GRAPH);
+        endpoint.clear(BASIC_SAMEAS_GRAPH);
         // Not necessary if we're not materializing all inferrable sameAs
 //        String queryStr = "CONSTRUCT { ?x <" + OWL.sameAs.getURI() + "> ?x } WHERE { \n" +
 //                "    ?x a ?thing \n" +
@@ -244,6 +249,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                             + queryStr +
 //                            "    ?x <" + OWL.sameAs.getURI() + "> ?x1 . \n" +
 //                            "    ?y <" + OWL.sameAs.getURI() + "> ?y1 . \n" +
+                            "    FILTER NOT EXISTS { ?x <" + OWL.sameAs.getURI() + "> ?y } \n" +
+                            "    FILTER NOT EXISTS { ?y <" + OWL.sameAs.getURI() + "> ?x } \n" +
                             "    FILTER NOT EXISTS { ?x <" + OWL.differentFrom.getURI() + "> ?y } \n" +
                             "    FILTER NOT EXISTS { ?y <" + OWL.differentFrom.getURI() + "> ?x } \n" +
                             "} \n";
@@ -987,7 +994,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             if(xnode.isURIResource()) {
                 String x = xnode.asResource().getURI();
                 log.debug("Processing x= " + x);
-                String query = "CONSTRUCT { ?x <"+ OWL.sameAs.getURI() + "> ?y } WHERE { \n" +
+                String query = "CONSTRUCT { <" + x + "> <"+ OWL.sameAs.getURI() + "> ?y } WHERE { \n" +
                         "    <" + x + "> a <" + VIVO + "Relationship> . \n" +
                         "    <" + x + "> <" + VIVO +"relates> ?a . \n" +
                         "    <" + x + "> <" + VIVO +"relates> ?b . \n" +
@@ -1030,7 +1037,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             if(xnode.isURIResource()) {
                 String x = xnode.asResource().getURI();
                 log.debug("Processing x= " + x);
-                String query = "CONSTRUCT { ?x <"+ OWL.sameAs.getURI() + "> ?y } WHERE { \n" +
+                String query = "CONSTRUCT { <" + x + "> <"+ OWL.sameAs.getURI() + "> ?y } WHERE { \n" +
                         "    <" + x + "> a <" + ROLE + "> . \n" +
                         "    <" + x + "> <" + INHERES_IN + "> ?a . \n" +
                         "    <" + x + "> <" + REALIZED_IN + "> ?b . \n" +

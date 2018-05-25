@@ -44,7 +44,7 @@ public class SparqlEndpoint implements ModelConstructor {
     
     private SparqlEndpointParams endpointParams;
     
-    private static final DefaultHttpClient httpClient;
+    private static final DefaultHttpClient httpClientfclear;
 
     static {
         PoolingClientConnectionManager cm = new PoolingClientConnectionManager();
@@ -306,6 +306,11 @@ public class SparqlEndpoint implements ModelConstructor {
         // (e.g. blank nodes)
         //log.info("Clearing graph " + graphURI);
         log.info("Calling final clear");
+        update("CLEAR GRAPH <" + graphURI + ">");
+    }
+    
+    public void clear(String graphURI) {
+        log.info("Clearing graph " + graphURI);
         update("CLEAR GRAPH <" + graphURI + ">");
     }
     
