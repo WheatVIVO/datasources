@@ -57,8 +57,8 @@ public class Publisher extends DataSourceBase implements DataSource {
     private static final String ADMINAPP_ASSERTIONS = 
             "http://vitro.mannlib.cornell.edu/default/adminappkb2";
     // number of individuals to process before writing results
-    private static final int BATCH_SIZE = 250;
-    private static final int PAUSE_BETWEEN_BATCHES = 3 * 1000; // ms
+    private static final int BATCH_SIZE = 2500;
+    private static final int PAUSE_BETWEEN_BATCHES = 0 * 1000; // ms
     private static final String DATETIMEVALUE = "http://vivoweb.org/ontology/core#dateTimeValue";
     private static final String DATETIMEINTERVAL = "http://vivoweb.org/ontology/core#dateTimeInterval";
     private static final String HASCONTACTINFO = "http://purl.obolibrary.org/obo/ARG_2000028";
@@ -93,9 +93,8 @@ public class Publisher extends DataSourceBase implements DataSource {
             if(graphURI == null) {
                 continue;
             }                     
-            //IndividualURIIterator indIt = new IndividualURIIterator(
-            //        sourceEndpoint, graphURI);
-            Iterator<String> indIt = Arrays.asList("http://vivo.wheatinitiative.org/individual/wi-administration-users-orcid-0000-0002-6067-4600").iterator();
+            IndividualURIIterator indIt = new IndividualURIIterator(
+                    sourceEndpoint, graphURI);
             while(indIt.hasNext()) {
                 long start = System.currentTimeMillis();
                 individualCount++;
@@ -140,9 +139,10 @@ public class Publisher extends DataSourceBase implements DataSource {
                 // TODO filter non-VIVO predicate namespaces?
                 addQuadStoreToBuffer(quadStore, buffer);
                 long duration = System.currentTimeMillis() - start;
-                if (duration > 100) {
+                if (duration > 1000) {
                     log.info(duration + " ms to process individual " + individualURI);
                 }
+                this.getStatus().setProcessedRecords(completedIndividuals.size());
                 if(individualCount % BATCH_SIZE == 0 || !indIt.hasNext()) {
                     flushBufferToDestination(buffer);    
                 }
@@ -237,7 +237,6 @@ public class Publisher extends DataSourceBase implements DataSource {
             log.debug("Returning sameAs for " + individualURI + " from cache");
             return sameAsCache.get(individualURI);
         }
-        log.info("Retrieving sameAs for " + individualURI);
         long start = System.currentTimeMillis();
         //long start = System.currentTimeMillis();
         String uriToMapTo = individualURI;
@@ -263,7 +262,10 @@ public class Publisher extends DataSourceBase implements DataSource {
                 sameAsCache.put(sameAsURI, uriToMapTo);
             }
         //}
-        log.info(System.currentTimeMillis() - start + " to find sameAs");
+        long duration = System.currentTimeMillis() - start;
+        if(duration > 10000) {
+            log.info(duration + " to find sameAs for " + individualURI);    
+        }        
         log.debug("sameAs:");
         log.debug(individualURI + " ===> " + uriToMapTo);
         return uriToMapTo;
@@ -420,7 +422,7 @@ public class Publisher extends DataSourceBase implements DataSource {
             if(sourceGraphURIs.contains(destGraphURI)) {
                 if(!KB2.equals(destGraphURI)) {
                     log.info("Clearing destination graph " + destGraphURI);
-                    //destinationEndpoint.clearGraph(destGraphURI);                                         
+                    destinationEndpoint.clearGraph(destGraphURI);                                         
                 }
             }
         }
@@ -436,7 +438,7 @@ public class Publisher extends DataSourceBase implements DataSource {
             if(!sourceGraphURIs.contains(destGraphURI)) {
                 if(!KB2.equals(destGraphURI)) {
                     log.info("Clearing destination graph " + destGraphURI);
-                    //destinationEndpoint.clearGraph(destGraphURI);
+                    destinationEndpoint.clearGraph(destGraphURI);
                 }
             }
         }
@@ -493,7 +495,7 @@ public class Publisher extends DataSourceBase implements DataSource {
             }
             log.info("Writing " + m.size() + " triples to graph " + graphURI);
             long start = System.currentTimeMillis();
-            //getSparqlEndpoint().writeModel(m, graphURI);
+            getSparqlEndpoint().writeModel(m, graphURI);
             log.info(System.currentTimeMillis() - start + " ms to write.");
             pause();
         }
@@ -700,11 +702,11 @@ public class Publisher extends DataSourceBase implements DataSource {
                 "externalToWheatPeopleQuery.sparql",
                 "externalToWheatOrganizationsQuery.sparql"
                 );
-        //destinationEndpoint.clearGraph(POSTMERGE_GRAPH);
+        destinationEndpoint.clearGraph(POSTMERGE_GRAPH);
         for(String query : queries) {            
             Model model = destinationEndpoint.construct(loadQuery("/postmerge/sparql/" + query));
             log.info("Postmerge query " + query + " constructed " + model.size());
-            //destinationEndpoint.writeModel(model, POSTMERGE_GRAPH);
+            destinationEndpoint.writeModel(model, POSTMERGE_GRAPH);
         }
     }
     
