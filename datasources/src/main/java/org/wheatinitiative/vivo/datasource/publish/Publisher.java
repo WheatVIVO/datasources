@@ -223,7 +223,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         String sameAsQuery = "CONSTRUCT { \n" +
                 "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
                 "} WHERE { \n" +
-                "    <" + individualURI + "> <" + OWL.sameAs.getURI() + ">* ?ind2 \n" +
+                "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
                 "} \n";
         return endpoint.construct(sameAsQuery);
     }
@@ -233,8 +233,11 @@ public class Publisher extends DataSourceBase implements DataSource {
     private String getSameAs(String individualURI, 
             List<String> graphURIPreferenceList, SparqlEndpoint endpoint) {
         if(sameAsCache.containsKey(individualURI)) {
+            log.info("Returning sameAs for " + individualURI + " from cache");
             return sameAsCache.get(individualURI);
         }
+        log.info("Retrieving sameAs for " + individualURI);
+        long start = System.currentTimeMillis();
         //long start = System.currentTimeMillis();
         String uriToMapTo = individualURI;
         List<String> sameAsURISet = getSameAsURIList(individualURI, endpoint);
@@ -260,6 +263,7 @@ public class Publisher extends DataSourceBase implements DataSource {
                 sameAsCache.put(sameAsURI, uriToMapTo);
             }
         //}
+        log.info(System.currentTimeMillis() - start + " to find sameAs");
         log.debug("sameAs:");
         log.debug(individualURI + " ===> " + uriToMapTo);
         return uriToMapTo;
