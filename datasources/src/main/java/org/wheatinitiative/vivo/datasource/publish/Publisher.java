@@ -223,7 +223,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         String sameAsQuery = "CONSTRUCT { \n" +
                 "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
                 "} WHERE { \n" +
-                "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
+                "    <" + individualURI + "> <" + OWL.sameAs.getURI() + ">* ?ind2 \n" +
                 "} \n";
         return endpoint.construct(sameAsQuery);
     }
