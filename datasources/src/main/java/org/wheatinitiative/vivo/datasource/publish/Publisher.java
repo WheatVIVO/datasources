@@ -608,7 +608,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         private void fetchNextBatch() {
             String individualsBatch = "SELECT DISTINCT ?s WHERE { \n" +
                     ((graphURI != null) ? "GRAPH <" + graphURI + "> { \n" : "") +
-                    "        ?s ?p ?o \n" +
+                    "        ?s a ?o \n" +
                     ((graphURI != null) ? "} \n" : "") +
                     "} ORDER BY ?s LIMIT " + INDIVIDUAL_BATCH_SIZE + 
                     " OFFSET " + individualOffset;
