@@ -33,6 +33,7 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.vocabulary.OWL;
+import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
 
 /**
@@ -223,7 +224,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         String sameAsQuery = "CONSTRUCT { \n" +
                 "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
                 "} WHERE { \n" +
-                "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
+                "    <" + individualURI + "> <" + OWL.sameAs.getURI() + ">* ?ind2 \n" +
                 "} \n";
         return endpoint.construct(sameAsQuery);
     }
@@ -233,16 +234,15 @@ public class Publisher extends DataSourceBase implements DataSource {
     private String getSameAs(String individualURI, 
             List<String> graphURIPreferenceList, SparqlEndpoint endpoint) {
         if(sameAsCache.containsKey(individualURI)) {
-            log.info("Returning sameAs for " + individualURI + " from cache");
+            log.debug("Returning sameAs for " + individualURI + " from cache");
             return sameAsCache.get(individualURI);
         }
         log.info("Retrieving sameAs for " + individualURI);
         long start = System.currentTimeMillis();
         //long start = System.currentTimeMillis();
         String uriToMapTo = individualURI;
-        List<String> sameAsURISet = getSameAsURIList(individualURI, endpoint);
-        List<String> sameAsURIs = new ArrayList<String>();
-        for(String sameAsURI : sameAsURISet) {
+        List<String> sameAsURIs = getSameAsURIList(individualURI, endpoint);
+        for(String sameAsURI : sameAsURIs) {
             String currentGraph = getHomeGraph(uriToMapTo, endpoint, graphURIPreferenceList);
             String candidateGraph = getHomeGraph(sameAsURI, endpoint, graphURIPreferenceList);
             log.debug(candidateGraph + (isHigherPriorityThan(candidateGraph, currentGraph, 
@@ -526,7 +526,7 @@ public class Publisher extends DataSourceBase implements DataSource {
                 subject = rewrittenSubject;
             }
             RDFNode object = quad.getObject();
-            if(object.isURIResource()) {
+            if(object.isURIResource() && !RDF.type.getURI().equals(quad.getPredicateURI())) {
                 String rewrittenObject = getSameAs(object.asResource().getURI(),
                         graphURIPreferenceList, endpoint);
                 if(rewrittenObject != null) {
