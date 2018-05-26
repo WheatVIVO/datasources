@@ -92,8 +92,9 @@ public class Publisher extends DataSourceBase implements DataSource {
             if(graphURI == null) {
                 continue;
             }                     
-            IndividualURIIterator indIt = new IndividualURIIterator(
-                    sourceEndpoint, graphURI);
+            //IndividualURIIterator indIt = new IndividualURIIterator(
+            //        sourceEndpoint, graphURI);
+            Iterator<String> indIt = Arrays.asList("http://vivo.wheatinitiative.org/individual/wi-administration-users-orcid-0000-0002-6067-4600").iterator();
             while(indIt.hasNext()) {
                 long start = System.currentTimeMillis();
                 individualCount++;
@@ -104,14 +105,17 @@ public class Publisher extends DataSourceBase implements DataSource {
                     }
                     continue;
                 }
+                List<String> sameAsURIs = getSameAsURIList(individualURI, sourceEndpoint);
                 List<Quad> individualQuads = getIndividualQuads(individualURI, 
                         sourceEndpoint);
+                for (String sameAsURI : sameAsURIs) {
+                    sameAsCache.put(sameAsURI, individualURI);
+                }
                 Map<String, Model> quadStore = new HashMap<String, Model>();   
                 log.debug("Adding " + individualURI + " to store");
                 addQuadsToStore(
                         rewrite(individualQuads, graphURIPreferenceList, 
                                 sourceEndpoint), quadStore);
-                List<String> sameAsURIs = getSameAsURIList(individualURI, sourceEndpoint);
                 report(quadStore);
                 log.debug("same as URIs " + sameAsURIs);
                 // don't waste memory recording an individual if we won't 
@@ -120,7 +124,6 @@ public class Publisher extends DataSourceBase implements DataSource {
                     completedIndividuals.add(individualURI);
                 }
                 for (String sameAsURI : sameAsURIs) {
-                    sameAsCache.put(sameAsURI, individualURI);
                     log.debug("Adding " + sameAsURI + " to store");
                     completedIndividuals.add(sameAsURI);
                     List<Quad> sameAsQuads = getIndividualQuads(
@@ -220,7 +223,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         String sameAsQuery = "CONSTRUCT { \n" +
                 "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
                 "} WHERE { \n" +
-                "    <" + individualURI + "> <" + OWL.sameAs.getURI() + ">* ?ind2 \n" +
+                "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
                 "} \n";
         return endpoint.construct(sameAsQuery);
     }
@@ -413,7 +416,7 @@ public class Publisher extends DataSourceBase implements DataSource {
             if(sourceGraphURIs.contains(destGraphURI)) {
                 if(!KB2.equals(destGraphURI)) {
                     log.info("Clearing destination graph " + destGraphURI);
-                    destinationEndpoint.clearGraph(destGraphURI);                                         
+                    //destinationEndpoint.clearGraph(destGraphURI);                                         
                 }
             }
         }
@@ -429,7 +432,7 @@ public class Publisher extends DataSourceBase implements DataSource {
             if(!sourceGraphURIs.contains(destGraphURI)) {
                 if(!KB2.equals(destGraphURI)) {
                     log.info("Clearing destination graph " + destGraphURI);
-                    destinationEndpoint.clearGraph(destGraphURI);
+                    //destinationEndpoint.clearGraph(destGraphURI);
                 }
             }
         }
@@ -486,7 +489,7 @@ public class Publisher extends DataSourceBase implements DataSource {
             }
             log.info("Writing " + m.size() + " triples to graph " + graphURI);
             long start = System.currentTimeMillis();
-            getSparqlEndpoint().writeModel(m, graphURI);
+            //getSparqlEndpoint().writeModel(m, graphURI);
             log.info(System.currentTimeMillis() - start + " ms to write.");
             pause();
         }
@@ -693,11 +696,11 @@ public class Publisher extends DataSourceBase implements DataSource {
                 "externalToWheatPeopleQuery.sparql",
                 "externalToWheatOrganizationsQuery.sparql"
                 );
-        destinationEndpoint.clearGraph(POSTMERGE_GRAPH);
+        //destinationEndpoint.clearGraph(POSTMERGE_GRAPH);
         for(String query : queries) {            
             Model model = destinationEndpoint.construct(loadQuery("/postmerge/sparql/" + query));
             log.info("Postmerge query " + query + " constructed " + model.size());
-            destinationEndpoint.writeModel(model, POSTMERGE_GRAPH);
+            //destinationEndpoint.writeModel(model, POSTMERGE_GRAPH);
         }
     }
     
