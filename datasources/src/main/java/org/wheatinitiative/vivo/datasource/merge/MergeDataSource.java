@@ -134,7 +134,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         try {
             log.info("Merging roles");
             tmp = getRoleSameAs();
-            log.info(result.size() + " sameAs from merged roles");
+            log.info(tmp.size() + " sameAs from merged roles");
             getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
         } catch (Exception e) {
             log.error(e, e);
