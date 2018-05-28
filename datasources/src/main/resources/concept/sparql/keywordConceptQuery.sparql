@@ -26,8 +26,18 @@ CONSTRUCT {
     ?concept a skos:Concept .  
     ?concept rdfs:label ?x .
     ?author vivo:hasResearchArea ?concept 
-} WHERE {  
-    ?y vivo:freetextKeyword ?x
+} WHERE { 
+  {
+    SELECT ?x ?y WHERE { 
+      {   
+        SELECT ?x (COUNT(DISTINCT ?y) AS ?count) WHERE {
+            ?y vivo:freetextKeyword ?x
+        } GROUP BY ?x 
+      }
+      ?y vivo:freetextKeyword ?x
+      FILTER(?count >= 5)
+    }
+  }
   BIND(lcase(replace(?x, "\\W", "")) AS ?keyword)
   BIND(IRI(concat("http://vivo.wheatinitiative.org/individual/kconcept_", ?keyword)) AS ?concept)
   FILTER( (strlen(?keyword) < 32) && (strlen(?keyword) > 0) )

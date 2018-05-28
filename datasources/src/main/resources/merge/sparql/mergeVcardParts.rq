@@ -35,20 +35,27 @@ CONSTRUCT {
         ?vcard1 vcard:hasName ?x .
         ?vcard2 vcard:hasName ?y .
     }
-    OPTIONAL {
-        ?vcard1 vcard:hasAddress ?x .
-        ?vcard2 vcard:hasAddress ?y .
-    }
+# Don't merge addresses
+#    OPTIONAL {
+#        ?vcard1 vcard:hasAddress ?x .
+#        ?vcard2 vcard:hasAddress ?y .
+#    }
     OPTIONAL {
         ?vcard1 vcard:hasEmail ?x .
+	?x vcard:email ?value .
+	?y vcard:email ?value .
         ?vcard2 vcard:hasEmail ?y .
     } 
     OPTIONAL {
         ?vcard1 vcard:hasTelephone ?x .
+	?x vcard:telephone ?value .
+	?y vcard:telephone ?value .
         ?vcard2 vcard:hasTelephone ?y .
     }
     OPTIONAL {
         ?vcard1 vcard:hasURL ?x .
+	?x vcard:url ?value .
+	?y vcard:url ?value .
         ?vcard2 vcard:hasURL ?y .
     }
   FILTER (?x != ?y)

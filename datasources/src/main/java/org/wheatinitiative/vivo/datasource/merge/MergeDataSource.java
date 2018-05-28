@@ -993,7 +993,9 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             if(xnode.isURIResource()) {
                 String x = xnode.asResource().getURI();
                 log.debug("Processing x= " + x);
-                String query = "CONSTRUCT { ?x1 <"+ OWL.sameAs.getURI() + "> ?y1 } WHERE { \n" +
+                String query = "CONSTRUCT { ?x1 <"+ OWL.sameAs.getURI() + "> ?y1 . \n" +
+                        "?    y1 <"+ OWL.sameAs.getURI() + "> ?x1 . \n" +
+                        "} WHERE { \n" +
                         "    <" + x + "> a <" + VIVO + "Relationship> . \n" +
                         "    <" + x + "> <" + VIVO +"relates> ?a . \n" +
                         "    <" + x + "> <" + VIVO +"relates> ?b . \n" +
@@ -1036,7 +1038,9 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             if(xnode.isURIResource()) {
                 String x = xnode.asResource().getURI();
                 log.debug("Processing x= " + x);
-                String query = "CONSTRUCT { <" + x + "> <"+ OWL.sameAs.getURI() + "> ?y } WHERE { \n" +
+                String query = "CONSTRUCT { ?x1 <"+ OWL.sameAs.getURI() + "> ?y1 . \n" +
+                        " ?y1 <"+ OWL.sameAs.getURI() + "> ?x1 . \n" +
+                        "} WHERE { \n" +
                         "    <" + x + "> a <" + ROLE + "> . \n" +
                         "    <" + x + "> <" + INHERES_IN + "> ?a . \n" +
                         "    <" + x + "> <" + REALIZED_IN + "> ?b . \n" +
@@ -1053,8 +1057,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                         " FILTER NOT EXISTS { ?y <" + VIVO + "dateTimeInterval> ?dti } \n" +
                         " FILTER NOT EXISTS { ?y <" + RDFS.label + "> ?label } \n" +  
                         " FILTER (<" + x + "> != ?y) \n" +  
-                        //" <" + x + "> <" + OWL.sameAs.getURI() + "> ?x1 . \n" +
-                        //" ?y <" + OWL.sameAs.getURI() + "> ?y1 . \n" +
+                        " <" + x + "> <" + OWL.sameAs.getURI() + "> ?x1 . \n" +
+                        " ?y <" + OWL.sameAs.getURI() + "> ?y1 . \n" +
                         "} \n";
                 m.add(getSparqlEndpoint().construct(query));                     
             }

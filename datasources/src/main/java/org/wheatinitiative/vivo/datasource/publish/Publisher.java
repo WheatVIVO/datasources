@@ -689,6 +689,20 @@ public class Publisher extends DataSourceBase implements DataSource {
         funcPropSet.add(DATETIMEVALUE);
         funcPropSet.add(DATETIMEINTERVAL);
         funcPropSet.add(HASCONTACTINFO);
+        funcPropSet.add("http://www.w3.org/2006/vcard/ns#country>");       
+        funcPropSet.add("http://www.w3.org/2006/vcard/ns#email>");
+        funcPropSet.add("http://www.w3.org/2006/vcard/ns#familyName");
+        funcPropSet.add("http://www.w3.org/2006/vcard/ns#givenName");
+        funcPropSet.add("http://www.w3.org/2006/vcard/ns#hasAddress");
+        funcPropSet.add("http://www.w3.org/2006/vcard/ns#hasName");
+        funcPropSet.add("http://www.w3.org/2006/vcard/ns#hasTitle");
+        funcPropSet.add("http://www.w3.org/2006/vcard/ns#locality");
+        funcPropSet.add("http://www.w3.org/2006/vcard/ns#postalCode");
+        funcPropSet.add("http://www.w3.org/2006/vcard/ns#region");
+        funcPropSet.add("http://www.w3.org/2006/vcard/ns#streetAddress");
+        funcPropSet.add("<http://www.w3.org/2006/vcard/ns#telephone");
+        funcPropSet.add("<http://www.w3.org/2006/vcard/ns#title");
+        funcPropSet.add("<http://www.w3.org/2006/vcard/ns#url");
         return funcPropSet;
     }
  
