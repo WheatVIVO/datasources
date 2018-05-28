@@ -994,7 +994,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 String x = xnode.asResource().getURI();
                 log.debug("Processing x= " + x);
                 String query = "CONSTRUCT { ?x1 <"+ OWL.sameAs.getURI() + "> ?y1 . \n" +
-                        "?    y1 <"+ OWL.sameAs.getURI() + "> ?x1 . \n" +
+                        "    ?y1 <"+ OWL.sameAs.getURI() + "> ?x1 . \n" +
                         "} WHERE { \n" +
                         "    <" + x + "> a <" + VIVO + "Relationship> . \n" +
                         "    <" + x + "> <" + VIVO +"relates> ?a . \n" +
@@ -1039,7 +1039,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 String x = xnode.asResource().getURI();
                 log.debug("Processing x= " + x);
                 String query = "CONSTRUCT { ?x1 <"+ OWL.sameAs.getURI() + "> ?y1 . \n" +
-                        " ?y1 <"+ OWL.sameAs.getURI() + "> ?x1 . \n" +
+                        "    ?y1 <"+ OWL.sameAs.getURI() + "> ?x1 . \n" +
                         "} WHERE { \n" +
                         "    <" + x + "> a <" + ROLE + "> . \n" +
                         "    <" + x + "> <" + INHERES_IN + "> ?a . \n" +
