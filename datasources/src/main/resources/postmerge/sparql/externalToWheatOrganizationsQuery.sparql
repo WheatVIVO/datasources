@@ -38,7 +38,7 @@ CONSTRUCT {
     }
     FILTER NOT EXISTS {
         ?x obo:RO_0000053 ?role .
-        ?role obo:RO_0000052 ?activity .
+        ?role obo:BFO_0000054 ?activity .
         FILTER NOT EXISTS { ?activity a <http://vivo.wheatinitiative.org/ontology/ExternalToWheat> }
     }
     FILTER NOT EXISTS {

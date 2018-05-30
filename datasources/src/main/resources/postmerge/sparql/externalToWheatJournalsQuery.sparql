@@ -23,36 +23,12 @@ PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 
 CONSTRUCT {
     ?x a <http://vivo.wheatinitiative.org/ontology/ExternalToWheat>
-} 
-#SELECT (COUNT(DISTINCT ?x) AS ?count)
-WHERE {
-    ?x a bibo:Document .
-    ?x rdfs:label ?label 
-  FILTER (NOT EXISTS {
-        ?x rdfs:label ?value 
-      FILTER( 
-        (regex(str(?value), "wheat", "i")) ||
-        (regex(str(?value), "tritic", "i")) ||
-        (regex(str(?value), "blé", "i")) 
-      )
+} WHERE {
+    ?x a bibo:Journal
+    FILTER NOT EXISTS {
+        ?x vivo:publicationVenueFor ?document .
+	FILTER NOT EXISTS {
+            ?document a <http://vivo.wheatinitiative.org/ontology/ExternalToWheat> .
+        }
     }
-# descriptions can contain irrelevant mentions of wheat
-#    && NOT EXISTS {
-#     ?x bibo:abstract ?value 
-#      FILTER( 
-#        (regex(str(?value), "wheat", "i")) ||
-#        (regex(str(?value), "tritic", "i")) ||
-#        (regex(str(?value), "blé", "i")) 
-#      )
-#    }
-#    && NOT EXISTS {
-#     ?x vivo:freetextKeyword ?value 
-#      FILTER( 
-#        (regex(str(?value), "wheat", "i")) ||
-#        (regex(str(?value), "tritic", "i")) ||
-#        (regex(str(?value), "blé", "i")) 
-#      )
-#    }
-  )  
-  
 }

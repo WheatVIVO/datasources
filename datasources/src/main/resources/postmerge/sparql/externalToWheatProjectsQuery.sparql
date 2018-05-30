@@ -36,14 +36,15 @@ WHERE {
         (regex(str(?value), "blé", "i")) 
       )
     }
-    && NOT EXISTS {
-     ?x vivo:description ?value 
-      FILTER( 
-        (regex(str(?value), "wheat", "i")) ||
-        (regex(str(?value), "tritic", "i")) ||
-        (regex(str(?value), "blé", "i")) 
-      )
-    }
+# descriptions can contain irrelevant mentions of wheat
+#    && NOT EXISTS {
+#     ?x vivo:description ?value 
+#      FILTER( 
+#        (regex(str(?value), "wheat", "i")) ||
+#        (regex(str(?value), "tritic", "i")) ||
+#        (regex(str(?value), "blé", "i")) 
+#      )
+#    }
   )  
   
 }
