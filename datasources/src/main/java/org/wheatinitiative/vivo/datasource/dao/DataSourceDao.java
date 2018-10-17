@@ -1,6 +1,7 @@
 package org.wheatinitiative.vivo.datasource.dao;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -9,6 +10,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wheatinitiative.vivo.datasource.DataSourceDescription;
+import org.wheatinitiative.vivo.datasource.DataSourceUpdateFrequency;
 import org.wheatinitiative.vivo.datasource.SparqlEndpointParams;
 
 import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
@@ -25,25 +27,27 @@ import com.hp.hpl.jena.vocabulary.XSD;
 
 public class DataSourceDao {
 
-    private static final String ADMIN_APP_TBOX = 
+    public static final String ADMIN_APP_TBOX = 
             "http://vivo.wheatinitiative.org/ontology/adminapp/";
-    private static final String DATASOURCE = ADMIN_APP_TBOX + "DataSource";
-    private static final String MERGESOURCE = ADMIN_APP_TBOX + "MergeDataSource";
-    private static final String PUBLISHSOURCE = ADMIN_APP_TBOX + "PublishDataSource";
-    private static final String SPARQLENDPOINT = ADMIN_APP_TBOX + "SparqlEndpoint";
-    private static final String USESSPARQLENDPOINT = ADMIN_APP_TBOX + "usesSparqlEndpoint";
-    private static final String USESQUERYTERMSET = ADMIN_APP_TBOX + "usesQueryTermSet";
-    private static final String QUERYTERM = ADMIN_APP_TBOX + "queryTerm";
-    private static final String DEPLOYMENTURI = ADMIN_APP_TBOX + "deploymentURI";
-    private static final String PRIORITY = ADMIN_APP_TBOX + "priority";
-    private static final String LASTUPDATE = ADMIN_APP_TBOX + "lastUpdate";
-    private static final String NEXTUPDATE = ADMIN_APP_TBOX + "nextUpdate";
-    private static final String SERVICEURI = ADMIN_APP_TBOX + "serviceURI";
-    private static final String ENDPOINTURI = ADMIN_APP_TBOX + "endpointURI";
-    private static final String ENDPOINTUPDATEURI = ADMIN_APP_TBOX + "endpointUpdateURI";
-    private static final String ENDPOINTUSERNAME = ADMIN_APP_TBOX + "username";
-    private static final String ENDPOINTPASSWORD = ADMIN_APP_TBOX + "password";
-    private static final String GRAPHURI = ADMIN_APP_TBOX + "graphURI";
+    public static final String DATASOURCE = ADMIN_APP_TBOX + "DataSource";
+    public static final String MERGESOURCE = ADMIN_APP_TBOX + "MergeDataSource";
+    public static final String PUBLISHSOURCE = ADMIN_APP_TBOX + "PublishDataSource";
+    public static final String SPARQLENDPOINT = ADMIN_APP_TBOX + "SparqlEndpoint";
+    public static final String USESSPARQLENDPOINT = ADMIN_APP_TBOX + "usesSparqlEndpoint";
+    public static final String USESQUERYTERMSET = ADMIN_APP_TBOX + "usesQueryTermSet";
+    public static final String QUERYTERM = ADMIN_APP_TBOX + "queryTerm";
+    public static final String DEPLOYMENTURI = ADMIN_APP_TBOX + "deploymentURI";
+    public static final String PRIORITY = ADMIN_APP_TBOX + "priority";
+    public static final String LASTUPDATE = ADMIN_APP_TBOX + "lastUpdate";
+    public static final String NEXTUPDATE = ADMIN_APP_TBOX + "nextUpdate";
+    public static final String UPDATEFREQUENCY = ADMIN_APP_TBOX + "updateFrequency";
+    public static final String SCHEDULEAFTER = ADMIN_APP_TBOX + "scheduleAfter";
+    public static final String SERVICEURI = ADMIN_APP_TBOX + "serviceURI";
+    public static final String ENDPOINTURI = ADMIN_APP_TBOX + "endpointURI";
+    public static final String ENDPOINTUPDATEURI = ADMIN_APP_TBOX + "endpointUpdateURI";
+    public static final String ENDPOINTUSERNAME = ADMIN_APP_TBOX + "username";
+    public static final String ENDPOINTPASSWORD = ADMIN_APP_TBOX + "password";
+    public static final String GRAPHURI = ADMIN_APP_TBOX + "graphURI";
     
     private static final Log log = LogFactory.getLog(DataSourceDao.class);
     
@@ -149,13 +153,15 @@ public class DataSourceDao {
         DataSourceDescription ds = new DataSourceDescription();
         ds.getConfiguration().setURI(URI);
         ds.getConfiguration().setName(getStringValue(URI, RDFS.label.getURI(), model));
-        ds.getConfiguration().setDeploymentURI(getStringValue(URI, DEPLOYMENTURI, model));        
-        //ds.setLastUpdate(getDateValue(URI, LASTUPDATE, model));
-        //ds.setNextUpdate(getDateValue(URI, NEXTUPDATE, model));
+        ds.getConfiguration().setDeploymentURI(getStringValue(URI, DEPLOYMENTURI, model));
+        ds.setLastUpdate(getStringValue(URI, LASTUPDATE, model));
+        ds.setNextUpdate(getStringValue(URI, NEXTUPDATE, model));
         ds.getConfiguration().setPriority(getIntValue(URI, PRIORITY, model));
         ds.getConfiguration().setResultsGraphURI(getStringValue(URI, GRAPHURI, model)); 
         ds.getConfiguration().setServiceURI(getStringValue(URI, SERVICEURI, model));        
-        //ds.setUpdateFrequency(DataSourceUpdateFrequency.WEEKLY);
+        ds.setUpdateFrequency(DataSourceUpdateFrequency.valueByURI(
+                getURIValue(URI, UPDATEFREQUENCY, model)));
+        ds.setScheduleAfterURI(getURIValue(URI, SCHEDULEAFTER, model));
         StmtIterator endpit = model.listStatements(model.getResource(URI), 
                 model.getProperty(USESSPARQLENDPOINT), (RDFNode) null);
         try {
@@ -213,6 +219,23 @@ public class DataSourceDao {
                 Statement stmt = sit.next();
                 if(stmt.getObject().isLiteral()) {
                     return stmt.getObject().asLiteral().getLexicalForm();
+                }
+            }
+            return null;
+        } finally {
+            sit.close();
+        }
+    }
+    
+    private String getURIValue(String subjectURI, String propertyURI, 
+            Model model) {
+        StmtIterator sit = model.listStatements(model.getResource(subjectURI), 
+                model.getProperty(propertyURI), (Resource) null);
+        try {
+            while(sit.hasNext()) {
+                Statement stmt = sit.next();
+                if(stmt.getObject().isURIResource()) {
+                    return stmt.getObject().asResource().getURI();
                 }
             }
             return null;

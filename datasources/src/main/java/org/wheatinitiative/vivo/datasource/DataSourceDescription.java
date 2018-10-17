@@ -4,7 +4,11 @@ public class DataSourceDescription {
 
     private DataSourceConfiguration configuration = null;
     private DataSourceStatus status = null;
-
+    private String lastUpdate;
+    private String nextUpdate;
+    private DataSourceUpdateFrequency updateFrequency;
+    private String scheduleAfterURI;
+    
     // Simple constructor for Jackson
     public DataSourceDescription() {}
     
@@ -35,6 +39,39 @@ public class DataSourceDescription {
     public void setStatus(DataSourceStatus status) {
         this.status = status;
     }
+    
+    public String getLastUpdate() {
+        return lastUpdate;
+    }
+
+    public void setLastUpdate(String lastUpdate) {
+        this.lastUpdate = lastUpdate;
+    }
+
+    public String getNextUpdate() {
+        return nextUpdate;
+    }
+
+    public void setNextUpdate(String nextUpdate) {
+        this.nextUpdate = nextUpdate;
+    }
+
+    public DataSourceUpdateFrequency getUpdateFrequency() {
+        return updateFrequency;
+    }
+
+    public void setUpdateFrequency(DataSourceUpdateFrequency updateFrequency) {
+        this.updateFrequency = updateFrequency;
+    }
+
+    public String getScheduleAfterURI() {
+        return scheduleAfterURI;
+    }
+
+    public void setScheduleAfterURI(String scheduleAfterURI) {
+        this.scheduleAfterURI = scheduleAfterURI;
+    }
+
     
 }
 
