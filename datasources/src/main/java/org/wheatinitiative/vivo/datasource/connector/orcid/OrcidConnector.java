@@ -50,7 +50,8 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
     private static final String NAMESPACE_ETC = 
             WHEAT_INITIATIVE + "orcid-";
     private static final String TEMP_NS = "http://example.org/tmp/";
-    private static final int MIN_REST = 125; // ms
+    private static final String DATASOURCE_CONFIG_PROPERTY_PREFIX = "datasource.";
+    private static final int MIN_REST = 65; // ms
     private static final String CLIENT_ID = "orcid.clientId";
     private static final String CLIENT_SECRET = "orcid.clientSecret";
     private String clientId;
@@ -74,14 +75,12 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
             this.clientId = (String) clientId;
         }
         if(this.clientId == null) {
+            log.debug("Reading " + CLIENT_ID + " from Java system properties");
             this.clientId = System.getProperty(CLIENT_ID);
         }
         if(this.clientSecret == null) {
+            log.debug("Reading " + CLIENT_SECRET + " from Java system properties");
             this.clientSecret = System.getProperty(CLIENT_SECRET);
-        }
-        if(this.clientId == null || this.clientSecret == null) {
-            throw new RuntimeException(
-                    "ORCID client ID and client secret must be specified");
         }
         httpClient = HttpClients.custom()
                 .setRedirectStrategy(new LaxRedirectStrategy())
@@ -103,7 +102,23 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
         public OrcidModelIterator(List<String> orcidIds) {
             this.orcidIdList = orcidIds;
             this.orcidIds = orcidIdList.iterator();
-            this.accessToken = getAccessToken();
+            if(clientId == null) {
+                log.info("Reading" + DATASOURCE_CONFIG_PROPERTY_PREFIX 
+                        + CLIENT_ID + " from parameter map");
+                clientId = getConfiguration().getParameterMap().get(
+                        DATASOURCE_CONFIG_PROPERTY_PREFIX + CLIENT_ID).toString();
+            }
+            if(clientSecret == null) {
+                log.info("Reading" + DATASOURCE_CONFIG_PROPERTY_PREFIX 
+                        + CLIENT_SECRET + " from parameter map");
+                clientSecret = getConfiguration().getParameterMap().get(
+                        DATASOURCE_CONFIG_PROPERTY_PREFIX + CLIENT_SECRET).toString();
+            }
+            if(clientId == null || clientSecret == null) {
+                throw new RuntimeException(
+                        "ORCID client ID and client secret must be specified");
+            }
+            this.accessToken = getAccessToken(clientId, clientSecret);
         }
 
         public boolean hasNext() {
@@ -180,7 +195,7 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
             }
         }
         
-        private String getAccessToken() {
+        private String getAccessToken(String clientId, String clientSecret) {
             URI tokenURI;
             try {
                 tokenURI = new URIBuilder(OAUTH_TOKEN_URL).build();
