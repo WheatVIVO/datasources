@@ -218,8 +218,14 @@ public abstract class ConnectorDataSource extends DataSourceBase {
         if(!res.isURIResource()) {
             return res;
         }
-        // don't rewrite ORCID iDs or resources that are already in the default namespace
-        if(res.getURI().startsWith(namespace) || res.getURI().contains("orcid.org")) {
+        // don't rewrite resources that are already in the default namespace
+        if(res.getURI().startsWith(namespace)) {
+            return res;
+        }
+        // don't rewrite things from known ABox namespaces
+        if(res.getURI().contains("orcid.org")
+                || res.getURI().contains("vivoweb.org")
+                || res.getURI().startsWith("http://aims.fao.org/aos/geopolitical")) {
             return res;
         }
         try {
