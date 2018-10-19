@@ -42,6 +42,7 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
     private static final String PRODINRA_ABOX_NS = PRODINRA_TBOX_NS + "individual/";
     private static final String NAMESPACE_ETC = PRODINRA_ABOX_NS + "n";
     private static final String SPARQL_RESOURCE_DIR = "/prodinra/sparql/";
+    private final static int RESULTS_PER_PAGE = 200;
     
     private static final Property RESUMPTION_TOKEN = ResourceFactory.createProperty(
             "http://www.openarchives.org/OAI/2.0//resumptionToken");
@@ -308,7 +309,7 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
             try {
                 String[] tokens = resumptionToken.split("!");
                 int cursor = Integer.parseInt(tokens[1], 10);
-                cursor = cursor + 200;
+                cursor = cursor + RESULTS_PER_PAGE;
                 return tokens[0] + "!" + cursor + "!" + tokens[2] + "!" + tokens[3] + "!"  + tokens[4];
             } catch (Exception e) {
                 log.error(e, e);
@@ -329,7 +330,8 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
                             Statement stmt = sit.next();
                             if(stmt.getObject().isLiteral()) {
                                 int total = stmt.getObject().asLiteral().getInt();
-                                this.totalRecords = new Integer(total);
+                                this.totalRecords = (int) Math.ceil(
+                                        (total / (double) RESULTS_PER_PAGE));
                             }
                         }
                     } 
