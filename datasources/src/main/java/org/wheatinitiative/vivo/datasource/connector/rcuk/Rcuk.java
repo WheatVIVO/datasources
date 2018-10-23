@@ -41,7 +41,8 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
 
     private static final Log log = LogFactory.getLog(Rcuk.class);
     private static final String API_URL = "http://gtr.ukri.org/gtr/api/";
-    private static final String RCUK_TBOX_NS = API_URL;
+    private String apiUrl = API_URL;
+    private static final String RCUK_TBOX_NS = "http://gtr.rcuk.ac.uk/gtr/api/";
     private static final String RCUK_ABOX_NS = API_URL + "individual/";
     private static final Property HREF = ResourceFactory.createProperty(
             RCUK_TBOX_NS + "href");
@@ -114,6 +115,10 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
     private int getTotalPages(Model projectsRdf) {
         int totalPages = 1;
         NodeIterator nodeIt = projectsRdf.listObjectsOfProperty(TOTAL_PAGES);
+        if(!nodeIt.hasNext()) {
+            throw new RuntimeException("No page total value found for property " 
+                    + TOTAL_PAGES);
+        }
         while(nodeIt.hasNext()) { 
             // should be only once, but if not we'll just take the last value
             RDFNode node = nodeIt.next();
@@ -131,7 +136,7 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
     
     private String getProjects(String queryTerm, int pageNum) 
             throws URISyntaxException {
-        URIBuilder builder = new URIBuilder(API_URL + "projects");
+        URIBuilder builder = new URIBuilder(apiUrl + "projects");
         builder.addParameter("q", queryTerm);
         builder.addParameter("s", Integer.toString(MAX_PAGE_SIZE, 10));
         builder.addParameter("p", Integer.toString(pageNum, 10));
@@ -310,7 +315,7 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
         return m;
     }
 
-    private static final String FILTER_OUT = "gtr.ukri.org";
+    private static final String FILTER_OUT = "gtr.rcuk.ac.uk";
     private static final String FILTER_OUT_RES = "individual/n";
     
     @Override
@@ -362,6 +367,9 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
         
         public RcukIterator() {
             try {
+                if(getConfiguration().getServiceURI() != null) {
+                    apiUrl = getConfiguration().getServiceURI();
+                }
                 queryTerms = getConfiguration().getQueryTerms();
                 for(String queryTerm : queryTerms) {
                     String projects = getProjects(queryTerm, 1);
@@ -373,6 +381,7 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
                     }
                     pageTotals.put(queryTerm, totalPages);
                     size += totalPages;
+                    log.info("RCUK iterator size is " + size);
                 }
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
@@ -412,7 +421,7 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
                     currentPageOfTerm++;
                 } else {
                     currentQueryTerm++;
-                    currentPageOfTerm = 0;
+                    currentPageOfTerm = 1;
                 }
                 log.info(retrievedURIs.size() + " retrieved resources from API");
             }

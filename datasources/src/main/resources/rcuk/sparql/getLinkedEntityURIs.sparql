@@ -20,7 +20,7 @@ PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>
 PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
-PREFIX rcuk:     <http://gtr.ukri.org/gtr/api/>
+PREFIX rcuk:     <http://gtr.rcuk.ac.uk/gtr/api/>
 
 SELECT DISTINCT ?x WHERE {
     ?links rcuk:link ?link .
@@ -30,5 +30,5 @@ SELECT DISTINCT ?x WHERE {
 	 ?xuri rcuk:href ?href 
     }
     # some employment links in the data are dirty and link to all organizations
-    FILTER (?xuri != <http://gtr.ukri.org:80/gtr/api/organisations/>)
+    FILTER (?xuri != <http://gtr.rcuk.ac.uk:80/gtr/api/organisations/>)
 } ORDER BY ?x 
