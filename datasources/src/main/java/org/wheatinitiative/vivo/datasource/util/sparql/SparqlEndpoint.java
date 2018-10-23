@@ -14,12 +14,13 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.wheatinitiative.vivo.datasource.SparqlEndpointParams;
@@ -37,20 +38,20 @@ import com.hp.hpl.jena.sparql.resultset.ResultSetException;
 
 public class SparqlEndpoint implements ModelConstructor {
 
-    // writing too many triples at once to VIVO seems to result in 403 errors
-    private static final int CHUNK_SIZE = 2500;
+    // Writing too many triples at once to VIVO results in 403 errors
+    // if maxPostSize is not adjusted on Tomcat.
+    private static final int CHUNK_SIZE = 2500;  // triples per 'chunk'
     
     private static final Log log = LogFactory.getLog(SparqlEndpoint.class);
     
     private SparqlEndpointParams endpointParams;
     
-    private static final DefaultHttpClient httpClient;
+    private static final HttpClient httpClient;
 
     static {
-        PoolingClientConnectionManager cm = new PoolingClientConnectionManager();
-        cm.setDefaultMaxPerRoute(50);
-        cm.setMaxTotal(300);
-        httpClient = new DefaultHttpClient(cm);
+        httpClient = HttpClients.custom()
+                .setRedirectStrategy(new LaxRedirectStrategy())
+                .build();
     }
     
     public SparqlEndpoint(SparqlEndpointParams params) {
@@ -63,11 +64,10 @@ public class SparqlEndpoint implements ModelConstructor {
     
     public ResultSet getResultSet(String queryStr) {
         try {
-            //System.out.println(this.endpointParams.getEndpointURI());
+            // original Jena implementation; problematic at least in some envs
             //QueryExecution qe = QueryExecutionFactory.sparqlService(
             //        this.endpointParams.getEndpointURI(), queryStr);
             //return qe.execSelect();
-            // avoid strange Jena bugs:
             return getResultSetWithoutJena(queryStr);
         } catch (QueryParseException qpe) {
             throw new RuntimeException("Unable to parse query:\n" + queryStr, qpe);
@@ -77,7 +77,6 @@ public class SparqlEndpoint implements ModelConstructor {
     private String getSparqlQueryResponse(String queryStr, String contentType) {
         try {
             String uri = endpointParams.getEndpointURI();
-            //queryStr = URLEncoder.encode(queryStr, "UTF-8");
             URIBuilder uriB = new URIBuilder(uri);
             uriB.addParameter("query", queryStr);
             uriB.addParameter("email", endpointParams.getUsername());
@@ -86,7 +85,6 @@ public class SparqlEndpoint implements ModelConstructor {
             HttpGet get = new HttpGet(uriWithParams);
             log.debug("Request URI " + uriWithParams);
             get.addHeader("Accept", contentType);
-            long start = System.currentTimeMillis();
             HttpResponse response = httpClient.execute(get);
             try {
                 String content = stringFromInputStream(

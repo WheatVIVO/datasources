@@ -13,6 +13,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.util.EntityUtils;
 
@@ -25,9 +26,9 @@ public class HttpUtils {
     private static final Log log = LogFactory.getLog(HttpUtils.class);
     
     public HttpUtils() {
-        DefaultHttpClient defaultHttpClient = new DefaultHttpClient();
-        defaultHttpClient.setRedirectStrategy(new LaxRedirectStrategy());
-        this.httpClient = defaultHttpClient;
+        this.httpClient = HttpClients.custom()
+                .setRedirectStrategy(new LaxRedirectStrategy())
+                .build();
     }
     
     public String getHttpResponse(String url) throws IOException {
