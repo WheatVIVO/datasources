@@ -82,8 +82,8 @@ public abstract class DataSourceBase {
         } catch (Exception e) {
             log.info(e, e);
             this.getStatus().setStatusOk(false);
-            this.getStatus().setMessage(e.getMessage());
-            this.getStatus().setMessage("ingest terminated due to error");
+            this.getStatus().setMessage("ingest terminated due to error " 
+                    + e.getMessage());
             throw new RuntimeException(e);
         } finally {
             log.info("Finishing ingest");

@@ -52,7 +52,11 @@ public class HttpUtils {
                 }
             }
         }
-        try {
+        if(response.getStatusLine().getStatusCode() >= 400) {
+            throw new RuntimeException(response.getStatusLine().getStatusCode() 
+                    + ": " + response.getStatusLine().getReasonPhrase() + " (" + url + ")");    
+        }
+        try {            
             return EntityUtils.toString(response.getEntity(), "UTF-8");
         } finally {
             EntityUtils.consume(response.getEntity());
