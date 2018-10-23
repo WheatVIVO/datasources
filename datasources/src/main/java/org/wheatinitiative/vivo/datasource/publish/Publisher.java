@@ -718,7 +718,8 @@ public class Publisher extends DataSourceBase implements DataSource {
                 "externalToWheatPeopleQuery.sparql",
                 "externalToWheatOrganizationsQuery.sparql",
                 "externalToWheatJournalsQuery.sparql",
-                "externalToWheatConceptsQuery.sparql"
+                "externalToWheatConceptsQuery.sparql",
+                "externalToWheatInactivePersonsQuery.sparql"
                 );
         destinationEndpoint.clearGraph(POSTMERGE_GRAPH);
         for(String query : queries) {            
