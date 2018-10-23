@@ -19,6 +19,7 @@ import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.DataSourceBase;
 import org.wheatinitiative.vivo.datasource.DataSourceDescription;
 import org.wheatinitiative.vivo.datasource.SparqlEndpointParams;
+import org.wheatinitiative.vivo.datasource.VivoVocabulary;
 import org.wheatinitiative.vivo.datasource.dao.DataSourceDao;
 import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
 
@@ -689,6 +690,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         funcPropSet.add(DATETIMEVALUE);
         funcPropSet.add(DATETIMEINTERVAL);
         funcPropSet.add(HASCONTACTINFO);
+        funcPropSet.add(VivoVocabulary.VIVO + "rank");
         funcPropSet.add("http://www.w3.org/2006/vcard/ns#country>");       
         funcPropSet.add("http://www.w3.org/2006/vcard/ns#email>");
         funcPropSet.add("http://www.w3.org/2006/vcard/ns#familyName");
