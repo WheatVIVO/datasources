@@ -43,9 +43,7 @@ public class Cordis extends ConnectorDataSource implements DataSource {
     private static final String CORDIS_ABOX_NS = CORDIS_TBOX_NS + "individual/";
     private static final String NAMESPACE_ETC = CORDIS_ABOX_NS + "n";
     private static final String VIVO_CORE_NS = "http://vivoweb.org/ontology/core#";
-    private static final String SPARQL_RESOURCE_DIR = "/cordis/sparql/";
-    private static final int MIN_REST_AFTER_HTTP_REQUEST = 250; //ms
-    
+    private static final String SPARQL_RESOURCE_DIR = "/cordis/sparql/";    
     
     /**
      * Iterate through this data source.
@@ -159,11 +157,8 @@ public class Cordis extends ConnectorDataSource implements DataSource {
                 String request = uriB.build().toString();
                 log.info("Requesting search result page " + request);
                 String response = httpUtils.getHttpResponse(request);
-                Model model = xmlToRdf.toRDF(response);
-                Thread.sleep(MIN_REST_AFTER_HTTP_REQUEST);
-                
-                return rdfUtils.renameBNodes(model, NAMESPACE_ETC, model);
-                
+                Model model = xmlToRdf.toRDF(response);                
+                return rdfUtils.renameBNodes(model, NAMESPACE_ETC, model);                
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -191,8 +186,7 @@ public class Cordis extends ConnectorDataSource implements DataSource {
                     						+ "/nCheck the debug log for more.");
                     	log.debug(e);
                     	continue;
-                    }
-                    Thread.sleep(MIN_REST_AFTER_HTTP_REQUEST);                                        
+                    }                                        
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }

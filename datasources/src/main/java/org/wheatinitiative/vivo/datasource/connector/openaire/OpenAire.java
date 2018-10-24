@@ -62,8 +62,6 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	private static final Property VITRO_VALUE = ResourceFactory
 			.createProperty("http://vitro.mannlib.cornell.edu/ns/vitro/0.7#value");
 	
-	private static final int MIN_REST_AFTER_HTTP_REQUEST = 250; //ms
-	
 	private HttpUtils httpUtils = new HttpUtils();
 	private XmlToRdf xmlToRdf = new XmlToRdf();
 	private RdfUtils rdfUtils = new RdfUtils();
@@ -221,8 +219,6 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 					log.info(request);
 					String response = httpUtils.getHttpResponse(request);
 					relatedProjectsModel = xmlToRdf.toRDF(response);
-					
-					Thread.sleep(MIN_REST_AFTER_HTTP_REQUEST);
 					
 				} catch (Exception e) {
 					log.error(e, e);

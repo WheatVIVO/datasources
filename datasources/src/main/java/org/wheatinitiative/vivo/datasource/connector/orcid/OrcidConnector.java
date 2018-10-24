@@ -26,6 +26,7 @@ import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.SparqlEndpointParams;
 import org.wheatinitiative.vivo.datasource.connector.ConnectorDataSource;
 import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
+import org.wheatinitiative.vivo.datasource.util.http.HttpUtils;
 import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
 import org.wheatinitiative.vivo.datasource.util.xml.XmlToRdf;
 
@@ -62,6 +63,7 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
     private static final String GIVEN_NAME = VCARD + "givenName";
     private static final String FAMILY_NAME = VCARD + "familyName";
     private HttpClient httpClient;
+    private long lastRequestMillis = 0;
     private NameProcessor nameProcessor = new NameProcessor();
     
     public OrcidConnector() {
@@ -84,6 +86,7 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
         }
         httpClient = HttpClients.custom()
                 .setRedirectStrategy(new LaxRedirectStrategy())
+                .setUserAgent(HttpUtils.DEFAULT_USER_AGENT)
                 .build();
     }
     
@@ -174,14 +177,15 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
             
         private String getOrcidResponse(String path) {
             try {
-                try {
-                    Thread.sleep(MIN_REST);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+                long msToSleep = MIN_REST - 
+                        (System.currentTimeMillis() - lastRequestMillis);
+                if(msToSleep > 0) {
+                    Thread.sleep(msToSleep);
+                }                
+                lastRequestMillis = System.currentTimeMillis();
                 HttpGet get = new HttpGet(path);
                 get.addHeader("Content-Type", "application/vdn.orcid+xml");
-                get.addHeader("Authorization", "Bearer " + accessToken);
+                get.addHeader("Authorization", "Bearer " + accessToken);                
                 log.info("Retrieving " + get.getURI());
                 HttpResponse resp = httpClient.execute(get);
                 try {

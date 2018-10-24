@@ -54,9 +54,6 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
     private static final String SPARQL_RESOURCE_DIR = "/rcuk/sparql/";
     private static final int MAX_PAGE_SIZE = 25; // number of search results that can
                                              // be retrieved in a single request
-    private static final int MIN_REST_MILLIS = 125; // ms to wait between
-                                                    // subsequent API calls
-    
     private HttpUtils httpUtils = new HttpUtils();
     private XmlToRdf xmlToRdf = new XmlToRdf();
         
@@ -253,11 +250,8 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
                 retrievedURIs.add(uri);
                 String doc = httpUtils.getHttpResponse(uri);
                 m.add(transformToRdf(doc));
-                Thread.currentThread();
-                Thread.sleep(MIN_REST_MILLIS);
             } catch (Exception e) {
                 log.error("Error fetching " + uri, e);
-                // TODO let bubble up to connector level?
                 this.getStatus().setErrorRecords(this.getStatus().getErrorRecords() + 1);
             }
         }
