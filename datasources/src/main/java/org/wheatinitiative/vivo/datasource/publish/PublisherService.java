@@ -1,24 +1,15 @@
 package org.wheatinitiative.vivo.datasource.publish;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.wheatinitiative.vivo.datasource.DataSource;
-import org.wheatinitiative.vivo.datasource.service.DataSourceService;
+import org.wheatinitiative.vivo.datasource.service.DataSourceServiceMultipleInstance;
 
-public class PublisherService extends DataSourceService {
+public class PublisherService extends DataSourceServiceMultipleInstance {
 
-    private static volatile DataSource dataSource = null;
-    
+    private static final long serialVersionUID = 1L;
+
     @Override
-    protected DataSource getDataSource(HttpServletRequest request) {
-        return getDataSourceInstance();
-    }
-    
-    public static synchronized DataSource getDataSourceInstance() {
-        if(dataSource == null) {
-            dataSource = new Publisher();
-        }
-        return dataSource;
+    protected DataSource constructDataSource() {
+        return new Publisher();
     }
     
 }

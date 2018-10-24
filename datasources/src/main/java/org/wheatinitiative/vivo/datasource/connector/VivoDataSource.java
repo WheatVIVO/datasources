@@ -20,6 +20,7 @@ import org.apache.jena.riot.RiotException;
 import org.apache.jena.riot.RiotNotFoundException;
 import org.wheatinitiative.vitro.webapp.ontology.update.KnowledgeBaseUpdater;
 import org.wheatinitiative.vitro.webapp.ontology.update.UpdateSettings;
+import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.VivoVocabulary;
 import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
 import org.wheatinitiative.vivo.datasource.util.classpath.ClasspathUtils;
@@ -44,7 +45,7 @@ import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.vocabulary.OWL;
 import com.hp.hpl.jena.vocabulary.RDF;
 
-public abstract class VivoDataSource extends ConnectorDataSource {
+public class VivoDataSource extends ConnectorDataSource implements DataSource {
 
     private static final String SEARCH_CONTROLLER = "search";
     private static final String QUERYTEXT_PARAM = "querytext";
@@ -60,7 +61,6 @@ public abstract class VivoDataSource extends ConnectorDataSource {
     protected HttpUtils httpUtils = new HttpUtils();
     protected XmlToRdf xmlToRdf = new XmlToRdf();
     
-    private final static int MIN_REST = 125; // ms between linked data requests
     private static final String RESOURCE_PATH = "/vivo/update15to16/"; 
     private static final String SPARQL_PATH = "/vivo/sparql/";
     private static final int NUMBER_OF_FILTERS = 27;
@@ -496,11 +496,6 @@ public abstract class VivoDataSource extends ConnectorDataSource {
                 if(shouldCache(uri, lodModel)) {
                     lodModelCache.put(uri, clone(lodModel));
                 }
-                try {
-                    Thread.sleep(MIN_REST);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }            
             }   
             return lodModel;
         }
@@ -719,6 +714,22 @@ public abstract class VivoDataSource extends ConnectorDataSource {
                     uriModel.getResource(uri), RDF.type, VivoVocabulary.PROJECT);
         }
         
+    }
+
+    /*
+     * Should not be called because VivoDataSources should preserve the URIs
+     * in the source data.  If called anyway, derive a prefix name from the
+     * name in the configuration 
+     * @see org.wheatinitiative.vivo.datasource.connector.ConnectorDataSource#getPrefixName()
+     */
+    @Override
+    protected String getPrefixName() {
+        String nameFromConfig = this.getConfiguration().getName();
+        if(nameFromConfig == null) {
+            throw new RuntimeException("Unable to return prefix name because " 
+                    + " name is not specified in data source configuration.");
+        }
+        return nameFromConfig.trim().replaceAll("\\W", "").toLowerCase();
     }
     
 }
