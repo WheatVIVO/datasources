@@ -127,12 +127,33 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
     @Override
     protected Model mapToVIVO(Model m) {
         m = rdfUtils.renameBNodes(m, NAMESPACE_ETC, m);
-        m = rdfUtils.smushResources(m, m.getProperty(
-                PRODINRA_TBOX_NS + "identifier"));
+        m = switchDocumentIdentifiers(m);
         m = renameByIdentifier(m);
         m = constructForVIVO(m);
         m = trimLiterals(m);
         m = removeItalics(m);
+        return m;
+    }
+    
+    /*
+     * See issue #9.  Move identifiers for documents from prodinra:identifier
+     * to prodinra:documentIdentifier to avoid collisions where ID is reused
+     * for organizations, etc.
+     */
+    private Model switchDocumentIdentifiers(Model m) {
+        long size = m.size();
+        construct(SPARQL_RESOURCE_DIR + "090-documentIdentifiers.sparql", m, NAMESPACE_ETC);
+        log.info("Added " + (m.size() - size) + " document identifiers");
+        Model removals = ModelFactory.createDefaultModel();
+        StmtIterator sit = m.listStatements(null, m.getProperty(
+                PRODINRA_TBOX_NS + "documentIdentifier"), (RDFNode) null);
+        while(sit.hasNext()) {
+            Statement stmt = sit.next();
+            removals.add(m.listStatements(stmt.getSubject(), m.getProperty(
+                    PRODINRA_TBOX_NS + "identifier"), (RDFNode) null));
+        }
+        m.remove(removals);
+        log.info("Removed " + removals.size() + " old document identifiers");
         return m;
     }
     
@@ -199,7 +220,9 @@ public class Prodinra extends ConnectorDataSource implements DataSource {
     
     protected Model renameByIdentifier(Model m) {
         m = renameByIdentifier(m, m.getProperty(
-                PRODINRA_TBOX_NS + "identifier"), PRODINRA_ABOX_NS, "id");
+                PRODINRA_TBOX_NS + "documentIdentifier"), PRODINRA_ABOX_NS, "id");
+        m = renameByIdentifier(m, m.getProperty(
+                PRODINRA_TBOX_NS + "identifier"), PRODINRA_ABOX_NS, "idn");
         m = renameByIdentifier(m, m.getProperty(
                 PRODINRA_TBOX_NS + "inraIdentifier"), PRODINRA_ABOX_NS, "in");
         m = renameByIdentifier(m, m.getProperty(
