@@ -92,18 +92,14 @@ public class ProdinraTest extends ConnectorTestCase {
     }
     
     public void testExternalAffiliation() {
-        Model m = testConstruct("/prodinra/externalAffiliationIn.n3", 
+        testConstruct("/prodinra/externalAffiliationIn.n3", 
                 "/prodinra/externalAffiliationOut.n3");
-        // test the blank nodes by issuing a query
     }
-    
-    // @Ignore when changed to Junit4 style
-    // Needs updating to check for vcard blank node structure
-//    public void testInraAffiliation() {
-//        Model m = testConstruct("/prodinra/inraAffiliationUnitIn.n3", 
-//                "/prodinra/inraAffiliationUnitOut.n3");
-//        // test the blank nodes by issuing a query
-//    }
+        
+    public void testInraAffiliation() {
+        testConstruct("/prodinra/inraAffiliationUnitIn.n3", 
+                "/prodinra/inraAffiliationUnitOut.n3");
+    }
     
     public void testFilter() {
         Model m = this.loadModelFromResource("/prodinra/inraAffiliationUnitIn.n3");

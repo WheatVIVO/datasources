@@ -14,9 +14,152 @@
 @prefix obo:   <http://purl.obolibrary.org/obo/> .
 @prefix foaf:  <http://xmlns.com/foaf/0.1/> .
 @prefix c4o:   <http://purl.org/spar/c4o/> .
-@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+<http://record.prodinra.inra.fr/individual/n995812-author2-vcard>
+        a              vcard:Individual ;
+        vcard:hasName  <http://record.prodinra.inra.fr/individual/n995812-author2-vcard-name> .
+
+<http://record.prodinra.inra.fr/individual/n995812-author2>
+        a                foaf:Person ;
+        <http://www.w3.org/2000/01/rdf-schema#label>
+                "Voituriez, Tancrede" ;
+        obo:ARG_2000028  <http://record.prodinra.inra.fr/individual/n995812-author2-vcard> ;
+        <http://record.prodinra.inra.fr/externalAffiliation>
+                <http://record.prodinra.inra.fr/individual/n4220466> ;
+        <http://record.prodinra.inra.fr/firstName>
+                "Tancrede" ;
+        <http://record.prodinra.inra.fr/lastName>
+                "Voituriez" ;
+        <http://record.prodinra.inra.fr/publicationName>
+                "Voituriez" ;
+        vitro:position   "1" ;
+        <http://www.w3.org/2001/XMLSchema-instance/type>
+                "ns2:externalAuthor" .
+
+<http://record.prodinra.inra.fr/individual/INRA>
+        a       foaf:Organization ;
+        <http://www.w3.org/2000/01/rdf-schema#label>
+                "INRA" .
+
+<http://record.prodinra.inra.fr/individual/n995812-authorship1>
+        a             vivo:Authorship ;
+        vivo:rank     1 ;
+        vivo:relates  <http://record.prodinra.inra.fr/individual/n995812-author1> , <http://record.prodinra.inra.fr/individual/n995812> .
+
+<http://record.prodinra.inra.fr/individual/n995812-author2-vcard-name>
+        a                 vcard:Name ;
+        vcard:familyName  "Voituriez" ;
+        vcard:givenName   "Tancrede" .
+
+<http://record.prodinra.inra.fr/individual/n995812-author1>
+        a                foaf:Person ;
+        <http://www.w3.org/2000/01/rdf-schema#label>
+                "Le Cotty, T." ;
+        obo:ARG_2000028  <http://record.prodinra.inra.fr/individual/n995812-author1-vcard> ;
+        <http://record.prodinra.inra.fr/initial>
+                "T." ;
+        <http://record.prodinra.inra.fr/inraAffiliation>
+                <http://record.prodinra.inra.fr/individual/n4510351> ;
+        <http://record.prodinra.inra.fr/lastName>
+                "Le Cotty" ;
+        <http://record.prodinra.inra.fr/publicationName>
+                "Le Cotty" ;
+        vitro:position   "1" ;
+        <http://vivo.wheatinitiative.org/ontology/wi#country>
+                "FRA" ;
+        <http://www.w3.org/2001/XMLSchema-instance/type>
+                "ns2:inraAuthor" .
+
+<http://record.prodinra.inra.fr/individual/n6916527>
+        <http://record.prodinra.inra.fr/externalAffiliation>
+                <http://record.prodinra.inra.fr/individual/n4220466> ;
+        <http://record.prodinra.inra.fr/firstName>
+                "Tancrede" ;
+        <http://record.prodinra.inra.fr/lastName>
+                "Voituriez" ;
+        <http://record.prodinra.inra.fr/publicationName>
+                "Voituriez" ;
+        vitro:position  "1" ;
+        <http://www.w3.org/2001/XMLSchema-instance/type>
+                "ns2:externalAuthor" .
+
+<http://record.prodinra.inra.fr/individual/n995812-author1-vcard-name>
+        a                 vcard:Name ;
+        vcard:familyName  "Le Cotty" ;
+        vcard:givenName   "T." .
+
+<http://record.prodinra.inra.fr/individual/n995812-dtv>
+        a                       vivo:DateTimeValue ;
+        vivo:dateTime           "2004-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+        vivo:dateTimePrecision  vivo:yearPrecision .
+
+<http://record.prodinra.inra.fr/individual/n1770699>
+        <http://record.prodinra.inra.fr/affiliationPartners>
+                <http://record.prodinra.inra.fr/individual/n4920413> , <http://record.prodinra.inra.fr/individual/n1695840> , <http://record.prodinra.inra.fr/individual/n4320283> , <http://record.prodinra.inra.fr/individual/n640776> ;
+        <http://record.prodinra.inra.fr/center>
+                <http://record.prodinra.inra.fr/individual/n5960170> ;
+        <http://record.prodinra.inra.fr/code>
+                "1135" ;
+        <http://record.prodinra.inra.fr/country>
+                "FRA" ;
+        <http://record.prodinra.inra.fr/department>
+                <http://record.prodinra.inra.fr/individual/n8605210> ;
+        <http://record.prodinra.inra.fr/laboratory>
+                "UMR 1135 Laboratoire montpelliérain d'économie théorique et appliquée" ;
+        <http://record.prodinra.inra.fr/name>
+                "Laboratoire montpelliérain d'économie théorique et appliquée" ;
+        <http://record.prodinra.inra.fr/type>
+                "UMR" ;
+        vitro:position  "3" .
+
+<http://record.prodinra.inra.fr/individual/n995812-author1-vcard>
+        a              vcard:Individual ;
+        vcard:hasName  <http://record.prodinra.inra.fr/individual/n995812-author1-vcard-name> .
+
+<http://record.prodinra.inra.fr/individual/n995812-author1-position-INRA>
+        a             vivo:Position ;
+        <http://vivo.wheatinitiative.org/ontology/wi#immediateOrgName>
+                "UMR 1135 Laboratoire montpelliérain d'économie théorique et appliquée" ;
+        vivo:relates  <http://record.prodinra.inra.fr/individual/INRA> , <http://record.prodinra.inra.fr/individual/n995812-author1> .
+
+<http://record.prodinra.inra.fr/individual/n8596062>
+        <http://record.prodinra.inra.fr/initial>
+                "T." ;
+        <http://record.prodinra.inra.fr/inraAffiliation>
+                <http://record.prodinra.inra.fr/individual/n4510351> ;
+        <http://record.prodinra.inra.fr/lastName>
+                "Le Cotty" ;
+        <http://record.prodinra.inra.fr/publicationName>
+                "Le Cotty" ;
+        vitro:position  "1" ;
+        <http://www.w3.org/2001/XMLSchema-instance/type>
+                "ns2:inraAuthor" .
+
+<http://record.prodinra.inra.fr/individual/n4220466>
+        a               foaf:Organization ;
+        <http://www.w3.org/2000/01/rdf-schema#label>
+                "Inconnu" ;
+        <http://record.prodinra.inra.fr/country>
+                "INC" ;
+        <http://record.prodinra.inra.fr/identifier>
+                "311264" ;
+        <http://record.prodinra.inra.fr/name>
+                "Inconnu" ;
+        vitro:position  "5" ;
+        <http://vivo.wheatinitiative.org/ontology/wi#country>
+                "INC" .
+
+<http://record.prodinra.inra.fr/individual/n2748871>
+        <http://record.prodinra.inra.fr/author>
+                <http://record.prodinra.inra.fr/individual/n6916527> ;
+        vitro:position  "4" .
+
+<http://record.prodinra.inra.fr/individual/n995812-author2-position-n4220466>
+        a             vivo:Position ;
+        vivo:relates  <http://record.prodinra.inra.fr/individual/n4220466> , <http://record.prodinra.inra.fr/individual/n995812-author2> .
 
 <http://record.prodinra.inra.fr/individual/n995812>
+        bibo:abstract       "Les négociations internationales sur le commerce agricole patinent. Pour les sortir de l'ornière, les auteurs proposent que les pays qui protègent leur agriculture versent une compensation, sous forme de taxe, aux pays du Sud lésés par leur politique. Et ils montrent que cette compensation permet d'accroître le bien-être global. "@fr ;
         <http://record.prodinra.inra.fr/abstract>
                 <http://record.prodinra.inra.fr/individual/n1425290> ;
         <http://record.prodinra.inra.fr/alternateTitle>
@@ -47,6 +190,8 @@
                 "fra" ;
         <http://record.prodinra.inra.fr/link>
                 "http://www.iddri.org/Publications/Collections/Analyses/an_0402_lecotty&voituriez_coord.pdf" ;
+        <http://record.prodinra.inra.fr/minPosition>
+                "3"^^<http://www.w3.org/2001/XMLSchema#int> ;
         <http://record.prodinra.inra.fr/notes>
                 "Document de Travail IDDRI  ; 6 Diffusion du document : IDdRI Institut du Développement durable et des Relations internationales 6 rue Général Clergerie 75116 Paris (FRA)" ;
         <http://record.prodinra.inra.fr/order>
@@ -81,105 +226,31 @@
                 "validé" ;
         <http://record.prodinra.inra.fr/year>
                 "2004" ;
-        vitro:position  "2" ;
+        vitro:position      "2" ;
+        vivo:dateTimeValue  <http://record.prodinra.inra.fr/individual/n995812-dtv> ;
         <http://www.w3.org/2001/XMLSchema-instance/type>
                 "ns2:researchReport" .
+
+<http://record.prodinra.inra.fr/individual/n1425290>
+        <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/language>
+                "fra" ;
+        vitro:value  "Les négociations internationales sur le commerce agricole patinent. Pour les sortir de l'ornière, les auteurs proposent que les pays qui protègent leur agriculture versent une compensation, sous forme de taxe, aux pays du Sud lésés par leur politique. Et ils montrent que cette compensation permet d'accroître le bien-être global. " .
+
+<http://record.prodinra.inra.fr/individual/n4510351>
+        <http://record.prodinra.inra.fr/acronym>
+                "INRA" ;
+        <http://record.prodinra.inra.fr/name>
+                "Institut National de la Recherche Agronomique" ;
+        <http://record.prodinra.inra.fr/unit>
+                <http://record.prodinra.inra.fr/individual/n1770699> ;
+        vitro:position  "5" .
+
+<http://record.prodinra.inra.fr/individual/n995812-authorship2>
+        a             vivo:Authorship ;
+        vivo:rank     2 ;
+        vivo:relates  <http://record.prodinra.inra.fr/individual/n995812-author2> , <http://record.prodinra.inra.fr/individual/n995812> .
 
 <http://record.prodinra.inra.fr/individual/n1948767>
         <http://record.prodinra.inra.fr/author>
                 <http://record.prodinra.inra.fr/individual/n8596062> ;
         vitro:position  "3" .
-
-<http://record.prodinra.inra.fr/individual/n2748871>
-        <http://record.prodinra.inra.fr/author>
-                <http://record.prodinra.inra.fr/individual/n6916527> ;
-        vitro:position  "4" .
-
-<http://record.prodinra.inra.fr/individual/n8596062>
-        <http://record.prodinra.inra.fr/initial>
-	        "T." ;
-	<http://record.prodinra.inra.fr/inraAffiliation>
-		<http://record.prodinra.inra.fr/individual/n4510351> ;
-	<http://record.prodinra.inra.fr/lastName>
-		"Le Cotty" ;
-	<http://record.prodinra.inra.fr/publicationName>
-		"Le Cotty" ;
-	vitro:position  "1" ;
-	<http://www.w3.org/2001/XMLSchema-instance/type>
-		"ns2:inraAuthor" .
-
-<http://record.prodinra.inra.fr/individual/n4510351>
-        <http://record.prodinra.inra.fr/acronym>
-	        "INRA" ;
-	<http://record.prodinra.inra.fr/name>
-	        "Institut National de la Recherche Agronomique" ;
-	<http://record.prodinra.inra.fr/unit>
-		<http://record.prodinra.inra.fr/individual/n1770699> ;
-	vitro:position  "5" .
-
-<http://record.prodinra.inra.fr/individual/n1770699>
-        <http://record.prodinra.inra.fr/affiliationPartners>
-	        <http://record.prodinra.inra.fr/individual/n4320283> , <http://record.prodinra.inra.fr/individual/n4920413> , <http://record.prodinra.inra.fr/individual/n1695840> , <http://record.prodinra.inra.fr/individual/n640776> ;
-	<http://record.prodinra.inra.fr/center>
-		<http://record.prodinra.inra.fr/individual/n5960170> ;
-	<http://record.prodinra.inra.fr/code>
-		"1135" ;
-	<http://record.prodinra.inra.fr/country>
-		"FRA" ;
-	<http://record.prodinra.inra.fr/department>	
-	        <http://record.prodinra.inra.fr/individual/n8605210> ;
-	<http://record.prodinra.inra.fr/laboratory>
-		"UMR 1135 Laboratoire montpelliérain d'économie théorique et appliquée" ;
-	<http://record.prodinra.inra.fr/name>
-		"Laboratoire montpelliérain d'économie théorique et appliquée" ;
-	<http://record.prodinra.inra.fr/type>
-		"UMR" ;
-	vitro:position  "3" .
-
-<http://vivo.wheatinitiative.org/individual/unit1135> a vivo:Laboratory ;
-	rdfs:label "Laboratoire montpelliérain d'économie théorique et appliquée" ;
-	<http://record.prodinra.inra.fr/affiliationPartners>
-	        <http://record.prodinra.inra.fr/individual/n4320283> , <http://record.prodinra.inra.fr/individual/n4920413> , <http://record.prodinra.inra.fr/individual/n1695840> , <http://record.prodinra.inra.fr/individual/n640776> ;
-	<http://record.prodinra.inra.fr/center>
-		<http://record.prodinra.inra.fr/individual/n5960170> ;
-	<http://record.prodinra.inra.fr/code>
-		"1135" ;
-	<http://record.prodinra.inra.fr/country>
-		"FRA" ;
-	<http://record.prodinra.inra.fr/department>	
-	        <http://record.prodinra.inra.fr/individual/n8605210> ;
-	<http://record.prodinra.inra.fr/laboratory>
-		"UMR 1135 Laboratoire montpelliérain d'économie théorique et appliquée" ;
-	<http://record.prodinra.inra.fr/name>
-		"Laboratoire montpelliérain d'économie théorique et appliquée" ;
-	<http://record.prodinra.inra.fr/type>
-		"UMR" ;
-	vitro:position  "3" .
-
-<http://record.prodinra.inra.fr/individual/n6916527>
-        <http://record.prodinra.inra.fr/externalAffiliation>
-	        <http://record.prodinra.inra.fr/individual/n4220466> ;
-	<http://record.prodinra.inra.fr/firstName>
-	        "Tancrede" ;
-	<http://record.prodinra.inra.fr/lastName>
-		"Voituriez" ;
-	<http://record.prodinra.inra.fr/publicationName>
-		"Voituriez" ;
-	vitro:position  "1" ;
-	<http://www.w3.org/2001/XMLSchema-instance/type>
-		"ns2:externalAuthor" .
-
-<http://record.prodinra.inra.fr/individual/n4220466>
-        <http://record.prodinra.inra.fr/country>
-	        "INC" ;
-	<http://record.prodinra.inra.fr/identifier>
-		"311264" ;
-	<http://record.prodinra.inra.fr/name>
-		"Inconnu" ;
-	vitro:position  "5" .
-
-<http://record.prodinra.inra.fr/individual/n1425290>
-        <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/language>
-	                "fra" ;
-        vitro:value  "Les négociations internationales sur le commerce agricole patinent. Pour les sortir de l'ornière, les auteurs proposent que les pays qui protègent leur agriculture versent une compensation, sous forme de taxe, aux pays du Sud lésés par leur politique. Et ils montrent que cette compensation permet d'accroître le bien-être global. " .
-
