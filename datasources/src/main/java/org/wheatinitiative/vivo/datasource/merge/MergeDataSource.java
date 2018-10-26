@@ -49,8 +49,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     private static final String QUALIFIED_BY = APPLICATION_CONTEXT_NS + "qualifiedBy";            
     private static final String ADMIN_APP_TBOX = 
             "http://vivo.wheatinitiative.org/ontology/adminapp/";
-    private static final String MERGESOURCE = ADMIN_APP_TBOX + "MergeDataSource";
     private static final String MERGERULE = ADMIN_APP_TBOX + "MergeRule";
+    private static final String DISABLED = ADMIN_APP_TBOX + "disabled";
     private static final String MERGERULEATOM = ADMIN_APP_TBOX + "MergeRuleAtom";
     private static final String HASMERGERULE = ADMIN_APP_TBOX + "hasMergeRule";
     private static final String MERGERULECLASS = ADMIN_APP_TBOX + "mergeRuleClass";
@@ -65,7 +65,6 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     private static final String FOAF_ORGANIZATION = "http://xmlns.com/foaf/0.1/Organization";
     private static final String BIBO_COLLECTION = "http://purl.org/ontology/bibo/Collection";
     private static final String BIBO_DOCUMENT = "http://purl.org/ontology/bibo/Document";
-    private static final String COAUTHOR = ADMIN_APP_TBOX + "coauthor";
     private static final String BASIC_SAMEAS_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/basicSameAs";
         
     private Model result = ModelFactory.createDefaultModel();
@@ -582,7 +581,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         String queryStr = "DESCRIBE ?x WHERE { \n" 
                 + "    { ?x a <" + MERGERULE + "> } \n" 
                 + "UNION \n" 
-                + "    { ?x a <" + MERGERULEATOM + "> } \n" 
+                + "    { ?x a <" + MERGERULEATOM + "> } \n"
+                + "FILTER NOT EXISTS { ?x <" + DISABLED + "> true } \n"   
                 + "} \n";
         return endpoint.construct(queryStr);
     }
@@ -767,6 +767,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         List<String> mergeRuleURIs = new ArrayList<String>();
         String queryStr = "SELECT ?x WHERE { \n" +
                  "    <" + dataSourceURI + "> <" + HASMERGERULE + "> ?x \n" +
+                 "    FILTER NOT EXISTS { ?x <" + DISABLED + "> true } \n" + 
                  "} \n";
         ResultSet rs = getSparqlEndpoint().getResultSet(queryStr);
         while(rs.hasNext()) {
