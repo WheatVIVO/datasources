@@ -27,6 +27,12 @@
               <goal>shade</goal>
             </goals>
             <configuration>
+              <relocations>
+                <relocation>
+                  <pattern>org.apache.http</pattern>
+                  <shadedPattern>org.shaded.apache.http</shadedPattern>
+                </relocation>
+              </relocations>
               <transformers>
                 <transformer>
                   <mainClass>org.wheatinitiative.vivo.datasource.LaunchIngest</mainClass>

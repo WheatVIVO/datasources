@@ -48,6 +48,14 @@
               <goal>shade</goal>
             </goals>
             <configuration>
+              <relocations>
+                <!-- shade the newer HttpClient required by Datasources
+                     so that it doesn't conflict with the one supplied by VIVO -->
+                <relocation>
+                  <pattern>org.apache.http</pattern>
+                  <shadedPattern>org.shaded.apache.http</shadedPattern>
+                </relocation>
+              </relocations>              
               <transformers>
                 <!-- add Main-Class to manifest file -->
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
