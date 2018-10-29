@@ -31,7 +31,7 @@ public class RcukTest extends ConnectorTestCase {
      */
     public void testConfiguration()
     {
-        List<String> queryTerms = Arrays.asList("wheat", "cheese", "gr‚u", "br‚nz„");
+        List<String> queryTerms = Arrays.asList("wheat", "cheese", "gr√¢u", "br√¢nzƒÉ");
         Rcuk rcuk = new Rcuk();
         rcuk.getConfiguration().getParameterMap().put("queryTerms", queryTerms);
         assertEquals(queryTerms, rcuk.getConfiguration().getParameterMap().get("queryTerms"));

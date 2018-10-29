@@ -38,13 +38,13 @@ public class DataSourceDescriptionSerializerTest extends TestCase {
         DataSourceStatus status = new DataSourceStatus();
         status.setCompletionPercentage(25);
         status.setErrorRecords(1);
-        status.setMessage("Bunã ziua");
+        status.setMessage("BunÄƒ ziua");
         status.setProcessedRecords(250);
         status.setRunning(false);
         status.setTotalRecords(1000);
         DataSourceConfiguration configuration = new DataSourceConfiguration();
         List<String> queryTerms = Arrays.asList(
-                "wheat", "cheese", "grâu", "brânzã");
+                "wheat", "cheese", "grÃ¢u", "brÃ¢nzÄƒ");
         configuration.getParameterMap().put("queryTerms", queryTerms);
         DataSourceDescription description = new DataSourceDescription(
                 configuration, status);
