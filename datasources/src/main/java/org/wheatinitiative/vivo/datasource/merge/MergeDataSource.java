@@ -90,13 +90,16 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         fauxPropertyContextModel.read(fauxPropertyModelURI);
         log.info(fauxPropertyContextModel.size() + " faux property context statements.");
         int windowSize = getWindowSize(this.getSparqlEndpoint());
+        this.getStatus().setMessage("adding basic sameAs assertions");
         addBasicSameAsAssertions(this.getSparqlEndpoint());
         log.info("Clearing previous merge state");
+        this.getStatus().setMessage("clearing previous merge results");
         List<MergeRule> mergeRules = new ArrayList<MergeRule>();
         for(String mergeRuleURI : getMergeRuleURIs(dataSourceURI)) {
             getSparqlEndpoint().clear(mergeRuleURI); 
             mergeRules.add(getMergeRule(mergeRuleURI, rulesModel));
         }
+        this.getStatus().setMessage("running merge rules");
         Collections.sort(mergeRules, new AffectedClassRuleComparator(getSparqlEndpoint()));        
         Map<String, Long> statistics = new HashMap<String, Long>();
         for(int i = 0; i < 2; i++) {
@@ -127,17 +130,20 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         SparqlEndpoint endpoint = getSparqlEndpoint();
         getSparqlEndpoint().clear(resultsGraphURI); 
         log.info("Merging relationships");
+        this.getStatus().setMessage("merging relationships");
         Model tmp = getRelationshipSameAs();
         log.info(tmp.size() + " sameAs from merged relationships");
         getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
         try {
             log.info("Merging roles");
+            this.getStatus().setMessage("merging roles");
             tmp = getRoleSameAs();
             log.info(tmp.size() + " sameAs from merged roles");
             getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
         } catch (Exception e) {
             log.error(e, e);
         }
+        this.getStatus().setMessage("merging vCards");
         tmp = getVcardSameAs(endpoint);
         log.info(tmp.size() + " sameAs from merged vCards");
         getSparqlEndpoint().writeModel(tmp, resultsGraphURI);

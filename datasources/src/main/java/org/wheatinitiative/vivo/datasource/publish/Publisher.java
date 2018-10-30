@@ -85,7 +85,8 @@ public class Publisher extends DataSourceBase implements DataSource {
                 sourceEndpoint);
         log.info("Graph URI preference list: " + graphURIPreferenceList);
         //OntModel sameAsModel = getSameAsModel(sourceEndpoint);
-        log.info("Starting to publish");        
+        log.info("Starting to publish");
+        this.getStatus().setMessage("publishing individuals");
         // iterate through data source graphs in order of priority
         Map<String, Model> buffer = new HashMap<String, Model>();
         int individualCount = 0;
@@ -149,7 +150,9 @@ public class Publisher extends DataSourceBase implements DataSource {
                 }
             }
         }
+        this.getStatus().setMessage("clearing old data");
         cleanUpDestination(sourceEndpoint, destinationEndpoint);
+        this.getStatus().setMessage("augmenting data via additional construct queries");
         runPostmergeQueries(destinationEndpoint);
         log.info("ending");
     }
