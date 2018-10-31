@@ -71,10 +71,15 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     protected LevenshteinDistance ld = LevenshteinDistance.getDefaultInstance();
     
     @Override
-    protected void runIngest() {
+    protected void runIngest() {        
         String dataSourceURI = this.getConfiguration().getURI();
+        if(this.getSparqlEndpoint() == null) {
+            throw new RuntimeException("SPARQL endpoint must be configured "
+                    + " for the merge data source");
+        }
         log.info("Starting merge " + dataSourceURI);
         Model rulesModel = retrieveMergeRulesFromEndpoint(this.getSparqlEndpoint());
+        Model differentFromModel = getDifferentFromModel(this.getSparqlEndpoint());
         Model fauxPropertyContextModel = ModelFactory.createDefaultModel();
         String serviceURI = this.getConfiguration().getServiceURI(); 
         if(serviceURI == null) {
@@ -114,6 +119,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                             ruleResult.size() + ") of triples." );
                 }
                 filterObviousResults(ruleResult);
+                filterKnownDifferentFrom(ruleResult, differentFromModel);
                 //result.add(ruleResult);
                 Long stat = statistics.get(mergeRuleURI);
                 if(stat == null) {
@@ -201,6 +207,28 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         } finally {
             qe.close();
         }
+    }
+    
+    /**
+     * Remove each statement of the type owl:sameAs(x,y) from model m where
+     * differentFromModel contains a statement owl:differentFrom(x,y).
+     * @param m the model containing sameAs statements to be filtered
+     * @param differentFromModel the model containing differentFrom statements
+     */
+    private void filterKnownDifferentFrom(Model m, Model differentFromModel) {
+        if(differentFromModel == null || differentFromModel.isEmpty()) {
+            return;
+        }
+        Model delete = ModelFactory.createDefaultModel();
+        StmtIterator sit = m.listStatements(null, OWL.sameAs, (Resource) null);
+        while(sit.hasNext()) {
+            Statement stmt = sit.next();
+            if(differentFromModel.contains(
+                    stmt.getSubject(), OWL.differentFrom, stmt.getObject())) {
+                delete.add(stmt);
+            }
+        }
+        m.remove(delete);
     }
     
     private void filterObviousResults(Model m) {
@@ -589,6 +617,24 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 + "UNION \n" 
                 + "    { ?x a <" + MERGERULEATOM + "> } \n"
                 + "FILTER NOT EXISTS { ?x <" + DISABLED + "> true } \n"   
+                + "} \n";
+        return endpoint.construct(queryStr);
+    }
+    
+    /**
+     * @param endpoint the SPARQL endpoint to query
+     * @return model containing symmetric closure of differentFrom statements
+     *         found in the supplied endpoint
+     * @return null if endpoint is null
+     */
+    protected Model getDifferentFromModel(SparqlEndpoint endpoint) {
+        if(endpoint == null) {
+            return null;
+        }
+        String queryStr = "CONSTRUCT { ?x <" + OWL.differentFrom.getURI() + "> ?y . \n" 
+                + "    ?y <" + OWL.differentFrom.getURI() + "> ?x . \n" 
+                + "} WHERE { \n" 
+                + "    ?x <" + OWL.differentFrom.getURI() + "> ?y \n" 
                 + "} \n";
         return endpoint.construct(queryStr);
     }
