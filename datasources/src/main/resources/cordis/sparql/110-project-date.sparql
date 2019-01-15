@@ -8,20 +8,21 @@ CONSTRUCT {
 
     ?project vivo:dateTimeInterval ?dti .
     ?dti a vivo:DateTimeInterval .
-
+    ?dti vivo:identifier ?dtiId .
     ?dti vivo:start ?start .    
     ?start a vivo:DateTimeValue .
     ?start vivo:dateTime ?start_date .
     ?start vivo:dateTimePrecision vivo:yearMonthDayPrecision .
-    
+    ?start vivo:identifier ?startId .
     ?dti vivo:end ?end .
     ?end a vivo:DateTimeValue .
     ?end vivo:dateTime ?end_date .
     ?end vivo:dateTimePrecision vivo:yearMonthDayPrecision .
+    ?end vivo:identifier ?endId .
     
 } WHERE {
     ?project a vivo:Project .
-    
+    ?project vivo:identifier ?projectId .    
     ?project cordis:startDate ?cordisStart .
     BIND ( xsd:dateTime( CONCAT ( ?cordisStart, "T00:00:00Z") ) AS ?start_date)
     
@@ -29,6 +30,9 @@ CONSTRUCT {
     BIND ( xsd:dateTime( CONCAT ( ?cordisEnd, "T00:00:00Z") ) AS ?end_date)
 
     BIND(IRI(CONCAT(STR(?project), "-dti")) AS ?dti)
+    BIND(CONCAT(STR(?projectId), "-dti") AS ?dtiId)
     BIND(IRI(CONCAT(STR(?project), "-dti-start")) AS ?start)
+    BIND(CONCAT(STR(?projectId), "-dti-start") AS ?startId)
     BIND(IRI(CONCAT(STR(?project), "-dti-end")) AS ?end)
+    BIND(CONCAT(STR(?projectId), "-dti-end") AS ?endId)
 }

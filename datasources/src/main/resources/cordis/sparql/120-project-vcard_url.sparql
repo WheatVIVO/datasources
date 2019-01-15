@@ -14,15 +14,18 @@ CONSTRUCT {
 	?grant obo:ARG_2000028 ?vcard .
 	
 	?vcard vcard:hasURL ?url .
+	?vcard vivo:identifier ?vcardId .
 	
     ?url a vcard:URL .
+    ?url vivo:identifier ?urlId .
     ?url vcard:url ?project_url .
     ?url rdfs:label ?project_url_str .
     
 } WHERE {
 
     ?project a vivo:Project .
-    
+    ?project vivo:identifier ?projectId .
+
     ?grant vivo:fundingVehicleFor ?project .
 
     ?project cordis:url ?someUrl
@@ -32,7 +35,9 @@ CONSTRUCT {
 	FILTER(REGEX(STR(?project_url_str), "^http"))
         BIND ( xsd:anyURI( ?project_url_str ) AS ?project_url )
 	BIND(IRI(CONCAT(STR(?project), "-vcard")) AS ?vcard)
+	BIND(CONCAT(STR(?projectId), "-vcard") AS ?vcardId)
 	BIND(IRI(CONCAT(STR(?project), "-vcard-url")) AS ?url)
+	BIND(CONCAT(STR(?projectId), "-vcard-url") AS ?urlId)
     }
     
     OPTIONAL {
@@ -40,6 +45,8 @@ CONSTRUCT {
 	FILTER(!REGEX(STR(?project_url_str), "^http"))
         BIND ( xsd:anyURI( CONCAT("http://", STR(?project_url_str)) ) AS ?project_url )
 	BIND(IRI(CONCAT(STR(?project), "-vcard")) AS ?vcard)
+	BIND(CONCAT(STR(?projectId), "-vcard") AS ?vcardId)
 	BIND(IRI(CONCAT(STR(?project), "-vcard-url")) AS ?url)
+	BIND(CONCAT(STR(?projectId), "-vcard-url") AS ?urlId)
     }
 }

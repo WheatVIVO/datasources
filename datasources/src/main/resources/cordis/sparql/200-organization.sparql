@@ -9,13 +9,24 @@ CONSTRUCT {
 
     ?org a foaf:Organization .
     ?org rdfs:label ?legal_name .
-	?org foaf:alternativeTerm ?short_name .
-	?org vivo:identifier ?id_code .
+    ?org foaf:alternativeTerm ?short_name .
+    ?org vivo:identifier ?id_code .
+    ?org vivo:identifier ?rcn_id
 	
 } WHERE {
 
     ?x cordis:organization ?org .
     ?org cordis:legalName ?legal_name .
-    ?org cordis:shortName ?short_name .
-    ?org cordis:id ?id_code .
+    OPTIONAL {
+        ?org cordis:shortName ?short_name .
+    }
+    OPTIONAL {
+        ?org cordis:id ?id_code .
+    }
+    OPTIONAL {
+        ?org cordis:rcn ?rcn 
+	FILTER NOT EXISTS { ?org cordis:id ?idtest }
+	BIND(CONCAT("rcn", STR(?rcn)) AS ?rcn_id)
+    }
+
 }

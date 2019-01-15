@@ -13,13 +13,15 @@ CONSTRUCT {
     ?grant vivo:relates ?role .
     
     ?role a vivo:InvestigatorRole .
+    ?role vivo:identifier ?roleId .
     ?role obo:RO_0000052 ?org .
     ?role obo:BFO_0000054 ?project .
 
 } WHERE {
 
     ?project a vivo:Project .
-    
+    ?project vivo:identifier ?projectId .
+
     ?grant vivo:fundingVehicleFor ?project .
     
     ?project cordis:relations ?rel .
@@ -27,7 +29,9 @@ CONSTRUCT {
     ?asc cordis:organization ?org .
     
     ?org a foaf:Organization .
+    ?org vivo:identifier ?orgId .
     ?org ingest:type "participant" .
 
-    BIND(IRI(CONCAT(STR(?project), "-participant-", STRAFTER(STR(?org), "://"))) AS ?role)
+    BIND(IRI(CONCAT(STR(?project), "-participant-", STR(?orgId))) AS ?role)
+    BIND(CONCAT(STR(?projectId), "-participant-", STR(?orgId)) AS ?roleId)
 }

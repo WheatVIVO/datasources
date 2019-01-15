@@ -1,0 +1,13 @@
+PREFIX cordis:	<http://cordis.europa.eu/>
+PREFIX rdfs:	<http://www.w3.org/2000/01/rdf-schema#>
+PREFIX vivo:	<http://vivoweb.org/ontology/core#>
+PREFIX vcard:   <http://www.w3.org/2006/vcard/ns#>
+
+
+
+CONSTRUCT {
+    ?project vivo:identifier ?project_id .
+} WHERE {
+    ?project a cordis:project .
+    ?project cordis:reference ?project_id .
+}

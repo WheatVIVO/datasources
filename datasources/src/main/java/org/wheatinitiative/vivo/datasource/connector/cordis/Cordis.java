@@ -329,30 +329,29 @@ public class Cordis extends ConnectorDataSource implements DataSource {
 	 * Transform raw RDF into VIVO RDF.
 	 */
 	@Override
-	protected Model mapToVIVO(Model model) {		
-		model = constructForVIVO(model);		
-		return this.renameByIdentifier(model, 
-		        model.getProperty(VIVO_CORE_NS + "identifier"), CORDIS_ABOX_NS, "cordis-");
+	protected Model mapToVIVO(Model model) {
+		model = constructForVIVO(model, Arrays.asList(
+		        "090-project-id.sparql",
+                "100-project.sparql",
+                "110-project-date.sparql",
+                "120-project-vcard_url.sparql",
+                "200-organization.sparql",
+                "210-organization-project-adminrole.sparql",
+                "211-orgaization-project-participantrole.sparql",
+                "212-organization-project-generalrole.sparql",
+                "220-organization-department.sparql",
+                "230-organization-vcard_address.sparql"
+                ));				
+	      return renameByIdentifier(model, 
+	                model.getProperty(VIVO_CORE_NS + "identifier"), CORDIS_ABOX_NS, "cordis-");
 	}
 	
 	
 	/**
 	 * Makes use of Sparql's CONSTRUCT queries to construct VIVO-RDF data.
 	 */
-	protected Model constructForVIVO(Model model) {
-		List<String> queries =  Arrays.asList(
-								"100-project.sparql",
-								"110-project-date.sparql",
-								"120-project-vcard_url.sparql",
-								"200-organization.sparql",
-								"210-organization-project-adminrole.sparql",
-								"211-orgaization-project-participantrole.sparql",
-								"212-organization-project-generalrole.sparql",
-								"220-organization-department.sparql",
-								"230-organization-vcard_address.sparql"
-								);
-		
-        for(String query : queries) {
+	protected Model constructForVIVO(Model model, List<String> queryNames) {		
+        for(String query : queryNames) {
         	log.debug("Executing query " + query);
             log.debug("Pre-query model size: " + model.size());
             construct(SPARQL_RESOURCE_DIR + query, model, NAMESPACE_ETC);

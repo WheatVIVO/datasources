@@ -12,7 +12,7 @@ CONSTRUCT {
 
 	# org "has contact info" 
         ?org obo:ARG_2000028 ?vcard .
-    
+         
         ?vcard a vcard:Organization .
         ?vcard vcard:hasAddress ?address .
         ?address vcard:streetAddress ?org_street .
@@ -24,10 +24,15 @@ CONSTRUCT {
 	?url a vcard:URL .
 	?url vcard:url ?org_url .
 	?url rdfs:label ?org_url_str .
+
+	?vcard vivo:identifier ?vcardId .
+	?address vivo:identifier ?addressId .
+	?url vivo:identifier ?urlId .
 	
 } WHERE {
 
 	?org a foaf:Organization .
+        ?org vivo:identifier ?orgId .
 
 	?org cordis:address ?adr .
 	
@@ -40,6 +45,7 @@ CONSTRUCT {
 	    FILTER(REGEX(STR(?org_url_str), "^http"))
 	    BIND ( xsd:anyURI( ?org_url_str ) AS ?org_url )
 	    BIND(IRI(CONCAT(STR(?org), "-vcard-url")) AS ?url)
+	    BIND(CONCAT(STR(?orgId), "-vcard-url") AS ?urlId)
         }
 	
         OPTIONAL {
@@ -47,6 +53,7 @@ CONSTRUCT {
 	    FILTER(!REGEX(STR(?org_url_str), "^http"))
 	    BIND ( xsd:anyURI( CONCAT("http://", STR(?org_url_str)) ) AS ?org_url )
 	    BIND(IRI(CONCAT(STR(?org), "-vcard-url")) AS ?url)
+	    BIND(CONCAT(STR(?orgId), "-vcard-url") AS ?urlId)
         }
 
 	?org cordis:relations ?rel .
@@ -55,5 +62,7 @@ CONSTRUCT {
 	?reg cordis:name ?org_country_name .
 	    
 	BIND(IRI(CONCAT(STR(?org), "-vcard")) AS ?vcard)
+	BIND(CONCAT(STR(?orgId), "-vcard") AS ?vcardId)
 	BIND(IRI(CONCAT(STR(?org), "-vcard-address")) AS ?address)
+	BIND(CONCAT(STR(?orgId), "-vcard-address") AS ?addressId)
 }

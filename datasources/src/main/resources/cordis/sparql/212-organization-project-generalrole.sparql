@@ -15,16 +15,20 @@ CONSTRUCT {
 	
 	?role obo:BFO_0000054 ?project .
 	# This role gets realized (_54) in the project
+
+	?role vivo:identifier ?roleId .
 	
 } WHERE {
 	
 	?project a vivo:Project .
+	?project vivo:identifier ?projectId .
 	
         ?grant vivo:fundingVehicleFor ?project .
 	
 	?project cordis:relations ?rel .
 	?rel cordis:associations ?asc .
 	?asc cordis:organization ?org .
+	?org vivo:identifier ?orgId .
 	
 	FILTER NOT EXISTS {
             # If the following path doesn't exist, it means that this organization has no mapped role.
@@ -34,6 +38,7 @@ CONSTRUCT {
             ?someRole obo:BFO_0000054 ?proj .
 	 }
 
-         BIND(IRI(CONCAT(STR(?project), "-orgRole-", STRAFTER(STR(?org), "://"))) AS ?role)
+         BIND(IRI(CONCAT(STR(?project), "-orgRole-", STR(?orgId))) AS ?role)
+         BIND(CONCAT(STR(?projectId), "-orgRole-", STR(?orgId)) AS ?roleId)
 
 }
