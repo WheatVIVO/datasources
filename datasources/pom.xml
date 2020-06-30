@@ -10,7 +10,10 @@
 
   <name>datasources</name>
   <url>http://maven.apache.org</url>
-
+  <properties>
+	<jackson.version>2.10.0.pr1</jackson.version>
+  </properties>
+  
   <build>
     <plugins>
       <plugin>
@@ -112,13 +115,13 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.8.10</version>
+      <version>${jackson.version}</version>
     </dependency>
 
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.10.0.pr1</version>
+      <version>${jackson.version}</version>
     </dependency>
 
     <dependency>
