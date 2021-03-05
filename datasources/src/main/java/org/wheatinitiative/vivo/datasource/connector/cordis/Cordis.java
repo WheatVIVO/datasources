@@ -40,7 +40,7 @@ public class Cordis extends ConnectorDataSource implements DataSource {
     public static final Log log = LogFactory.getLog(Cordis.class);
     
     private static final String CORDIS_TBOX_NS = "http://cordis.europa.eu/";
-    private static final String CORDIS_ABOX_NS = CORDIS_TBOX_NS + "individual/";
+    private static final String CORDIS_ABOX_NS = "http://abox.cordis.europa.example.edu/";
     private static final String NAMESPACE_ETC = CORDIS_ABOX_NS + "n";
     private static final String VIVO_CORE_NS = "http://vivoweb.org/ontology/core#";
     private static final String SPARQL_RESOURCE_DIR = "/cordis/sparql/";    
@@ -50,9 +50,18 @@ public class Cordis extends ConnectorDataSource implements DataSource {
      */
     @Override
     protected IteratorWithSize<Model> getSourceModelIterator() {
+        // Cordis search supports boolean searches with each operand in single 
+        // quotes, e.g. 'termA' OR 'termB'
+        StringBuilder queryTermsORed = new StringBuilder();
+        for(String queryTerm : this.getConfiguration().getQueryTerms()) {
+            if(queryTermsORed.length() > 0) {
+                queryTermsORed.append(" OR ");                
+            }
+            queryTermsORed.append("'").append(queryTerm).append("'");
+        }
         return new CordisModelIterator(
                 this.getConfiguration().getServiceURI(), 
-                this.getConfiguration().getQueryTerms()
+                Arrays.asList(queryTermsORed.toString())
                 );
     }
     
@@ -319,7 +328,7 @@ public class Cordis extends ConnectorDataSource implements DataSource {
          * The size of the model.
          */
         public Integer size() {
-            return totalResults(initialResultsCache);
+            return totalResults(initialResultsCache) / SEARCH_RESULTS_PER_PAGE + 1;
         }
         
     }
@@ -329,10 +338,11 @@ public class Cordis extends ConnectorDataSource implements DataSource {
 	 * Transform raw RDF into VIVO RDF.
 	 */
 	@Override
-	protected Model mapToVIVO(Model model) {		
+	protected Model mapToVIVO(Model model) {
+	    model = renameByIdentifier(model, 
+                model.getProperty(CORDIS_TBOX_NS + "id"), CORDIS_ABOX_NS, "");
 		model = constructForVIVO(model);		
-		return this.renameByIdentifier(model, 
-		        model.getProperty(VIVO_CORE_NS + "identifier"), CORDIS_ABOX_NS, "cordis-");
+		return model;
 	}
 	
 	
@@ -369,7 +379,7 @@ public class Cordis extends ConnectorDataSource implements DataSource {
 	protected Model filter(Model model) {
 	    // TODO possibly need to filter grants that don't match the initial query?
 		// No filtering is needed, since we retrieve already-filtered data.
-		return model;
+		return filterGeneric(model, Arrays.asList(CORDIS_TBOX_NS));
 	}
 
 

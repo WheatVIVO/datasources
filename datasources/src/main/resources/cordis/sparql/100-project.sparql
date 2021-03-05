@@ -23,15 +23,15 @@ CONSTRUCT {
 } WHERE {
 
 	?project a cordis:project .
-	?project cordis:acronym ?acronym .
+	OPTIONAL { ?project cordis:acronym ?acronym }
 	?project cordis:title ?cordis_title .
 	
     BIND( CONCAT( ?acronym, " - ", ?cordis_title ) AS ?title )
     
 	OPTIONAL { ?project cordis:objective ?objective }
 	
-	?project cordis:reference ?project_id .
+	OPTIONAL { ?project cordis:id ?project_id }
         BIND(CONCAT("grant-", STR(?project_id)) AS ?grant_id) 	
 	BIND(IRI(CONCAT(STR(?project), "-grant")) AS ?grant)
-	?project cordis:totalCost ?project_cost .
+	OPTIONAL { ?project cordis:totalCost ?project_cost }
 }

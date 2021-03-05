@@ -3,6 +3,8 @@ package org.wheatinitiative.vivo.datasource.connector;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -32,6 +34,9 @@ public abstract class ConnectorDataSource extends DataSourceBase {
     /* number of iterator elements to be processed at once in memory 
     before being flushed to a SPARQL endpoint */
     protected final static int DEFAULT_BATCH_SIZE = 5;
+    private static final List<String> FILTER_OUT_GENERIC = Arrays.asList(
+            "generalizedXMLtoRDF/0.1", "vitro/0.7#position", "vitro/0.7#value", "XMLSchema-instance");
+    private static final String FILTER_OUT_RES = "match_nothing"; 
     
     private Model result;
     
@@ -237,6 +242,43 @@ public abstract class ConnectorDataSource extends DataSourceBase {
             log.debug(e, e);
             return res;
         }                
+    }
+    
+    /**
+     * A filter that removes raw statements produced by
+     * XML (or JSON) to RDF lifting as well as other statements
+     * where predicate URIs or rdf:type object URIs contain any of supplied 
+     * substrings.
+     * @param model
+     * @param filterOutSubstrings 
+     * @return copy of model containing only statements that were not filtered out
+     */
+    protected Model filterGeneric(Model model, List<String> filterOutSubstrings) {
+        List<String> filterOuts = new ArrayList<String>();
+        filterOuts.addAll(FILTER_OUT_GENERIC);
+        filterOuts.addAll(filterOutSubstrings);
+        Model filtered = ModelFactory.createDefaultModel();
+        StmtIterator sit = model.listStatements();
+        while(sit.hasNext()) {
+            Statement stmt = sit.next();
+            String typeURI = null;
+            if( (RDF.type.equals(stmt.getPredicate()))
+                        && (stmt.getObject().isURIResource()) ) { 
+                typeURI = stmt.getObject().asResource().getURI();
+            } 
+            boolean retainStatement = true;
+            for (String filterOut : filterOuts) {
+                if( stmt.getPredicate().getURI().contains(filterOut)
+                        || (typeURI != null && typeURI.contains(filterOut))) {
+                    retainStatement = false;
+                    break;
+                }
+            }
+            if(retainStatement) {
+                filtered.add(stmt);
+            }
+        }
+        return filtered;
     }
     
     protected abstract String getPrefixName();
