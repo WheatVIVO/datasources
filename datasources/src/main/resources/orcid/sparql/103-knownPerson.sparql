@@ -48,8 +48,8 @@ CONSTRUCT {
     BIND(concat("/", ?rawOrcid, "/person") AS ?personPath)
     ?person generic:path ?personPath .
     ?person orcidperson:name ?name .
-    ?name <http://www.orcid.org/ns/personal-details/family-name> ?familyName .
-    ?name  <http://www.orcid.org/ns/personal-details/given-names> ?givenName .
+    OPTIONAL { ?name <http://www.orcid.org/ns/personal-details/family-name> ?familyName }
+    OPTIONAL { ?name  <http://www.orcid.org/ns/personal-details/given-names> ?givenName }
     BIND(concat(?familyName, ", ", ?givenName) AS ?personLabel)
     BIND(IRI(CONCAT(STR(abox:), "orcid-", ?rawOrcid)) AS ?knownperson)
     BIND(IRI(CONCAT(STR(?x), "-authorship-", ?rawOrcid)) AS ?authorship)
