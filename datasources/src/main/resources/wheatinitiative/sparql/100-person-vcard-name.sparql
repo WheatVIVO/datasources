@@ -35,8 +35,8 @@ CONSTRUCT {
     ?name vcard:givenName ?firstName .
     ?name vivo:middleName ?middleName .
 } WHERE {
-    ?x wi:lastName ?lastName .
-    OPTIONAL { ?x wi:firstName ?firstName }
+    ?x wi:Last_Name ?lastName .
+    OPTIONAL { ?x wi:First_Name ?firstName }
     BIND(IRI(CONCAT(STR(?x), "-vcard")) AS ?vcard)
     BIND(IRI(CONCAT(STR(?x), "-vcard-name")) AS ?name)
 }

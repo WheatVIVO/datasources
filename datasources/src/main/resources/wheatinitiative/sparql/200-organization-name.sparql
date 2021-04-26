@@ -30,15 +30,15 @@ CONSTRUCT {
     ?position a vivo:Position .
     ?x vivo:relatedBy ?position .
     ?position vivo:relates ?org .
-    ?position wi:employmentSector ?employmentSector .
-    ?position wi:mainEmploymentCategory ?employmentCategory .
+    ?position wi:Employment_Sector ?employmentSector .
+    ?position rdfs:label ?roleLabel 
 } WHERE {
-    ?x wi:institutionCompany ?orgName .
+    ?x wi:Institution-Company ?orgName .
     OPTIONAL {
-        ?x wi:employmentSector ?employmentSector .
+        ?x wi:Employment_Sector ?employmentSector .
     }
     OPTIONAL {
-        ?x wi:mainEmploymentCategory ?employmentCategory 
+        ?x wi:Your_role-position_in_your_organisation ?roleLabel
     }
     BIND(IRI(CONCAT(STR(wia:), REPLACE(REPLACE(STR(?orgName), " ", "-"), "[^-a-zA-Z0-9]", ""))) AS ?org)
     BIND(IRI(CONCAT(STR(?x), "-position-", afn:localname(?org))) AS ?position)

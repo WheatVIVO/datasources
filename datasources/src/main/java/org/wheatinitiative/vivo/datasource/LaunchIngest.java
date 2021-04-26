@@ -30,7 +30,8 @@ public class LaunchIngest {
     public static void main(String[] args) {
         if(args.length < 3) {
             System.out.println("Usage: LaunchIngest " 
-                    + "openaire|cordis|rcuk|prodinra|usda|wheatinitiative|cornell|tamu|upenn|florida outputfile " 
+                    + "openaire|cordis|rcuk|prodinra|usda|wheatinitiative|cornell|tamu|upenn|florida outputfile "
+                    + "[dataDir=] "
                     + "queryTerm ... [queryTermN] [limit]");
             return;
         }
@@ -43,6 +44,7 @@ public class LaunchIngest {
             log.info("Retrieving a limit of " + limit + " records");
         }
         DataSource connector = getConnector(connectorName);
+        connector.getConfiguration().getParameterMap().put("dataDir", getDataDir(queryTerms));
         connector.getConfiguration().setQueryTerms(queryTerms);
         connector.getConfiguration().setEndpointParameters(null);
         connector.getConfiguration().setLimit(limit);
@@ -60,6 +62,16 @@ public class LaunchIngest {
             } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }
+        }
+    }
+    
+    private static String getDataDir(List<String> queryTerms) {
+        if(!queryTerms.isEmpty() && queryTerms.get(0).startsWith("dataDir=")) {
+            String dataDir = queryTerms.get(0).substring("dataDir=".length());
+            queryTerms.remove(0);
+            return dataDir;
+        } else {
+            return null;
         }
     }
     

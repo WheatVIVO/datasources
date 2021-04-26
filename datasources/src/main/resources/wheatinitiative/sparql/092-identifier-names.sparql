@@ -28,8 +28,8 @@ PREFIX wi:       <http://www.wheatinitiative.org/administration/users/ontology/>
 CONSTRUCT {
     ?x wi:identifier ?identifier 
 } WHERE {
-    ?x wi:lastName ?lastName .
-    ?x wi:firstName ?firstName .
-    FILTER NOT EXISTS { ?x vivo:orcidId ?orcidId }
-    BIND(CONCAT(REPLACE(STR(?firstName), "\\W", ""), "-", REPLACE(STR(?lastName), "\\W", "")) AS ?identifier)
+    ?x wi:Last_Name ?lastName .
+    ?x wi:First_Name ?firstName .
+    FILTER NOT EXISTS { ?x wi:OrcidId ?orcidId }
+    BIND(CONCAT(REPLACE(STR(?firstName), "\\W+", "-"), "-", REPLACE(STR(?lastName), "\\W+", "-")) AS ?identifier)
 }
