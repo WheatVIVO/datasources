@@ -31,6 +31,7 @@ CONSTRUCT {
     ?orcidIRI a owl:Thing .
 } WHERE {
     ?x wi:OrcidID ?orcidId .
-    BIND(IRI(STR(?orcidId)) AS ?orcidIRI)
+    FILTER(REGEX(STR(?orcidId), "^https"))
+    BIND(IRI(REPLACE(STR(?orcidId), "\\s+", "")) AS ?orcidIRI)
     BIND(CONCAT("orcid-", SUBSTR(STR(?orcidId), 19)) AS ?identifier)
 }
