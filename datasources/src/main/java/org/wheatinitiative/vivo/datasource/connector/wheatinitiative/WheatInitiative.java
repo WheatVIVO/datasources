@@ -198,7 +198,7 @@ public class WheatInitiative extends ConnectorDataSource implements DataSource {
     
     /**
      * Run a series of SPARQL CONSTRUCTS to generate VIVO-compatible RDF
-     * @param m containing RDF lifted directly from RCUK XML
+     * @param m containing RDF lifted directly from source
      * @return model with VIVO RDF added
      */
     protected Model mapToVIVO(Model m) {
