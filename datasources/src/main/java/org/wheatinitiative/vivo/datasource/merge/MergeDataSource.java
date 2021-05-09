@@ -102,7 +102,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         this.getStatus().setMessage("clearing previous merge results");
         List<MergeRule> mergeRules = new ArrayList<MergeRule>();
         for(String mergeRuleURI : getMergeRuleURIs(dataSourceURI)) {
-            getSparqlEndpoint().clear(mergeRuleURI); 
+            getSparqlEndpoint().clearGraph(mergeRuleURI); 
             mergeRules.add(getMergeRule(mergeRuleURI, rulesModel));
         }
         this.getStatus().setMessage("running merge rules");
@@ -135,7 +135,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         }
         String resultsGraphURI = getConfiguration().getResultsGraphURI();
         SparqlEndpoint endpoint = getSparqlEndpoint();
-        getSparqlEndpoint().clear(resultsGraphURI); 
+        getSparqlEndpoint().clearGraph(resultsGraphURI); 
         log.info("Merging relationships");
         this.getStatus().setMessage("merging relationships");
         Model tmp = getRelationshipSameAs();
