@@ -38,7 +38,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
             "generalizedXMLtoRDF/0.1", "vitro/0.7#position", "vitro/0.7#value", "XMLSchema-instance");
     private static final String FILTER_OUT_RES = "match_nothing"; 
     
-    private Model result;
+    protected Model result;
     
     /**
      * to be overridden by subclasses
@@ -168,6 +168,10 @@ public abstract class ConnectorDataSource extends DataSourceBase {
         }
     }
     
+    protected String getDefaultNamespace() {
+        return getDefaultNamespace(getConfiguration());
+    }
+    
     private String getDefaultNamespace(DataSourceConfiguration configuration) {
         Object o = configuration.getParameterMap().get("Vitro.defaultNamespace");
         if(o instanceof String) {
@@ -177,7 +181,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
         }
     }
 
-    private boolean activeEndpointForResults() {
+    protected boolean activeEndpointForResults() {
         return (this.getConfiguration().getEndpointParameters() != null);
     }
     

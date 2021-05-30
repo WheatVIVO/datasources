@@ -75,4 +75,7 @@
       <scope>provided</scope>
     </dependency>
   </dependencies>
+  <properties>
+    <jackson.version>2.10.0.pr1</jackson.version>
+  </properties>
 </project>

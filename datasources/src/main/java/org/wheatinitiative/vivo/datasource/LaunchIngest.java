@@ -9,17 +9,20 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wheatinitiative.vivo.datasource.connector.openaire.OpenAire;
-import org.wheatinitiative.vivo.datasource.connector.florida.Florida;
-import org.wheatinitiative.vivo.datasource.connector.cornell.Cornell;
 import org.wheatinitiative.vivo.datasource.connector.cordis.Cordis;
+import org.wheatinitiative.vivo.datasource.connector.cornell.Cornell;
+import org.wheatinitiative.vivo.datasource.connector.florida.Florida;
+import org.wheatinitiative.vivo.datasource.connector.openaire.OpenAire;
 import org.wheatinitiative.vivo.datasource.connector.orcid.OrcidConnector;
 import org.wheatinitiative.vivo.datasource.connector.prodinra.Prodinra;
 import org.wheatinitiative.vivo.datasource.connector.rcuk.Rcuk;
-import org.wheatinitiative.vivo.datasource.connector.upenn.Upenn;
 import org.wheatinitiative.vivo.datasource.connector.tamu.Tamu;
+import org.wheatinitiative.vivo.datasource.connector.upenn.Upenn;
 import org.wheatinitiative.vivo.datasource.connector.usda.Usda;
 import org.wheatinitiative.vivo.datasource.connector.wheatinitiative.WheatInitiative;
+import org.wheatinitiative.vivo.datasource.normalizer.AuthorNameForSameAsNormalizer;
+import org.wheatinitiative.vivo.datasource.normalizer.LiteratureNameForSameAsNormalizer;
+import org.wheatinitiative.vivo.datasource.normalizer.OrganizationNameForSameAsNormalizer;
 
 import com.hp.hpl.jena.rdf.model.Model;
 
@@ -30,7 +33,9 @@ public class LaunchIngest {
     public static void main(String[] args) {
         if(args.length < 3) {
             System.out.println("Usage: LaunchIngest " 
-                    + "openaire|cordis|rcuk|prodinra|usda|wheatinitiative|cornell|tamu|upenn|florida outputfile " 
+                    + "openaire|cordis|rcuk|prodinra|wheatinitiative|florida"
+                    + "normalizePerson|normalizeOrganization|normalizeLiterature"
+                    + " outputfile " 
                     + "queryTerm ... [queryTermN] [limit]");
             return;
         }
@@ -105,10 +110,16 @@ public class LaunchIngest {
         	connector = new Tamu();
             connector.getConfiguration().setServiceURI(
                     "http://scholars.library.tamu.edu/vivo/");
+        } else if ("normalizePerson".equals(connectorName)) {
+            connector = new AuthorNameForSameAsNormalizer();
+        } else if ("normalizeLiterature".equals(connectorName)) {
+            connector = new LiteratureNameForSameAsNormalizer();
+        } else if ("normalizeOrganization".equals(connectorName)) {
+            connector = new OrganizationNameForSameAsNormalizer();
         } else {
             throw new RuntimeException("Connector not found: " 
                     + connectorName);
-        }
+        } 
         connector.getConfiguration().getParameterMap().put(
                 "Vitro.defaultNamespace", "http://vivo.wheatinitiative.org/individual/");
         return connector;
