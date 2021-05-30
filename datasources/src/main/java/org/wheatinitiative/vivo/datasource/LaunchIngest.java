@@ -60,6 +60,7 @@ public class LaunchIngest {
         connector.getConfiguration().setQueryTerms(queryTerms);
         connector.getConfiguration().setEndpointParameters(endpointParameters);
         connector.getConfiguration().setLimit(limit);
+        connector.getConfiguration().setResultsGraphURI(getResultsGraphURI(queryTerms));
         connector.run();
         Model result = connector.getResult();
         if(result == null) {
@@ -170,6 +171,16 @@ public class LaunchIngest {
             queryTerms.remove(0);
             return dataDir;
         } else {
+            return null;
+        }
+    }
+    
+    private static String getResultsGraphURI(List<String> queryTerms) {
+        if(!queryTerms.isEmpty() && queryTerms.get(0).startsWith("graph=")) {
+            String graphParam = queryTerms.remove(0);
+            return graphParam.substring("graph=".length());
+        } else {
+            log.info("Graph parameter not found");
             return null;
         }
     }
