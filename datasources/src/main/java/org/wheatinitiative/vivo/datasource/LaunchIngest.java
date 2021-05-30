@@ -9,6 +9,8 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wheatinitiative.vivo.datasource.DataSource;
+import org.wheatinitiative.vivo.datasource.SparqlEndpointParams;
 import org.wheatinitiative.vivo.datasource.connector.cordis.Cordis;
 import org.wheatinitiative.vivo.datasource.connector.cornell.Cornell;
 import org.wheatinitiative.vivo.datasource.connector.florida.Florida;
@@ -32,11 +34,12 @@ public class LaunchIngest {
     
     public static void main(String[] args) {
         if(args.length < 3) {
-            System.out.println("Usage: LaunchIngest " 
-                    + "openaire|cordis|rcuk|prodinra|wheatinitiative|florida"
+            System.out.println("Usage: LaunchIngest" 
+                    + " openaire|cordis|rcuk|prodinra|wheatinitiative|florida"
                     + "normalizePerson|normalizeOrganization|normalizeLiterature"
-                    + " outputfile " 
-                    + "queryTerm ... [queryTermN] [limit]");
+                    + " outputfile" 
+                    + " [endpointURI= endpointUpdateURI= username= password= dataDir= graph=]"
+                    + " queryTerm ... [queryTermN] [limit]");
             return;
         }
         List<String> queryTerms = new LinkedList<String>(
@@ -48,8 +51,14 @@ public class LaunchIngest {
             log.info("Retrieving a limit of " + limit + " records");
         }
         DataSource connector = getConnector(connectorName);
+        SparqlEndpointParams endpointParameters = getEndpointParams("", queryTerms);
+        SparqlEndpointParams prodEndpointParameters = getEndpointParams("prod", queryTerms);
+        if(prodEndpointParameters != null) {
+            connector.getConfiguration().getParameterMap().put("prodEndpointParameters", prodEndpointParameters);
+        }
+        connector.getConfiguration().getParameterMap().put("dataDir", getDataDir(queryTerms));
         connector.getConfiguration().setQueryTerms(queryTerms);
-        connector.getConfiguration().setEndpointParameters(null);
+        connector.getConfiguration().setEndpointParameters(endpointParameters);
         connector.getConfiguration().setLimit(limit);
         connector.run();
         Model result = connector.getResult();
@@ -123,6 +132,46 @@ public class LaunchIngest {
         connector.getConfiguration().getParameterMap().put(
                 "Vitro.defaultNamespace", "http://vivo.wheatinitiative.org/individual/");
         return connector;
+    }
+    
+    private static SparqlEndpointParams getEndpointParams(String endpointName, 
+            List<String> queryTerms) {
+        SparqlEndpointParams params = new SparqlEndpointParams();
+        int toRemove = 0;
+        for (String queryTerm : queryTerms) {
+            if(queryTerm.startsWith(endpointName + "endpointURI=")) {
+                params.setEndpointURI(queryTerm.substring((endpointName + "endpointURI=").length()));
+                toRemove++;
+            } else if (queryTerm.startsWith(endpointName + "endpointUpdateURI=")) {
+                params.setEndpointUpdateURI(queryTerm.substring((endpointName + "endpointUpdateURI=").length()));
+                toRemove++;
+            } else if (queryTerm.startsWith(endpointName + "username=")) {
+                params.setUsername(queryTerm.substring((endpointName + "username=").length()));
+                toRemove++;
+            } else if (queryTerm.startsWith(endpointName + "password=")) {
+                params.setPassword(queryTerm.substring((endpointName + "password=").length()));
+                toRemove++;
+            }
+        }
+        for(int i = 0; i < toRemove; i++) {
+            queryTerms.remove(0);
+        }
+        if(toRemove > 0) {
+            return params;    
+        } else {
+            log.info("Endpoint parameters not found");
+            return null;
+        }        
+    }
+    
+    private static String getDataDir(List<String> queryTerms) {
+        if(queryTerms.get(0).startsWith("dataDir=")) {
+            String dataDir = queryTerms.get(0).substring("dataDir=".length());
+            queryTerms.remove(0);
+            return dataDir;
+        } else {
+            return null;
+        }
     }
     
     private static int getLimit(List<String> queryTerms) {
