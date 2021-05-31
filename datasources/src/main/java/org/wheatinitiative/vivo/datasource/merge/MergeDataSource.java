@@ -107,7 +107,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         this.getStatus().setMessage("clearing previous merge results");
         List<MergeRule> mergeRules = new ArrayList<MergeRule>();
         for(String mergeRuleURI : getMergeRuleURIs(dataSourceURI)) {
-            getSparqlEndpoint().clear(mergeRuleURI); 
+            getSparqlEndpoint().clearGraph(mergeRuleURI); 
             mergeRules.add(getMergeRule(mergeRuleURI, rulesModel));
         }
         this.getStatus().setMessage("running merge rules");
@@ -140,7 +140,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         }
         String resultsGraphURI = getConfiguration().getResultsGraphURI();
         SparqlEndpoint endpoint = getSparqlEndpoint();
-        getSparqlEndpoint().clear(resultsGraphURI); 
+        getSparqlEndpoint().clearGraph(resultsGraphURI); 
         log.info("Merging relationships");
         this.getStatus().setMessage("merging relationships");
         Model tmp = getRelationshipSameAs();
@@ -276,7 +276,12 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     private Model getSameAs(MergeRule rule, Model fauxPropertyContextModel, 
             SparqlEndpoint sparqlEndpoint, int windowSize) {
         Model sameAsModel = null;
+        boolean firstAtom = true;
         for (MergeRuleAtom atom : rule.getAtoms()) {
+            if(!firstAtom && sameAsModel.isEmpty()) {
+                return sameAsModel;
+            }
+            firstAtom = false;
             log.debug("Processing atom " + atom.getMergeDataPropertyURI() + " ; " 
                     + atom.getMergeObjectPropertyURI() + " ; " 
                     + atom.getMatchDegree());
@@ -317,15 +322,53 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                             "    FILTER NOT EXISTS { ?y <" + OWL.sameAs.getURI() + "> ?x } \n" +
                             "    FILTER NOT EXISTS { ?x <" + OWL.differentFrom.getURI() + "> ?y } \n" +
                             "    FILTER NOT EXISTS { ?y <" + OWL.differentFrom.getURI() + "> ?x } \n" +
-                            "} \n";
+                            "    #VALUES \n" +
+                            "} \n";                   
                     log.info("Generated sameAs query: \n" + queryStr);                    
-                    sameAsModel = join(sameAsModel, sparqlEndpoint.construct(
-                            queryStr));
+                    sameAsModel = join(sameAsModel, constructWithValues(queryStr, sameAsModel));
                 }
             }
         }         
         return sameAsModel;
-    } 
+    }
+    
+    private Model constructWithValues(String queryStr, Model valuesModel) {
+        if(valuesModel == null || valuesModel.isEmpty()) {
+            return sparqlEndpoint.construct(queryStr);
+        } else {
+            Model results = ModelFactory.createDefaultModel();
+            List<Statement> valuesForQuery = new ArrayList<Statement>();
+            boolean firstIteration = true;
+            int count = 0;
+            StmtIterator existIt = valuesModel.listStatements();
+            while(existIt.hasNext()) {
+                Statement existStmt = existIt.next();
+                valuesForQuery.add(existStmt);
+                count++;
+                if(count == 250 || !existIt.hasNext()) {
+                    StringBuilder values = new StringBuilder();
+                    values.append("VALUES (?x ?y) { \n");
+                    for(Statement exist : valuesForQuery) {
+                        if(exist.getSubject().isURIResource() 
+                                && exist.getObject().isURIResource()) {
+                            values.append("  (<").append(exist.getSubject().getURI()).append("> ");
+                            values.append("<").append(exist.getObject().asResource().getURI()).append(">) \n");
+                        }
+                    }
+                    values.append("} \n");
+                    queryStr = queryStr.replace("#VALUES", values.toString());
+                    if(firstIteration) {
+                        log.info(queryStr);
+                        firstIteration = false;
+                    }
+                    results.add(sparqlEndpoint.construct(queryStr));
+                    valuesForQuery.clear();
+                    count = 0;
+                }         
+            }
+            return results;
+        }
+    }
     
     private Model join(Model sameAsModel, Model atomModel) {
         if(sameAsModel == null) {
@@ -717,17 +760,29 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             mergeRule.setPriority(priority);
         }
         mergeRule.setMergeClassURI(getString(ruleURI, MERGERULECLASS, model));
-        StmtIterator atomIt = model.listStatements(
-                model.getResource(ruleURI), model.getProperty(HASATOM), (RDFNode) null);
-        while(atomIt.hasNext()) {
-          Statement atomStmt = atomIt.next();
-          if(!atomStmt.getObject().isURIResource()) {
-              continue;
-          } else {
-              mergeRule.addAtom(getAtom(
-                      atomStmt.getObject().asResource().getURI(), model));
-          }
-        }        
+        ParameterizedSparqlString atomQuery = new ParameterizedSparqlString(
+                "SELECT ?atom WHERE { \n" +
+                "  ?rule <" + HASATOM + "> ?atom . \n" +
+                "  OPTIONAL { ?atom <" + PRIORITY +"> ?priority } \n" +
+                "  FILTER(!BOUND(?rank) || (?rank >= 0)) \n" +
+                "  FILTER NOT EXISTS { ?atom <" + DISABLED + "> true } \n" +
+                "} ORDER BY ?rank");
+        atomQuery.setIri("rule", ruleURI);
+        QueryExecution qe = QueryExecutionFactory.create(atomQuery.toString(), model);
+        try {
+            ResultSet rs = qe.execSelect();
+            while(rs.hasNext()) {
+                QuerySolution qsoln = rs.next();
+                if(qsoln.get("atom").isURIResource()) {
+                    mergeRule.addAtom(getAtom(
+                            qsoln.get("atom").asResource().getURI(), model));
+                }
+            }
+        } finally {
+            if(qe != null) {
+                qe.close();
+            }
+        }       
         return mergeRule;
     }
     

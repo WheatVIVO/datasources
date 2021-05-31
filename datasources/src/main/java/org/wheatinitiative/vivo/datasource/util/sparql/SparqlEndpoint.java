@@ -40,7 +40,7 @@ public class SparqlEndpoint implements ModelConstructor {
 
     // Writing too many triples at once to VIVO results in 403 errors
     // if maxPostSize is not adjusted on Tomcat.
-    private static final int CHUNK_SIZE = 2500;  // triples per 'chunk'
+    private static final int CHUNK_SIZE = 15000;  // triples per 'chunk'
     
     private static final Log log = LogFactory.getLog(SparqlEndpoint.class);
     
@@ -308,61 +308,88 @@ public class SparqlEndpoint implements ModelConstructor {
         }
         return m;
     } 
-    
+
     /**
      * An alternative to CLEAR, which is very inefficient with VIVO-based 
      * endpoints
      * @param graphURI
      */
     public void clearGraph(String graphURI) {
-        // retrieve individual URIs in batches of 1000
-        int batchSize = 100;
+        int batchSize = 15000;
         log.info("Clearing graph " + graphURI + " in batches of " + batchSize + 
-                " individuals");
-        boolean getNextBatch = true;
-        do {
-            String individualsBatch = "SELECT DISTINCT ?s WHERE { \n" +
-                    "    GRAPH <" + graphURI + "> { \n" +
-                    "        ?s ?p ?o \n" +
-                    "    } \n" +
-                    "} LIMIT " + batchSize;
-            log.debug(individualsBatch);
-            ResultSet rs = getResultSet(individualsBatch);
-            getNextBatch = rs.hasNext();
-            StringBuilder deletion = new StringBuilder();
-            while(rs.hasNext()) {
-                QuerySolution sol = rs.next();
-                Resource s = sol.getResource("s");
-                if(s.isURIResource()) {
-                    deletion.append("DELETE { \n")
-                    .append("    GRAPH<").append(graphURI).append(">")
-                    .append(" { <").append(s.getURI()).append("> ?p ?o } \n")
-                    .append("} WHERE { \n")
-                    .append("    GRAPH<").append(graphURI).append(">")
-                    .append(" { <").append(s.getURI()).append("> ?p ?o } \n")
-                    .append("}; \n");
-                }
+                " triples");
+        boolean done = false;
+        while(!done) {
+            log.info("Acquiring chunk");
+            String chunkConstruct = "CONSTRUCT { ?s ?p ?o } WHERE { \n"
+                    + "  GRAPH <" + graphURI + "> { ?s ?p ?o } \n" 
+                    + "} LIMIT " + batchSize;
+            Model chunk = this.construct(chunkConstruct);
+            log.info("Chunk acquired");
+            this.deleteModel(chunk, graphURI);
+            log.info("Chunk deleted");
+            if(chunk.size() < batchSize) {
+                done = true;
             }
-            String deletionStr = deletion.toString();
-            log.debug(deletionStr);
-            if(deletionStr.isEmpty()) {
-                getNextBatch = false;
-            } else {
-                try {
-                    update(deletionStr);    
-                } catch (Exception e) {
-                    log.info("Failed to delete batch of triples", e);
-                }
-            }            
-        } while (getNextBatch);
-        // TODO check that count is decreasing after each N batches, otherwise 
-        // terminate loop
-        // Finally, issue the regular CLEAR to flush out anything remaining
-        // (e.g. blank nodes)
-        //log.info("Clearing graph " + graphURI);
+        }
         log.info("Calling final clear");
         update("CLEAR GRAPH <" + graphURI + ">");
     }
+    
+    /**
+     * An alternative to CLEAR, which is very inefficient with VIVO-based 
+     * endpoints
+     * @param graphURI
+     */
+//    public void clearGraph(String graphURI) {
+//        // retrieve individual URIs in batches of 1000
+//        int batchSize = 100;
+//        log.info("Clearing graph " + graphURI + " in batches of " + batchSize + 
+//                " individuals");
+//        boolean getNextBatch = true;
+//        do {
+//            String individualsBatch = "SELECT DISTINCT ?s WHERE { \n" +
+//                    "    GRAPH <" + graphURI + "> { \n" +
+//                    "        ?s ?p ?o \n" +
+//                    "    } \n" +
+//                    "} LIMIT " + batchSize;
+//            log.debug(individualsBatch);
+//            ResultSet rs = getResultSet(individualsBatch);
+//            getNextBatch = rs.hasNext();
+//            StringBuilder deletion = new StringBuilder();
+//            while(rs.hasNext()) {
+//                QuerySolution sol = rs.next();
+//                Resource s = sol.getResource("s");
+//                if(s.isURIResource()) {
+//                    deletion.append("DELETE { \n")
+//                    .append("    GRAPH<").append(graphURI).append(">")
+//                    .append(" { <").append(s.getURI()).append("> ?p ?o } \n")
+//                    .append("} WHERE { \n")
+//                    .append("    GRAPH<").append(graphURI).append(">")
+//                    .append(" { <").append(s.getURI()).append("> ?p ?o } \n")
+//                    .append("}; \n");
+//                }
+//            }
+//            String deletionStr = deletion.toString();
+//            log.debug(deletionStr);
+//            if(deletionStr.isEmpty()) {
+//                getNextBatch = false;
+//            } else {
+//                try {
+//                    update(deletionStr);    
+//                } catch (Exception e) {
+//                    log.info("Failed to delete batch of triples", e);
+//                }
+//            }            
+//        } while (getNextBatch);
+//        // TODO check that count is decreasing after each N batches, otherwise 
+//        // terminate loop
+//        // Finally, issue the regular CLEAR to flush out anything remaining
+//        // (e.g. blank nodes)
+//        //log.info("Clearing graph " + graphURI);
+//        log.info("Calling final clear");
+//        update("CLEAR GRAPH <" + graphURI + ">");
+//    }
     
     /**
      * An alternative to CLEAR, which is very inefficient with VIVO-based 

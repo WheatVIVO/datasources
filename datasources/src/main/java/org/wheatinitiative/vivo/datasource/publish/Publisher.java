@@ -91,6 +91,8 @@ public class Publisher extends DataSourceBase implements DataSource {
         Map<String, Model> buffer = new HashMap<String, Model>();
         int individualCount = 0;
         Set<String> completedIndividuals = new HashSet<String>();
+	boolean errorOccurred = false;
+	try {
         for(String graphURI : graphURIPreferenceList) {
             if(graphURI == null) {
                 continue;
@@ -150,10 +152,16 @@ public class Publisher extends DataSourceBase implements DataSource {
                 }
             }
         }
-        this.getStatus().setMessage("clearing old data");
-        cleanUpDestination(sourceEndpoint, destinationEndpoint);
-        this.getStatus().setMessage("augmenting data via additional construct queries");
-        runPostmergeQueries(destinationEndpoint);
+	} catch(Throwable t) {
+            log.error(t, t);
+            errorOccurred = true;
+	}
+	if(!errorOccurred) {
+            this.getStatus().setMessage("clearing old data");
+            cleanUpDestination(sourceEndpoint, destinationEndpoint);
+            this.getStatus().setMessage("augmenting data via additional construct queries");
+            runPostmergeQueries(destinationEndpoint);
+        }
         log.info("ending");
     }
     
@@ -228,7 +236,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         String sameAsQuery = "CONSTRUCT { \n" +
                 "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
                 "} WHERE { \n" +
-                "    <" + individualURI + "> <" + OWL.sameAs.getURI() + ">* ?ind2 \n" +
+                "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
                 "} \n";
         return endpoint.construct(sameAsQuery);
     }
