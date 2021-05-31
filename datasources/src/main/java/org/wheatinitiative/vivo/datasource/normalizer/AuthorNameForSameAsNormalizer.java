@@ -24,7 +24,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 public class AuthorNameForSameAsNormalizer 
         extends InsertOnlyConnectorDataSource implements DataSource {
 
-    private static final String HAS_NORMALIZED_NAMES = "https://wheatvivo.org/ontology/local/hasNN";
+    public static final String HAS_NORMALIZED_NAMES = "https://wheatvivo.org/ontology/local/hasNN";
     private static final Log log = LogFactory.getLog(AuthorNameForSameAsNormalizer.class);
     private NameProcessingUtils nameUtils = new NameProcessingUtils();
     

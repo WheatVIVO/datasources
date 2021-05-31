@@ -1,6 +1,7 @@
 package org.wheatinitiative.vivo.datasource.merge;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -13,8 +14,11 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.DataSourceBase;
+import org.wheatinitiative.vivo.datasource.connector.InsertOnlyConnectorDataSource;
+import org.wheatinitiative.vivo.datasource.normalizer.AuthorNameForSameAsNormalizer;
 import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
 
+import com.hp.hpl.jena.query.ParameterizedSparqlString;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.QuerySolution;
@@ -66,6 +70,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     private static final String BIBO_COLLECTION = "http://purl.org/ontology/bibo/Collection";
     private static final String BIBO_DOCUMENT = "http://purl.org/ontology/bibo/Document";
     private static final String BASIC_SAMEAS_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/basicSameAs";
+    private static final String TRANSITIVE_SAMEAS_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/transitiveSameAs";
+    private static final String NORM_PROP_BASE = InsertOnlyConnectorDataSource.LABEL_FOR_SAMEAS;
         
     private Model result = ModelFactory.createDefaultModel();
     protected LevenshteinDistance ld = LevenshteinDistance.getDefaultInstance();
@@ -155,6 +161,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
         tmp = getVcardPartsSameAs(endpoint);
         getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
+        addTransitiveSameAsAssertions(endpoint);
         log.info("======== Final Results ========");
         for(String ruleURI : statistics.keySet()) {            
             log.info("Rule " + ruleURI + " added " + statistics.get(ruleURI));
@@ -173,6 +180,28 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         Model m = endpoint.construct(queryStr);
         log.info("Writing " + m.size() + " triples to " + BASIC_SAMEAS_GRAPH);
         endpoint.writeModel(m, BASIC_SAMEAS_GRAPH);        
+    }
+    
+    /**
+     * Materialize inferences of type sameAs(x,x) for query support
+     */
+    protected void addTransitiveSameAsAssertions(SparqlEndpoint endpoint) {
+        log.info("Clearing " + TRANSITIVE_SAMEAS_GRAPH);
+        endpoint.clear(TRANSITIVE_SAMEAS_GRAPH);
+        int maxIterations = 3;
+        long inferenceCount = 1;
+        while(inferenceCount > 0 && maxIterations > 0) {
+            maxIterations--;
+            String queryStr = "CONSTRUCT { ?x <" + OWL.sameAs.getURI() + "> ?z } WHERE { \n" +
+                    "    ?x <" + OWL.sameAs.getURI() + "> ?y . \n" +
+                    "    ?y <" + OWL.sameAs.getURI() + "> ?z . \n" +
+                    "    FILTER NOT EXISTS { ?x <" + OWL.sameAs.getURI() + "> ?z } \n" +
+                    "} \n";
+            Model m = endpoint.construct(queryStr);
+            log.info("Writing " + m.size() + " triples to " + TRANSITIVE_SAMEAS_GRAPH);
+            inferenceCount = m.size();
+            endpoint.writeModel(m, TRANSITIVE_SAMEAS_GRAPH);
+        }
     }
     
     /**
@@ -251,7 +280,10 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             log.debug("Processing atom " + atom.getMergeDataPropertyURI() + " ; " 
                     + atom.getMergeObjectPropertyURI() + " ; " 
                     + atom.getMatchDegree());
-            if(atom.getMatchDegree() < 100) {
+            if(AuthorNameForSameAsNormalizer.HAS_NORMALIZED_NAMES.equals(
+                    atom.getMergeObjectPropertyURI())) {
+                sameAsModel = join(sameAsModel, executePersonNameMatch(sparqlEndpoint)); 
+            } else if(atom.getMatchDegree() < 100) {
                 sameAsModel = join(sameAsModel, getFuzzySameAs(
                         rule, atom, fauxPropertyContextModel, windowSize));
                 sameAsModel = supplementFuzzySameAs(sameAsModel, sparqlEndpoint);
@@ -304,6 +336,42 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                     + sameAsModel.size() + "; atom=" + atomModel.size());
             return intersection;
         }
+    }
+    
+    private Model executePersonNameMatch( 
+            SparqlEndpoint endpoint) {
+        return executePersonNameMatchQuery("personSameName.rq", endpoint);                               
+    }
+    
+    private Model executePersonNameMatchQuery(String queryFile, 
+            SparqlEndpoint endpoint) {
+        Model results = ModelFactory.createDefaultModel();
+        List<String> xNormP = Arrays.asList("C3", "RC3", "C2", "C1", "RC1", "B3", "B2", "B1", "RB1", "A3", "A2", "A1");
+        List<String> yNormP = Arrays.asList("C3",  "C3", "C2", "C1",  "C1", "B3", "B2", "B1",  "B1", "A3", "A2", "A1");
+        List<String> guardP = Arrays.asList("XX",  "XX", "XX", "XX",  "XX", "C1", "C1", "C1",  "C1", "B1", "B1", "B1");
+        List<String> guardPx = Arrays.asList("XX",  "XX", "C3", "C2",  "XX", "XX", "B3", "B2",  "XX", "XX", "A3", "A2");
+        for(int i = 0; i < xNormP.size(); i++) {
+            Map<String, String> uriBindings = new HashMap<String, String>();
+            uriBindings.put("xNormP", NORM_PROP_BASE + xNormP.get(i));
+            uriBindings.put("yNormP", NORM_PROP_BASE + yNormP.get(i));
+            uriBindings.put("guardP", NORM_PROP_BASE + guardP.get(i));
+            uriBindings.put("guardPx", NORM_PROP_BASE + guardPx.get(i));
+            ParameterizedSparqlString queryStr = new ParameterizedSparqlString(
+                    this.loadQuery(SPARQL_RESOURCE_DIR + queryFile));
+            for(String key : uriBindings.keySet()) {
+                queryStr.setIri(key, uriBindings.get(key));
+            }
+            log.info(queryStr.toString());
+            Model m = endpoint.construct(queryStr.toString());
+            StmtIterator mit = m.listStatements();
+            while(mit.hasNext()) {
+                Statement stmt = mit.next();
+                if(!results.contains(stmt.getSubject(), null, (RDFNode) null)) {
+                    results.add(stmt);
+                }
+            }
+        }
+        return results;
     }
     
     /**
