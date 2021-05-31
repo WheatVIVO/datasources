@@ -33,25 +33,16 @@ PREFIX orcidrecord: <http://www.orcid.org/ns/record/>
 PREFIX orcidperson: <http://www.orcid.org/ns/person/>
 PREFIX generic: <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
 
-SELECT ?x ?y ?z WHERE {
-  GRAPH ?g1 {
-    ?x <http://wheatvivo.org/ontology/local/hasNN> ?nn1 .
-    ?nn1 ?xNormP ?value .
-      GRAPH ?g2 {
-        ?nn2 ?yNormP ?value .
-        ?y <http://wheatvivo.org/ontology/local/hasNN> ?nn2 .
-        FILTER NOT EXISTS {
-          GRAPH ?gmerge2 { ?y owl:sameAs ?z }
-        }
-        # ensure there is only one possible match
-        #FILTER NOT EXISTS {
-        #  ?nn3 ?yNormP ?value .
-        #  FILTER(?nn3 != ?nn2)
-        #}
-    }
-  }
-  FILTER NOT EXISTS { ?x owl:sameAs ?something }
+CONSTRUCT {
+  ?x owl:sameAs ?y .
+  ?y owl:sameAs ?x .
+} WHERE {
+  ?x <http://wheatvivo.org/ontology/local/hasNN> ?nn1 .
+  ?nn1 ?xNormP ?value .
+  ?nn2 ?yNormP ?value .
+  ?y <http://wheatvivo.org/ontology/local/hasNN> ?nn2 .
+  FILTER(?x != ?y)
   FILTER NOT EXISTS { ?x owl:differentFrom ?y }
   FILTER( ( NOT EXISTS { ?nn1 ?guardP ?something } && NOT EXISTS { ?nn1 ?guardPx ?somethingPx} ) 
           || ( NOT EXISTS { ?nn2 ?guardP ?somethingElse } && NOT EXISTS { ?nn2 ?guardPx ?somethingElsePx } ) )
-} ORDER BY ?x ?y ?z
+}
