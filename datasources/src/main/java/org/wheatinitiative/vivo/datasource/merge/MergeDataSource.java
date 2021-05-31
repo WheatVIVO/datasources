@@ -172,14 +172,19 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
      * Materialize inferences of type sameAs(x,x) for query support
      */
     protected void addBasicSameAsAssertions(SparqlEndpoint endpoint) {
-        log.info("Clearing " + BASIC_SAMEAS_GRAPH);
-        endpoint.clear(BASIC_SAMEAS_GRAPH);
         String queryStr = "CONSTRUCT { ?x <" + OWL.sameAs.getURI() + "> ?x } WHERE { \n" +
                 "    ?x a ?thing \n" +
+                "    FILTER NOT EXISTS { ?x <" + OWL.sameAs.getURI() + "> ?x } \n" +
                 "} \n";
         Model m = endpoint.construct(queryStr);
         log.info("Writing " + m.size() + " triples to " + BASIC_SAMEAS_GRAPH);
-        endpoint.writeModel(m, BASIC_SAMEAS_GRAPH);        
+        String delQueryStr = "CONSTRUCT { ?x <" + OWL.sameAs.getURI() + "> ?x } WHERE { \n" +
+                "    GRAPH <" + BASIC_SAMEAS_GRAPH + "> { ?x <" + OWL.sameAs.getURI() + "> ?x } \n" +
+                "    FILTER NOT EXISTS { ?x a ?thing } \n" +
+                "} \n";
+        Model toDelete = endpoint.construct(delQueryStr);
+        log.info("Deleting " + toDelete.size() + " triples from " + BASIC_SAMEAS_GRAPH);
+        endpoint.deleteModel(toDelete, BASIC_SAMEAS_GRAPH);        
     }
     
     /**
