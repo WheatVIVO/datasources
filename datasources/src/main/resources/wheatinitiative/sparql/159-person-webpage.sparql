@@ -27,7 +27,7 @@ CONSTRUCT {
     ?url a vcard:URL .
     ?url vcard:url ?webpage .
 } WHERE {
-    ?x wi:personalWebpage ?webpage .
+    ?x wi:Personal_Webpage ?webpage .
     FILTER(REGEX(STR(?webpage), "^http"))
     ?x a foaf:Person .
     ?x obo:ARG_2000028 ?vcard .

@@ -31,12 +31,10 @@ CONSTRUCT {
     ?address vcard:postalCode ?postalCode .
     ?address vcard:country ?country .
 } WHERE {
-    ?x wi:addressCountry ?country .
+    ?x wi:Country ?country .
     ?x a foaf:Person .
     ?x obo:ARG_2000028 ?vcard .
     ?vcard a vcard:Individual .
-    OPTIONAL { ?x wi:addressThoroughfare ?streetAddress }
-    OPTIONAL { ?x wi:addressLocality ?locality }
-    OPTIONAL { ?x wi:addressPostalCode ?postalCode }
+    OPTIONAL { ?x wi:City ?locality }
     BIND(IRI(CONCAT(STR(?x), "-vcard-address")) AS ?address)
 }
