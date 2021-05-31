@@ -37,10 +37,10 @@ CONSTRUCT {
   ?x owl:sameAs ?y .
   ?y owl:sameAs ?x .
 } WHERE {
-  ?x <http://wheatvivo.org/ontology/local/hasNN> ?nn1 .
+  ?x <https://wheatvivo.org/ontology/local/hasNN> ?nn1 .
   ?nn1 ?xNormP ?value .
   ?nn2 ?yNormP ?value .
-  ?y <http://wheatvivo.org/ontology/local/hasNN> ?nn2 .
+  ?y <https://wheatvivo.org/ontology/local/hasNN> ?nn2 .
   FILTER(?x != ?y)
   FILTER NOT EXISTS { ?x owl:differentFrom ?y }
   FILTER( ( NOT EXISTS { ?nn1 ?guardP ?something } && NOT EXISTS { ?nn1 ?guardPx ?somethingPx} ) 
