@@ -53,7 +53,10 @@ public class AuthorNameForSameAsNormalizer
             
             String queryStr = "SELECT ?person ?familyName ?givenName ?hash WHERE { \n";
             queryStr += "{ \n";
-            queryStr += "SELECT ?person (MAX(STR(?lastName)) AS ?familyName) (MAX(STR(?firstName)) AS ?givenName) WHERE { \n";
+            // Use MIN for one and MAX for other as a simple way of avoiding
+            // problems with messy Name objects where values A and B are both
+            // asserted as the family name and as the given name.
+            queryStr += "SELECT ?person (MIN(STR(?lastName)) AS ?familyName) (MAX(STR(?firstName)) AS ?givenName) WHERE { \n";
             if(graphURI != null) {
                 queryStr += "  GRAPH <" + graphURI + "> { \n";
             }
@@ -159,7 +162,14 @@ public class AuthorNameForSameAsNormalizer
         
         protected String normalizeFamily(String value) {
             StringBuilder builder = new StringBuilder();
-            value = StringUtils.stripAccents(value.toLowerCase());
+            String lowerValue = value.toLowerCase();
+            if(lowerValue.length() == value.length()) {
+                value = lowerValue;
+            }
+            String strippedValue = StringUtils.stripAccents(value);
+            if(strippedValue.length() == value.length()) {
+                value = strippedValue;
+            }
             value = value.replaceAll("\\W+", "");
             String[] tokens = value.split(" ");
             for(int i = 0; i < tokens.length; i++) {
@@ -247,7 +257,9 @@ public class AuthorNameForSameAsNormalizer
      * @return first character in lowercase form
      */
     private String grabInitial(String token) {
-        return Character.toString(token.charAt(0)).toLowerCase();
+        String charStr = Character.toString(token.charAt(0));
+        String lowerCharStr = charStr.toLowerCase();
+        return (lowerCharStr.length() == charStr.length()) ? lowerCharStr : charStr; 
     }
     
     private StringBuilder appendSpace(StringBuilder builder) {
@@ -282,7 +294,10 @@ public class AuthorNameForSameAsNormalizer
     
     private List<String> tokenizeGiven(String givenName, boolean splitOnHyphen) {
         List<String> tokenList = new ArrayList<String>();
-        givenName = StringUtils.stripAccents(givenName);        
+        String strippedGivenName = StringUtils.stripAccents(givenName);
+        if(strippedGivenName.length() == givenName.length()) {
+            givenName = strippedGivenName;
+        }
         givenName = givenName.replaceAll("\\.-", "-");
         givenName = givenName.replaceAll("\\.", " ");
         if(splitOnHyphen) {
@@ -360,7 +375,11 @@ public class AuthorNameForSameAsNormalizer
     }
     
     private String normalizeGivenToken(String token) {
-        String norm = token.toLowerCase().replaceAll("\\W", "-");
+        String lowerToken = token.toLowerCase();
+        if(lowerToken.length() == token.length()) {
+            token = lowerToken;
+        }
+        String norm = token.replaceAll("\\W", "-");
         String normNoNick = substituteNickname(norm);
         return (normNoNick != null) ? normNoNick : norm;        
     }
