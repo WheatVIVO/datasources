@@ -418,10 +418,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             Model m = endpoint.construct(queryStr.toString());
             StmtIterator mit = m.listStatements();
             while(mit.hasNext()) {
-                Statement stmt = mit.next();
-                if(!results.contains(stmt.getSubject(), null, (RDFNode) null)) {
-                    results.add(stmt);
-                }
+                results.add(mit.next());
             }
         }
         return results;
