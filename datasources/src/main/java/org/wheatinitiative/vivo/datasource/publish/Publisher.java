@@ -1,9 +1,12 @@
 package org.wheatinitiative.vivo.datasource.publish;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -76,10 +79,12 @@ public class Publisher extends DataSourceBase implements DataSource {
     
     @Override
     protected void runIngest() {
+        Date currentDateTime = Calendar.getInstance().getTime();
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        String timestamp = "--" + df.format(currentDateTime);
         SparqlEndpoint sourceEndpoint = getSourceEndpoint();
         SparqlEndpoint destinationEndpoint = getSparqlEndpoint();
         Set<String> functionalPropertyURIs = getFunctionalPropertyURIs();  
-        emptyDestination(sourceEndpoint, destinationEndpoint);
         log.info("Getting graph preference list");
         List<String> graphURIPreferenceList = getGraphURIPreferenceList(
                 sourceEndpoint);
@@ -91,74 +96,74 @@ public class Publisher extends DataSourceBase implements DataSource {
         Map<String, Model> buffer = new HashMap<String, Model>();
         int individualCount = 0;
         Set<String> completedIndividuals = new HashSet<String>();
-	boolean errorOccurred = false;
-	try {
-        for(String graphURI : graphURIPreferenceList) {
-            if(graphURI == null) {
-                continue;
-            }                     
-            IndividualURIIterator indIt = new IndividualURIIterator(
-                    sourceEndpoint, graphURI);
-            while(indIt.hasNext()) {
-                long start = System.currentTimeMillis();
-                individualCount++;
-                String individualURI = indIt.next();
-                if(completedIndividuals.contains(individualURI)) {
-                    if(!indIt.hasNext()) {
-                        flushBufferToDestination(buffer);
-                    }
+        boolean errorOccurred = false;
+        try {
+            for(String graphURI : graphURIPreferenceList) {
+                if(graphURI == null) {
                     continue;
-                }
-                List<String> sameAsURIs = getSameAsURIList(individualURI, sourceEndpoint);
-                List<Quad> individualQuads = getIndividualQuads(individualURI, 
-                        sourceEndpoint);
-                for (String sameAsURI : sameAsURIs) {
-                    sameAsCache.put(sameAsURI, individualURI);
-                }
-                Map<String, Model> quadStore = new HashMap<String, Model>();   
-                log.debug("Adding " + individualURI + " to store");
-                addQuadsToStore(
-                        rewrite(individualQuads, graphURIPreferenceList, 
-                                sourceEndpoint), quadStore);
-                report(quadStore);
-                log.debug("same as URIs " + sameAsURIs);
-                // don't waste memory recording an individual if we won't 
-                // encounter it again later
-                if(quadStore.keySet().size() <= 1 && !sameAsURIs.isEmpty()) {
-                    completedIndividuals.add(individualURI);
-                }
-                for (String sameAsURI : sameAsURIs) {
-                    log.debug("Adding " + sameAsURI + " to store");
-                    completedIndividuals.add(sameAsURI);
-                    List<Quad> sameAsQuads = getIndividualQuads(
-                            sameAsURI, sourceEndpoint);
+                }                     
+                IndividualURIIterator indIt = new IndividualURIIterator(
+                        sourceEndpoint, graphURI);
+                while(indIt.hasNext()) {
+                    long start = System.currentTimeMillis();
+                    individualCount++;
+                    String individualURI = indIt.next();
+                    if(completedIndividuals.contains(individualURI)) {
+                        if(!indIt.hasNext()) {
+                            flushBufferToDestination(buffer, timestamp);
+                        }
+                        continue;
+                    }
+                    List<String> sameAsURIs = getSameAsURIList(individualURI, sourceEndpoint);
+                    List<Quad> individualQuads = getIndividualQuads(individualURI, 
+                            sourceEndpoint);
+                    for (String sameAsURI : sameAsURIs) {
+                        sameAsCache.put(sameAsURI, individualURI);
+                    }
+                    Map<String, Model> quadStore = new HashMap<String, Model>();   
+                    log.debug("Adding " + individualURI + " to store");
                     addQuadsToStore(
-                            rewrite(sameAsQuads, graphURIPreferenceList, 
+                            rewrite(individualQuads, graphURIPreferenceList, 
                                     sourceEndpoint), quadStore);
                     report(quadStore);
-                }
-                dedupFunctionalProperties(quadStore, functionalPropertyURIs, 
-                        graphURIPreferenceList);  
-                filterIrrelevantGraphs(quadStore, graphURIPreferenceList);
-                // TODO filter non-VIVO predicate namespaces?
-                addQuadStoreToBuffer(quadStore, buffer);
-                long duration = System.currentTimeMillis() - start;
-                if (duration > 1000) {
-                    log.info(duration + " ms to process individual " + individualURI);
-                }
-                this.getStatus().setProcessedRecords(completedIndividuals.size());
-                if(individualCount % BATCH_SIZE == 0 || !indIt.hasNext()) {
-                    flushBufferToDestination(buffer);    
+                    log.debug("same as URIs " + sameAsURIs);
+                    // don't waste memory recording an individual if we won't 
+                    // encounter it again later
+                    if(quadStore.keySet().size() <= 1 && !sameAsURIs.isEmpty()) {
+                        completedIndividuals.add(individualURI);
+                    }
+                    for (String sameAsURI : sameAsURIs) {
+                        log.debug("Adding " + sameAsURI + " to store");
+                        completedIndividuals.add(sameAsURI);
+                        List<Quad> sameAsQuads = getIndividualQuads(
+                                sameAsURI, sourceEndpoint);
+                        addQuadsToStore(
+                                rewrite(sameAsQuads, graphURIPreferenceList, 
+                                        sourceEndpoint), quadStore);
+                        report(quadStore);
+                    }
+                    dedupFunctionalProperties(quadStore, functionalPropertyURIs, 
+                            graphURIPreferenceList);  
+                    filterIrrelevantGraphs(quadStore, graphURIPreferenceList);
+                    // TODO filter non-VIVO predicate namespaces?
+                    addQuadStoreToBuffer(quadStore, buffer);
+                    long duration = System.currentTimeMillis() - start;
+                    if (duration > 1000) {
+                        log.info(duration + " ms to process individual " + individualURI);
+                    }
+                    this.getStatus().setProcessedRecords(completedIndividuals.size());
+                    if(individualCount % BATCH_SIZE == 0 || !indIt.hasNext()) {
+                        flushBufferToDestination(buffer, timestamp);    
+                    }
                 }
             }
-        }
-	} catch(Throwable t) {
+        } catch(Throwable t) {
             log.error(t, t);
             errorOccurred = true;
-	}
-	if(!errorOccurred) {
+        }
+        if(!errorOccurred) {
             this.getStatus().setMessage("clearing old data");
-            cleanUpDestination(sourceEndpoint, destinationEndpoint);
+            cleanUpDestination(sourceEndpoint, destinationEndpoint, timestamp);
             this.getStatus().setMessage("augmenting data via additional construct queries");
             runPostmergeQueries(destinationEndpoint);
         }
@@ -422,29 +427,20 @@ public class Publisher extends DataSourceBase implements DataSource {
         return predSet;
     }
     
-    private void emptyDestination(SparqlEndpoint sourceEndpoint, 
-            SparqlEndpoint destinationEndpoint) {
-        // need to empty the destination only of graphs that exist in BOTH
-        // the source and the destination
+    private void cleanUpDestination(SparqlEndpoint sourceEndpoint, 
+            SparqlEndpoint destinationEndpoint, String timestamp) {
+        // After main loop, clear any destination graphs that do not 
+        // exist in the source (except kb2).
+        // Because the timestamp of publishing has been appended to the graphs
+        // in the destination endpoint, we will also append the same timestamp
+        // to the source graphs for comparison.  That way we will only clear
+        // out old versions of the graphs and not the same graphs we just 
+        // wrote to the destination.
         List<String> sourceGraphURIs = getGraphURIsInEndpoint(sourceEndpoint);
-        // KB2 will get rewritten as ADMINAPP_ASSERTIONS, thus pretend it exists
-        sourceGraphURIs.add(ADMINAPP_ASSERTIONS);
-        List<String> destinationGraphURIs = getGraphURIsInEndpoint(destinationEndpoint);
-        for(String destGraphURI : destinationGraphURIs) {
-            if(sourceGraphURIs.contains(destGraphURI)) {
-                if(!KB2.equals(destGraphURI)) {
-                    log.info("Clearing destination graph " + destGraphURI);
-                    destinationEndpoint.clearGraph(destGraphURI);                                         
-                }
-            }
+        for(int i = 0; i < sourceGraphURIs.size(); i++) {
+            sourceGraphURIs.add(i, sourceGraphURIs.get(i) + timestamp);
         }
-    }
-    
-    private void cleanUpDestination(SparqlEndpoint sourceEndpoint, SparqlEndpoint destinationEndpoint) {
-        // after main loop, clear any destination graphs that do not 
-        // exist in the source (except kb2)
-        List<String> sourceGraphURIs = getGraphURIsInEndpoint(sourceEndpoint);
-        sourceGraphURIs.add(ADMINAPP_ASSERTIONS);
+        sourceGraphURIs.add(ADMINAPP_ASSERTIONS + timestamp);
         List<String> destinationGraphURIs = getGraphURIsInEndpoint(destinationEndpoint);
         for(String destGraphURI : destinationGraphURIs) {
             if(!sourceGraphURIs.contains(destGraphURI)) {
@@ -483,8 +479,15 @@ public class Publisher extends DataSourceBase implements DataSource {
         }
     }
     
-    private void flushBufferToDestination(Map<String, Model> buffer) {
-        writeQuadStoreToDestination(buffer);
+    /**
+     * Write a buffer of quads to the destination SPARQL endpoint, appending
+     * the current timestamp to the end of each graph URI.
+     * @param buffer
+     * @param timestamp
+     */
+    private void flushBufferToDestination(Map<String, Model> buffer, 
+            String timestamp) {
+        writeQuadStoreToDestination(buffer, timestamp);
         buffer.clear();
     }
     
@@ -499,8 +502,18 @@ public class Publisher extends DataSourceBase implements DataSource {
         }
     }
     
-    private void writeQuadStoreToDestination(Map<String, Model> quadStore) {
+    /**
+     * Write a quad store to the destination SPARQL endpoint, appending
+     * an optional timestamp string to the end of each graph URI.
+     * @param quadStore
+     * @param timestamp may be null.
+     */
+    private void writeQuadStoreToDestination(Map<String, Model> quadStore, 
+            String timestamp) {
         for(String graphURI : quadStore.keySet()) {
+            if(timestamp != null) {
+                graphURI += timestamp;
+            }
             Model m = quadStore.get(graphURI);
             if(m.size() == 0) {
                 continue;
