@@ -110,6 +110,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             getSparqlEndpoint().clearGraph(mergeRuleURI); 
             mergeRules.add(getMergeRule(mergeRuleURI, rulesModel));
         }
+        SparqlEndpoint endpoint = getSparqlEndpoint();
+        clearTransitiveSameAsAssertions(endpoint);        
         this.getStatus().setMessage("running merge rules");
         Collections.sort(mergeRules, new AffectedClassRuleComparator(getSparqlEndpoint()));        
         Map<String, Long> statistics = new HashMap<String, Long>();
@@ -137,9 +139,9 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 log.info("Rule results size: " + ruleResult.size());            
                 getSparqlEndpoint().writeModel(ruleResult, mergeRuleURI); 
             }
+            addTransitiveSameAsAssertions(endpoint);
         }
         String resultsGraphURI = getConfiguration().getResultsGraphURI();
-        SparqlEndpoint endpoint = getSparqlEndpoint();
         getSparqlEndpoint().clearGraph(resultsGraphURI); 
         log.info("Merging relationships");
         this.getStatus().setMessage("merging relationships");
@@ -187,12 +189,15 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         endpoint.deleteModel(toDelete, BASIC_SAMEAS_GRAPH);        
     }
     
+    protected void clearTransitiveSameAsAssertions(SparqlEndpoint endpoint) {
+        log.info("Clearing " + TRANSITIVE_SAMEAS_GRAPH);
+        endpoint.clear(TRANSITIVE_SAMEAS_GRAPH);
+    }
+    
     /**
      * Materialize inferences of type sameAs(x,x) for query support
      */
     protected void addTransitiveSameAsAssertions(SparqlEndpoint endpoint) {
-        log.info("Clearing " + TRANSITIVE_SAMEAS_GRAPH);
-        endpoint.clear(TRANSITIVE_SAMEAS_GRAPH);
         int maxIterations = 3;
         long inferenceCount = 1;
         while(inferenceCount > 0 && maxIterations > 0) {
