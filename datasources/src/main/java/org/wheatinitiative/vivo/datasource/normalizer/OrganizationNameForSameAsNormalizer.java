@@ -1,5 +1,10 @@
 package org.wheatinitiative.vivo.datasource.normalizer;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -17,10 +22,13 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.vocabulary.RDFS;
 
-public class OrganizationNameForSameAsNormalizer extends InsertOnlyConnectorDataSource implements DataSource { 
+public class OrganizationNameForSameAsNormalizer 
+        extends InsertOnlyConnectorDataSource implements DataSource { 
 
     private static final String ABBREVIATION = VivoVocabulary.VIVO + "abbreviation";
     private static final Log log = LogFactory.getLog(OrganizationNameForSameAsNormalizer.class);
+    private static final Set<String> STOP_WORDS = new HashSet<String>(Arrays.asList(
+            "the", "of", "for", "from", "on", "a", "an"));
 
     @Override 
     public int getBatchSize() {
@@ -126,10 +134,11 @@ public class OrganizationNameForSameAsNormalizer extends InsertOnlyConnectorData
                     token = "and";
                 }
                 token = token.replaceAll("-", " ");
-                token = token.replaceAll("\\.", "");                
+                //token = token.replaceAll("\\.", "");
+                token = token.replaceAll("\\W", "");
                 token = StringUtils.stripAccents(
-                        token.toLowerCase()).trim();                
-                if(token.isEmpty()) {
+                        token.toLowerCase()).trim();
+                if(STOP_WORDS.contains(token) || token.isEmpty()) {
                     continue;
                 } else {
                     if(out.length() > 0) {
