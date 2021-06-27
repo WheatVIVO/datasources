@@ -69,6 +69,7 @@ public class Publisher extends DataSourceBase implements DataSource {
     private static final String POSTMERGE_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/postmerge";
     
     private DataSourceDao dataSourceDao;
+    private String timestamp;
     
     protected DataSourceDao getDataSourceDao() {
         if(dataSourceDao == null) {
@@ -81,7 +82,7 @@ public class Publisher extends DataSourceBase implements DataSource {
     protected void runIngest() {
         Date currentDateTime = Calendar.getInstance().getTime();
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-        String timestamp = "--" + df.format(currentDateTime);
+        this.timestamp = "--" + df.format(currentDateTime);
         SparqlEndpoint sourceEndpoint = getSourceEndpoint();
         SparqlEndpoint destinationEndpoint = getSparqlEndpoint();
         Set<String> functionalPropertyURIs = getFunctionalPropertyURIs();  
@@ -110,7 +111,7 @@ public class Publisher extends DataSourceBase implements DataSource {
                     String individualURI = indIt.next();
                     if(completedIndividuals.contains(individualURI)) {
                         if(!indIt.hasNext()) {
-                            flushBufferToDestination(buffer, timestamp);
+                            flushBufferToDestination(buffer, this.timestamp);
                         }
                         continue;
                     }
@@ -153,7 +154,7 @@ public class Publisher extends DataSourceBase implements DataSource {
                     }
                     this.getStatus().setProcessedRecords(completedIndividuals.size());
                     if(individualCount % BATCH_SIZE == 0 || !indIt.hasNext()) {
-                        flushBufferToDestination(buffer, timestamp);    
+                        flushBufferToDestination(buffer, this.timestamp);    
                     }
                 }
             }
@@ -168,6 +169,10 @@ public class Publisher extends DataSourceBase implements DataSource {
             runPostmergeQueries(destinationEndpoint);
         }
         log.info("ending");
+    }
+    
+    public String getTimestamp() {
+        return this.timestamp;
     }
     
     private void report(Map<String, Model> quadStore) {
@@ -438,7 +443,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         // wrote to the destination.
         List<String> sourceGraphURIs = getGraphURIsInEndpoint(sourceEndpoint);
         for(int i = 0; i < sourceGraphURIs.size(); i++) {
-            sourceGraphURIs.add(i, sourceGraphURIs.get(i) + timestamp);
+            sourceGraphURIs.set(i, sourceGraphURIs.get(i) + timestamp);
         }
         sourceGraphURIs.add(ADMINAPP_ASSERTIONS + timestamp);
         List<String> destinationGraphURIs = getGraphURIsInEndpoint(destinationEndpoint);
@@ -511,12 +516,12 @@ public class Publisher extends DataSourceBase implements DataSource {
     private void writeQuadStoreToDestination(Map<String, Model> quadStore, 
             String timestamp) {
         for(String graphURI : quadStore.keySet()) {
-            if(timestamp != null) {
-                graphURI += timestamp;
-            }
             Model m = quadStore.get(graphURI);
             if(m.size() == 0) {
                 continue;
+            }
+            if(timestamp != null) {
+                graphURI += timestamp;
             }
             log.info("Writing " + m.size() + " triples to graph " + graphURI);
             long start = System.currentTimeMillis();
