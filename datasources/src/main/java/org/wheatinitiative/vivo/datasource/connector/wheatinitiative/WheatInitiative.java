@@ -41,6 +41,7 @@ public class WheatInitiative extends ConnectorDataSource implements DataSource {
     private static final String ABOX_ETC = ABOX + "n";
     private static final String VIVO_NS = "http://vivoweb.org/ontology/core#";
     private static final String SPARQL_RESOURCE_DIR = "/wheatinitiative/sparql/";
+    public static final String EXCEL_SUBDIR = "/wheatInitiative";
     private static final int MAX_COLS = 13;
     private static final Log log = LogFactory.getLog(WheatInitiative.class);
 
@@ -49,9 +50,10 @@ public class WheatInitiative extends ConnectorDataSource implements DataSource {
         Object dataDir = this.getConfiguration().getParameterMap().get("dataDir");
         if(!(dataDir instanceof String)) {
             throw new RuntimeException("dataDir parameter must point to " 
-                    + "directory of researcher Excel files");
+                    + "a directory containing a subdirectory " + EXCEL_SUBDIR 
+                    + " of researcher Excel files");
         }
-        return new WheatInitiativeIterator((String) dataDir);
+        return new WheatInitiativeIterator((String) dataDir + EXCEL_SUBDIR);
     }
 
     private class WheatInitiativeIterator implements IteratorWithSize<Model> {        
