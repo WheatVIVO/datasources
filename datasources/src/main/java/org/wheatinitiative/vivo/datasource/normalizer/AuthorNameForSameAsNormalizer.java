@@ -170,7 +170,10 @@ public class AuthorNameForSameAsNormalizer
             if(strippedValue.length() == value.length()) {
                 value = strippedValue;
             }
-            value = value.replaceAll("\\W+", "");
+            String stripNonWord = value.replaceAll("\\W+", "");
+            if(!stripNonWord.isEmpty()) {
+                value = stripNonWord;
+            }
             String[] tokens = value.split(" ");
             for(int i = 0; i < tokens.length; i++) {
                 String token = tokens[i];
@@ -309,7 +312,10 @@ public class AuthorNameForSameAsNormalizer
                 tokenList.add(token);
             } else {
                 token = token.trim();
-                token = token.replaceAll("\\W", "-");
+                String stripNonWord = token.replaceAll("\\W+", "-");
+                if(!"-".equals(stripNonWord)) {
+                    token = stripNonWord;
+                }
                 if(token.length() == 0) {
                     continue;
                 }
@@ -379,7 +385,11 @@ public class AuthorNameForSameAsNormalizer
         if(lowerToken.length() == token.length()) {
             token = lowerToken;
         }
-        String norm = token.replaceAll("\\W", "-");
+        String norm = token;
+        String stripNonWord = token.replaceAll("\\W+", "-");
+        if(!"-".equals(stripNonWord)) {
+            norm = stripNonWord;
+        }
         String normNoNick = substituteNickname(norm);
         return (normNoNick != null) ? normNoNick : norm;        
     }
