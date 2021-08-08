@@ -111,7 +111,9 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             mergeRules.add(getMergeRule(mergeRuleURI, rulesModel));
         }
         SparqlEndpoint endpoint = getSparqlEndpoint();
-        clearTransitiveSameAsAssertions(endpoint);        
+        clearTransitiveSameAsAssertions(endpoint);
+        String resultsGraphURI = getConfiguration().getResultsGraphURI();
+        getSparqlEndpoint().clearGraph(resultsGraphURI); 
         this.getStatus().setMessage("running merge rules");
         Collections.sort(mergeRules, new AffectedClassRuleComparator(getSparqlEndpoint()));        
         Map<String, Long> statistics = new HashMap<String, Long>();
@@ -141,8 +143,6 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             }
             addTransitiveSameAsAssertions(endpoint);
         }
-        String resultsGraphURI = getConfiguration().getResultsGraphURI();
-        getSparqlEndpoint().clearGraph(resultsGraphURI); 
         log.info("Merging relationships");
         this.getStatus().setMessage("merging relationships");
         Model tmp = getRelationshipSameAs();
@@ -203,8 +203,15 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         while(inferenceCount > 0 && maxIterations > 0) {
             maxIterations--;
             String queryStr = "CONSTRUCT { ?x <" + OWL.sameAs.getURI() + "> ?z } WHERE { \n" +
-                    "    ?x <" + OWL.sameAs.getURI() + "> ?y . \n" +
+                    "    { SELECT ?x ?y \n" + 
+                    "      WHERE { \n" +
+                    "        ?x <" + OWL.sameAs.getURI() + "> ?y . \n" +
+                    "        FILTER (?x != ?y) \n" +
+                    "      } \n" + 
+                    "    } \n" +
                     "    ?y <" + OWL.sameAs.getURI() + "> ?z . \n" +
+                    "    FILTER (?y != ?z) \n" +
+                    "    FILTER (?x != ?z) \n" +
                     "    FILTER NOT EXISTS { ?x <" + OWL.sameAs.getURI() + "> ?z } \n" +
                     "} \n";
             Model m = endpoint.construct(queryStr);
