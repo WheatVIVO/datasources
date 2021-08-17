@@ -24,6 +24,7 @@ import org.wheatinitiative.vivo.datasource.DataSourceDescription;
 import org.wheatinitiative.vivo.datasource.SparqlEndpointParams;
 import org.wheatinitiative.vivo.datasource.VivoVocabulary;
 import org.wheatinitiative.vivo.datasource.dao.DataSourceDao;
+import org.wheatinitiative.vivo.datasource.util.indexinginference.IndexingInference;
 import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
 
 import com.hp.hpl.jena.query.QuerySolution;
@@ -79,12 +80,23 @@ public class Publisher extends DataSourceBase implements DataSource {
     }
     
     @Override
-    protected void runIngest() {
+    protected void runIngest() throws InterruptedException {
         Date currentDateTime = Calendar.getInstance().getTime();
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
         this.timestamp = "--" + df.format(currentDateTime);
         SparqlEndpoint sourceEndpoint = getSourceEndpoint();
         SparqlEndpoint destinationEndpoint = getSparqlEndpoint();
+        IndexingInference inf = null;
+        if(destinationEndpoint.getSparqlEndpointParams().getEndpointURI() != null) {
+            inf = new IndexingInference(destinationEndpoint);    
+        }        
+        if(inf != null && inf.isAvailable()) {
+            inf.unregisterReasoner();
+            inf.unregisterSearchIndexer();
+            log.info("Unregistered reasoner and search indexer");
+        } else {
+            log.warn("IndexingInferenceService not available on destination endpoint");
+        }
         Set<String> functionalPropertyURIs = getFunctionalPropertyURIs();  
         log.info("Getting graph preference list");
         List<String> graphURIPreferenceList = getGraphURIPreferenceList(
@@ -167,6 +179,20 @@ public class Publisher extends DataSourceBase implements DataSource {
             cleanUpDestination(sourceEndpoint, destinationEndpoint, timestamp);
             this.getStatus().setMessage("augmenting data via additional construct queries");
             runPostmergeQueries(destinationEndpoint);
+        }
+        if(inf != null && inf.isAvailable()) {
+            inf.registerReasoner();
+            log.info("Registered reasoner");
+            inf.registerSearchIndexer();
+            log.info("Registered search indexer");
+            inf.recompute(); // will also request search index rebuild
+            log.info("Recomputing inferences");
+            do {
+                Thread.sleep(10000);
+            } while (inf.isReasonerIsRecomputing());            
+            inf.index();
+        } else {
+            log.warn("IndexingInferenceService not available on destination endpoint");
         }
         log.info("ending");
     }

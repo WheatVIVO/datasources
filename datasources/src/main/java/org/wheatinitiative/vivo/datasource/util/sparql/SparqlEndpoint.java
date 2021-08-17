@@ -405,4 +405,8 @@ public class SparqlEndpoint implements ModelConstructor {
         update("CLEAR GRAPH <" + graphURI + ">");
     }
     
+    public SparqlEndpointParams getSparqlEndpointParams() {
+        return this.endpointParams;
+    }
+    
 }
