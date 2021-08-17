@@ -9,11 +9,10 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wheatinitiative.vivo.datasource.DataSource;
-import org.wheatinitiative.vivo.datasource.SparqlEndpointParams;
 import org.wheatinitiative.vivo.datasource.connector.cordis.Cordis;
 import org.wheatinitiative.vivo.datasource.connector.cornell.Cornell;
 import org.wheatinitiative.vivo.datasource.connector.florida.Florida;
+import org.wheatinitiative.vivo.datasource.connector.msracad.MicrosoftAcademicConnector;
 import org.wheatinitiative.vivo.datasource.connector.openaire.OpenAire;
 import org.wheatinitiative.vivo.datasource.connector.orcid.OrcidConnector;
 import org.wheatinitiative.vivo.datasource.connector.prodinra.Prodinra;
@@ -35,7 +34,7 @@ public class LaunchIngest {
     public static void main(String[] args) {
         if(args.length < 3) {
             System.out.println("Usage: LaunchIngest" 
-                    + " openaire|cordis|rcuk|prodinra|wheatinitiative|florida"
+                    + " openaire|cordis|rcuk|msracad|prodinra|wheatinitiative|florida"
                     + "normalizePerson|normalizeOrganization|normalizeLiterature"
                     + " outputfile" 
                     + " [endpointURI= endpointUpdateURI= username= password= dataDir= graph=]"
@@ -90,6 +89,8 @@ public class LaunchIngest {
             connector = new Rcuk();
             connector.getConfiguration().setServiceURI(
                     "http://gtr.ukri.org/gtr/api/");
+        } else if ("msracad".equals(connectorName)) {
+            connector = new MicrosoftAcademicConnector();
         } else if ("prodinra".equals(connectorName)) {
             connector = new Prodinra();
             connector.getConfiguration().setServiceURI(
