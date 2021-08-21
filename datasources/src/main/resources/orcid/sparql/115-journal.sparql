@@ -23,12 +23,20 @@ PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
 PREFIX orcidwork:   <http://www.orcid.org/ns/work/>
 PREFIX orcidcommon: <http://www.orcid.org/ns/common/>
+PREFIX abox:   <http://vivo.wheatinitiative.org/individual/>
 
 CONSTRUCT {
    ?x vivo:hasPublicationVenue ?journal .
    ?journal a bibo:Journal .
    ?journal rdfs:label ?journalTitle .
+   ?journal bibo:issn ?issn
 } WHERE {
    ?x orcidwork:journal-title ?journalTitle .
-   BIND(IRI(CONCAT(STR(?x), "-journal-", REPLACE(STR(?journalTitle), "\\W", ""))) AS ?journal)
+   OPTIONAL {
+     ?x orcidcommon:external-ids ?externalIds .
+     ?externalIds orcidcommon:external-id ?externalId .
+     ?externalId orcidcommon:external-id-type "issn" .
+     ?externalId orcidcommon:external-id-value ?issn
+   }
+   BIND(IRI(CONCAT(STR(abox:), "orcid-journal-", REPLACE(STR(?journalTitle), "\\W+", "-"))) AS ?journal)
 }

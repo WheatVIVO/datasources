@@ -23,34 +23,12 @@ PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX prodinra: <http://record.prodinra.inra.fr/>
 PREFIX orcidwork:   <http://www.orcid.org/ns/work/>
 PREFIX orcidcommon: <http://www.orcid.org/ns/common/>
-PREFIX orcidrecord: <http://www.orcid.org/ns/record/>
-PREFIX orcidperson: <http://www.orcid.org/ns/person/>
-PREFIX generic: <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
-PREFIX temp: <http://example.org/tmp/>
-PREFIX abox: <http://vivo.wheatinitiative.org/individual/>
 
 CONSTRUCT {
-    ?authorship a vivo:Authorship .
-    ?authorship vivo:relates ?x .
-    ?x vivo:relatedBy ?authorship .
-    ?authorship vivo:relates ?knownperson .
-    ?knownperson vivo:relatedBy ?authorship .
-    ?knownperson a foaf:Person .
-    ?knownperson orcidcommon:label ?personLabel .
-    ?knownperson vivo:orcidId ?orcidId .
-    ?orcidId a owl:Thing .
+   ?x bibo:pmid ?value 
 } WHERE {
-    ?x a orcidwork:work .
-    ?x generic:path ?workPath .
-    BIND(strbefore(?workPath, "/work") AS ?path)
-    BIND(strafter(?path, "/") AS ?rawOrcid)
-    BIND(IRI(concat("https://orcid.org/", ?rawOrcid)) AS ?orcidId)
-    BIND(concat("/", ?rawOrcid, "/person") AS ?personPath)
-    ?person generic:path ?personPath .
-    ?person orcidperson:name ?name .
-    OPTIONAL { ?name <http://www.orcid.org/ns/personal-details/family-name> ?familyName }
-    OPTIONAL { ?name  <http://www.orcid.org/ns/personal-details/given-names> ?givenName }
-    BIND(concat(?familyName, ", ", ?givenName) AS ?personLabel)
-    BIND(IRI(CONCAT(STR(abox:), "orcid-", ?rawOrcid)) AS ?knownperson)
-    BIND(IRI(CONCAT(STR(?x), "-authorship-", ?rawOrcid)) AS ?authorship)
+   ?x orcidcommon:external-ids ?externalIds .
+   ?externalIds orcidcommon:external-id ?externalId .
+   ?externalId orcidcommon:external-id-type "pmid" .
+   ?externalId orcidcommon:external-id-value ?value 
 }
