@@ -119,14 +119,16 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
         public OrcidModelIterator() {
             this.orcidIdIt = orcidIds.keySet().iterator();
             if(clientId == null) {
-                log.info("Reading " + CLIENT_ID + " from parameter map");
+                log.info("Reading " + DATASOURCE_CONFIG_PROPERTY_PREFIX
+                        + CLIENT_ID + " from parameter map");
                 clientId = getConfiguration().getParameterMap().get(
-                        CLIENT_ID).toString();
+                        DATASOURCE_CONFIG_PROPERTY_PREFIX + CLIENT_ID).toString();
             }
             if(clientSecret == null) {
-                log.info("Reading" +  CLIENT_SECRET + " from parameter map");
+                log.info("Reading" +  DATASOURCE_CONFIG_PROPERTY_PREFIX
+                        + CLIENT_SECRET + " from parameter map");
                 clientSecret = getConfiguration().getParameterMap().get(
-                        CLIENT_SECRET).toString();
+                        DATASOURCE_CONFIG_PROPERTY_PREFIX + CLIENT_SECRET).toString();
             }
             if(clientId == null || clientSecret == null) {
                 throw new RuntimeException(
