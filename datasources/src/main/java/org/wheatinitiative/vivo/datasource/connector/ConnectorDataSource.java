@@ -13,8 +13,12 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.DataSourceBase;
 import org.wheatinitiative.vivo.datasource.DataSourceConfiguration;
+import org.wheatinitiative.vivo.datasource.normalizer.AuthorNameForSameAsNormalizer;
+import org.wheatinitiative.vivo.datasource.normalizer.LiteratureNameForSameAsNormalizer;
+import org.wheatinitiative.vivo.datasource.normalizer.OrganizationNameForSameAsNormalizer;
 import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
 import org.wheatinitiative.vivo.datasource.util.indexinginference.IndexingInference;
 
@@ -156,6 +160,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
                     this.getStatus().setErrorRecords(this.getStatus().getErrorRecords() + 1);
                 }
             }
+            runNormalizers();
             boolean skipClearingOldData = false;
             if(!dataWrittenToEndpoint) {
                 if(totalRecords == null) {
@@ -200,6 +205,21 @@ public abstract class ConnectorDataSource extends DataSourceBase {
                 log.warn("IndexingInferenceService not available on destination endpoint");
             }
         }
+    }
+    
+    private void runNormalizers() {
+        this.getStatus().setMessage("Running person name normalizer");
+        DataSource norm = new AuthorNameForSameAsNormalizer();
+        norm.setConfiguration(this.getConfiguration());
+        norm.run();
+        this.getStatus().setMessage("Running organization name normalizer");
+        norm = new OrganizationNameForSameAsNormalizer();
+        norm.setConfiguration(this.getConfiguration());
+        norm.run();
+        this.getStatus().setMessage("Running literature name normalizer");
+        norm = new LiteratureNameForSameAsNormalizer();
+        norm.setConfiguration(this.getConfiguration());
+        norm.run();
     }
 
     protected String getDefaultNamespace() {
