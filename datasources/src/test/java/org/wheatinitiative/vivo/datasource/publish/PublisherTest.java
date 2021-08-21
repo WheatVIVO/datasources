@@ -60,7 +60,7 @@ public class PublisherTest extends ConnectorTestCase {
 
     }
     
-    public void testPublish() {
+    public void testPublish() throws InterruptedException {
         String wheatInitiativeGraph = "http://vitro.mannlib.cornell.edu/a/graph/wheatinitiative";
         String orcidGraph = "http://vitro.mannlib.cornell.edu/a/graph/ORCID";
         Dataset fromDataset = DatasetFactory.createMem();
