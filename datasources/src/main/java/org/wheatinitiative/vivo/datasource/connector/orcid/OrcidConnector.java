@@ -147,11 +147,11 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
         }
         
         private Model getOrcidModel(String orcidId) {
-            if(orcidId.length() < 36) {
+            if(orcidId == null || orcidId.length() < 36 || !orcidId.contains("orcid.org/")) {
                 log.error("Skipping invalid orcid iD " + orcidId);
                 return ModelFactory.createDefaultModel();
             }
-            String orcidNum = orcidId.substring("http://orcid.org/".length());
+            String orcidNum = orcidId.split("orcid.org/")[1];
             String orcidRecord = getOrcidResponse(PUBLIC_API_BASE_URL + orcidNum + "/record");
             Model record = xmlToRdf.toRDF(orcidRecord);
             String response = getOrcidResponse(PUBLIC_API_BASE_URL + orcidNum + "/works");
