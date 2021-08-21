@@ -138,21 +138,9 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
         }
 
         public boolean hasNext() {
-            if(orcidIdIt.hasNext()) {
-                return true;
-            } else {
-                postProcess();
-            }
-            return false;
+            return orcidIdIt.hasNext();
         }
         
-        private void postProcess() {
-            result = renameByOrcid(result);
-            result = mergeRemainingSameAs(result);
-            result = renameByIssn(result);
-            result = deleteExtraAuthorships(result);
-        }
-
         public Model next() {
             String orcidId = orcidIdIt.next();
             try {
@@ -368,8 +356,17 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
                 "129-sameRank.sparql"
                 );
         executeQueries(queries, model);
-        return rdfUtils.renameBNodes(
+        model = rdfUtils.renameBNodes(
                 model, NAMESPACE_ETC, model);
+        return postProcess(model);
+    }
+    
+    private Model postProcess(Model model) {
+        model = renameByOrcid(model);
+        model = mergeRemainingSameAs(model);
+        model = renameByIssn(model);
+        model = deleteExtraAuthorships(model);
+        return model;
     }
     
     private Model renameByOrcid(Model model) {
