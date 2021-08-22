@@ -76,7 +76,9 @@ public class OrganizationNameForSameAsNormalizer
         public Model next() {
             Model m = ModelFactory.createDefaultModel();
             QuerySolution qsoln = rs.next();
-            if(!qsoln.get("org").isURIResource() || !qsoln.get("label").isLiteral()) { 
+            if(!qsoln.contains("org") || !qsoln.contains("label")
+                    || !qsoln.get("org").isURIResource() 
+                    || !qsoln.get("label").isLiteral()) { 
                 return m;
             } else {
                 Resource org = qsoln.getResource("org");
