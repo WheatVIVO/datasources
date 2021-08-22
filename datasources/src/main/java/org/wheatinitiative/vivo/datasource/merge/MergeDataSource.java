@@ -202,8 +202,9 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 "    ?x a ?thing \n" +
                 "    FILTER NOT EXISTS { ?x <" + OWL.sameAs.getURI() + "> ?x } \n" +
                 "} \n";
-        Model m = endpoint.construct(queryStr);
-        log.info("Writing " + m.size() + " triples to " + BASIC_SAMEAS_GRAPH);
+        Model toAdd = endpoint.construct(queryStr);
+        log.info("Writing " + toAdd.size() + " triples to " + BASIC_SAMEAS_GRAPH);
+        endpoint.writeModel(toAdd, BASIC_SAMEAS_GRAPH);
         String delQueryStr = "CONSTRUCT { ?x <" + OWL.sameAs.getURI() + "> ?x } WHERE { \n" +
                 "    GRAPH <" + BASIC_SAMEAS_GRAPH + "> { ?x <" + OWL.sameAs.getURI() + "> ?x } \n" +
                 "    FILTER NOT EXISTS { ?x a ?thing } \n" +
