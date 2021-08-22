@@ -24,6 +24,7 @@ import org.wheatinitiative.vivo.datasource.connector.wheatinitiative.WheatInitia
 import org.wheatinitiative.vivo.datasource.normalizer.AuthorNameForSameAsNormalizer;
 import org.wheatinitiative.vivo.datasource.normalizer.LiteratureNameForSameAsNormalizer;
 import org.wheatinitiative.vivo.datasource.normalizer.OrganizationNameForSameAsNormalizer;
+import org.wheatinitiative.vivo.datasource.postmerge.PostmergeDataSource;
 
 import com.hp.hpl.jena.rdf.model.Model;
 
@@ -35,7 +36,7 @@ public class LaunchIngest {
         if(args.length < 3) {
             System.out.println("Usage: LaunchIngest" 
                     + " openaire|cordis|rcuk|msracad|prodinra|wheatinitiative|florida"
-                    + "normalizePerson|normalizeOrganization|normalizeLiterature"
+                    + "normalizePerson|normalizeOrganization|normalizeLiterature|postmerge"
                     + " outputfile" 
                     + " [endpointURI= endpointUpdateURI= username= password= dataDir= graph=]"
                     + " queryTerm ... [queryTermN] [limit]");
@@ -127,6 +128,8 @@ public class LaunchIngest {
             connector = new LiteratureNameForSameAsNormalizer();
         } else if ("normalizeOrganization".equals(connectorName)) {
             connector = new OrganizationNameForSameAsNormalizer();
+        } else if ("postmerge".equals(connectorName)) {
+            connector = new PostmergeDataSource();
         } else {
             throw new RuntimeException("Connector not found: " 
                     + connectorName);

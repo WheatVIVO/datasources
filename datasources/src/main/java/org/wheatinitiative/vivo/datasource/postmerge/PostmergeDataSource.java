@@ -22,22 +22,23 @@ public class PostmergeDataSource extends ConnectorDataSource implements DataSour
     @Override
     public void runIngest() {
         log.info("Starting postmerge processing");
-        getSparqlEndpoint();
         List<String> queries = Arrays.asList(
                 "geoqueries.sparql",
                 "participatesIn.sparql",
                 "secondTierLocatedIn.sparql",
                 "externalToWheatPublicationsQuery.sparql",
-                "externalToWheatPeopleQuery.sparql",
-                "externalToWheatProjectsQuery.sparql",
                 "externalToWheatGrantsQuery.sparql",
-                "externalToWheatOrganizationsQuery.sparql"
+                "externalToWheatProjectsQuery.sparql",
+                "externalToWheatPeopleQuery.sparql",
+                "externalToWheatOrganizationsQuery.sparql",
+                "externalToWheatJournalsQuery.sparql",
+                "externalToWheatConceptsQuery.sparql",
+                "externalToWheatInactivePersonsQuery.sparql"
                 );
         getSparqlEndpoint().clearGraph(this.getConfiguration().getResultsGraphURI());
         for(String query : queries) {
             Model model = ModelFactory.createDefaultModel();
             log.debug("Executing query " + query);
-            log.debug("Pre-query model size: " + model.size());
             construct(SPARQL_RESOURCE_DIR + query, model, NAMESPACE_ETC);
             log.debug("Post-query model size: " + model.size());
             getSparqlEndpoint().writeModel(model, this.getConfiguration().getResultsGraphURI());

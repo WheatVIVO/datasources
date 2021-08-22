@@ -97,6 +97,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         } else {
             log.warn("IndexingInferenceService not available on destination endpoint");
         }
+        boolean errorOccurred = false;
         try {
             Set<String> functionalPropertyURIs = getFunctionalPropertyURIs();  
             log.info("Getting graph preference list");
@@ -110,7 +111,6 @@ public class Publisher extends DataSourceBase implements DataSource {
             Map<String, Model> buffer = new HashMap<String, Model>();
             int individualCount = 0;
             Set<String> completedIndividuals = new HashSet<String>();
-            boolean errorOccurred = false;
             try {
                 for(String graphURI : graphURIPreferenceList) {
                     if(graphURI == null) {
@@ -178,8 +178,6 @@ public class Publisher extends DataSourceBase implements DataSource {
             if(!errorOccurred) {
                 this.getStatus().setMessage("clearing old data");
                 cleanUpDestination(sourceEndpoint, destinationEndpoint, timestamp);
-                this.getStatus().setMessage("augmenting data via additional construct queries");
-                runPostmergeQueries(destinationEndpoint);
             }
         } finally {
             if(inf != null && inf.isAvailable()) {
@@ -197,7 +195,11 @@ public class Publisher extends DataSourceBase implements DataSource {
                 this.getStatus().setMessage("Rebuilding search index");
                 do {
                     Thread.sleep(10000);
-                } while (inf.isReasonerIsRecomputing()); 
+                } while (inf.isReasonerIsRecomputing());
+                if(!errorOccurred) {
+                    this.getStatus().setMessage("augmenting data via additional construct queries");
+                    runPostmergeQueries(destinationEndpoint);
+                }
             } else {
                 log.warn("IndexingInferenceService not available on destination endpoint");
             }
@@ -771,7 +773,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         return funcPropSet;
     }
 
-    protected void runPostmergeQueries(SparqlEndpoint destinationEndpoint) {
+    public void runPostmergeQueries(SparqlEndpoint destinationEndpoint) {
         log.info("Starting postmerge processing");
         List<String> queries = Arrays.asList(
                 "geoqueries.sparql",
