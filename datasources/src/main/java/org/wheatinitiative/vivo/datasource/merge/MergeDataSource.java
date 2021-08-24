@@ -156,9 +156,12 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 }
                 addTransitiveSameAsAssertions(endpoint);
             }
+            this.getStatus().setMessage("adding additional query results");
+            Model tmp = getAdditionalQueryResults(endpoint);
+            getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
             log.info("Merging relationships");
             this.getStatus().setMessage("merging relationships");
-            Model tmp = getRelationshipSameAs();
+            tmp = getRelationshipSameAs();
             log.info(tmp.size() + " sameAs from merged relationships");
             getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
             try {
@@ -193,7 +196,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             }
         }
     }
-
+    
     /**
      * Materialize inferences of type sameAs(x,x) for query support
      */
@@ -423,6 +426,22 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         }
     }
 
+    private Model getAdditionalQueryResults(SparqlEndpoint endpoint) {
+        List<String> queries = Arrays.asList("personSameLastSameAuthorship.rq");
+        Model model = ModelFactory.createDefaultModel();
+        for(String query : queries) {
+            try {
+                ParameterizedSparqlString queryStr = new ParameterizedSparqlString(
+                        this.loadQuery(SPARQL_RESOURCE_DIR + query));
+                log.info(queryStr.toString());
+                model.add(endpoint.construct(queryStr.toString()));                
+            } catch (Exception e) {
+                log.error("Unable to execute " + query, e);
+            }
+        }
+        return model;
+    }
+    
     private Model executePersonNameMatch( 
             SparqlEndpoint endpoint) {
         return executePersonNameMatchQuery("personSameName.rq", endpoint);                               
