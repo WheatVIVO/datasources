@@ -24,34 +24,11 @@ PREFIX orcidwork:   <http://www.orcid.org/ns/work/>
 PREFIX orcidcommon: <http://www.orcid.org/ns/common/>
 
 CONSTRUCT {
-    ?x a ?type .
+    ?x a bibo:Document
 } WHERE {
-    { 
-        ?x orcidwork:type "journal-article" 
-	BIND(bibo:Article AS ?type)
-    } UNION {
-        ?x orcidwork:type "book" 
-	BIND(bibo:Book AS ?type)
-    } UNION {
-        ?x orcidwork:type "book-chapter" 
-	BIND(bibo:Chapter AS ?type)
-    } UNION {
-        ?x orcidwork:type "book-review" 
-	BIND(vivo:Review AS ?type)
-    } UNION {
-        ?x orcidwork:type "dissertation" 
-	BIND(bibo:Thesis AS ?type)
-    } UNION {
-        ?x orcidwork:type "edited-book" 
-	BIND(bibo:EditedBook AS ?type)
-    } UNION {
-        ?x orcidwork:type "manual" 
-	BIND(bibo:Manual AS ?type)
-    } UNION {
-        ?x orcidwork:type "working-paper" 
-	BIND(vivo:WorkingPaper AS ?type)
-    } UNION {
-        ?x orcidwork:type "website" 
-	BIND(bibo:Website AS ?type)
+    ?x a orcidwork:work
+    FILTER NOT EXISTS {
+      ?x a ?otherType
+      FILTER(?otherType != orcidwork:work)
     }
 }

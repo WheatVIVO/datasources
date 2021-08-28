@@ -335,6 +335,7 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
         model = renameByIdentifier(model, model.getProperty(
                 XmlToRdf.GENERIC_NS + "put-code"), WHEAT_INITIATIVE, "orcid-work-");
         List<String> queries = Arrays.asList("100-documentTypes.sparql",
+                "101-defaultType.sparql",
                 "102-authorship.sparql",
                 "103-knownPerson.sparql", 
                 "107-tempPropsForNaming.sparql");
