@@ -30,6 +30,10 @@ WHERE {
     FILTER NOT EXISTS {
         ?x a <http://vivo.wheatinitiative.org/ontology/ExternalToWheat>
     }
+    FILTER NOT EXISTS {
+        GRAPH ?g { ?x a ?something }
+        FILTER(REGEX(STR(?g), "wheatinitiative"))
+    }		    
     ?x a foaf:Person .
     # don't match persons with ORCID iDs
     FILTER NOT EXISTS { ?x vivo:orcidId ?orcidId }
