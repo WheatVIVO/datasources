@@ -2,7 +2,6 @@ package org.wheatinitiative.vivo.datasource.publish;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
@@ -24,6 +23,7 @@ import org.wheatinitiative.vivo.datasource.DataSourceDescription;
 import org.wheatinitiative.vivo.datasource.SparqlEndpointParams;
 import org.wheatinitiative.vivo.datasource.VivoVocabulary;
 import org.wheatinitiative.vivo.datasource.dao.DataSourceDao;
+import org.wheatinitiative.vivo.datasource.postmerge.PostmergeDataSource;
 import org.wheatinitiative.vivo.datasource.util.indexinginference.IndexingInference;
 import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
 
@@ -198,7 +198,9 @@ public class Publisher extends DataSourceBase implements DataSource {
                 } while (inf.isReasonerIsRecomputing());
                 if(!errorOccurred) {
                     this.getStatus().setMessage("augmenting data via additional construct queries");
-                    runPostmergeQueries(destinationEndpoint);
+                    PostmergeDataSource postmerge = new PostmergeDataSource();
+                    postmerge.setConfiguration(this.getConfiguration());
+                    postmerge.runIngest();
                 }
             } else {
                 log.warn("IndexingInferenceService not available on destination endpoint");
@@ -773,28 +775,6 @@ public class Publisher extends DataSourceBase implements DataSource {
         return funcPropSet;
     }
 
-    public void runPostmergeQueries(SparqlEndpoint destinationEndpoint) {
-        log.info("Starting postmerge processing");
-        List<String> queries = Arrays.asList(
-                "geoqueries.sparql",
-                "participatesIn.sparql",
-                "secondTierLocatedIn.sparql",
-                "externalToWheatPublicationsQuery.sparql",
-                "externalToWheatGrantsQuery.sparql",
-                "externalToWheatProjectsQuery.sparql",
-                "externalToWheatPeopleQuery.sparql",
-                "externalToWheatOrganizationsQuery.sparql",
-                "externalToWheatJournalsQuery.sparql",
-                "externalToWheatConceptsQuery.sparql",
-                "externalToWheatInactivePersonsQuery.sparql"
-                );
-        destinationEndpoint.clearGraph(POSTMERGE_GRAPH);
-        for(String query : queries) {            
-            Model model = destinationEndpoint.construct(loadQuery("/postmerge/sparql/" + query));
-            log.info("Postmerge query " + query + " constructed " + model.size());
-            destinationEndpoint.writeModel(model, POSTMERGE_GRAPH);
-        }
-    }
 
     //    /**
     //     * @param endpoint
