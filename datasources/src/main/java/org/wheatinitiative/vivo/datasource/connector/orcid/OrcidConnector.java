@@ -4,8 +4,10 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
@@ -24,20 +26,27 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
 import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.SparqlEndpointParams;
+import org.wheatinitiative.vivo.datasource.VivoVocabulary;
 import org.wheatinitiative.vivo.datasource.connector.ConnectorDataSource;
 import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
-import org.wheatinitiative.vivo.datasource.util.http.HttpUtils;
 import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
 import org.wheatinitiative.vivo.datasource.util.xml.XmlToRdf;
 
+import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
+import com.hp.hpl.jena.util.ResourceUtils;
+import com.hp.hpl.jena.vocabulary.OWL;
+import com.hp.hpl.jena.vocabulary.RDF;
+import com.hp.hpl.jena.vocabulary.RDFS;
 
 public class OrcidConnector extends ConnectorDataSource implements DataSource {
 
@@ -53,8 +62,8 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
     private static final String TEMP_NS = "http://example.org/tmp/";
     private static final String DATASOURCE_CONFIG_PROPERTY_PREFIX = "datasource.";
     private static final int MIN_REST = 65; // ms
-    private static final String CLIENT_ID = "orcid.clientId";
-    private static final String CLIENT_SECRET = "orcid.clientSecret";
+    public static final String CLIENT_ID = "orcid.clientId";
+    public static final String CLIENT_SECRET = "orcid.clientSecret";
     private String clientId;
     private String clientSecret;
     private static final String ORCIDID = "http://vivoweb.org/ontology/core#orcidId";
@@ -65,6 +74,8 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
     private HttpClient httpClient;
     private long lastRequestMillis = 0;
     private NameProcessor nameProcessor = new NameProcessor();
+    private Map<String, String> orcidIds = new HashMap<String, String>();
+    private Map<String, String> journals = new HashMap<String, String>();
     
     public OrcidConnector() {
         Object clientId = this.getConfiguration().getParameterMap().get(CLIENT_ID);
@@ -84,35 +95,37 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
             log.debug("Reading " + CLIENT_SECRET + " from Java system properties");
             this.clientSecret = System.getProperty(CLIENT_SECRET);
         }
+        log.info("clientId = " + clientId);
+        log.info("clientSecret = " + clientSecret);
         httpClient = HttpClients.custom()
                 .setRedirectStrategy(new LaxRedirectStrategy())
-                .setUserAgent(HttpUtils.DEFAULT_USER_AGENT)
+                //.setUserAgent(HttpUtils.DEFAULT_USER_AGENT)
                 .build();
     }
     
     @Override
     protected IteratorWithSize<Model> getSourceModelIterator() {
-        return new OrcidModelIterator(getOrcidIds());
+        getOrcidIds();
+        getJournals();
+        return new OrcidModelIterator();
     }
     
     private class OrcidModelIterator implements IteratorWithSize<Model> {
         
-        private List<String> orcidIdList;
-        private Iterator<String> orcidIds;
+        private Iterator<String> orcidIdIt;
         private String accessToken;
         private XmlToRdf xmlToRdf = new XmlToRdf();
         
-        public OrcidModelIterator(List<String> orcidIds) {
-            this.orcidIdList = orcidIds;
-            this.orcidIds = orcidIdList.iterator();
+        public OrcidModelIterator() {
+            this.orcidIdIt = orcidIds.keySet().iterator();
             if(clientId == null) {
-                log.info("Reading" + DATASOURCE_CONFIG_PROPERTY_PREFIX 
+                log.info("Reading " + DATASOURCE_CONFIG_PROPERTY_PREFIX
                         + CLIENT_ID + " from parameter map");
                 clientId = getConfiguration().getParameterMap().get(
                         DATASOURCE_CONFIG_PROPERTY_PREFIX + CLIENT_ID).toString();
             }
             if(clientSecret == null) {
-                log.info("Reading" + DATASOURCE_CONFIG_PROPERTY_PREFIX 
+                log.info("Reading" +  DATASOURCE_CONFIG_PROPERTY_PREFIX
                         + CLIENT_SECRET + " from parameter map");
                 clientSecret = getConfiguration().getParameterMap().get(
                         DATASOURCE_CONFIG_PROPERTY_PREFIX + CLIENT_SECRET).toString();
@@ -125,11 +138,11 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
         }
 
         public boolean hasNext() {
-            return orcidIds.hasNext();
+            return orcidIdIt.hasNext();
         }
-
+        
         public Model next() {
-            String orcidId = orcidIds.next();
+            String orcidId = orcidIdIt.next();
             try {
                 return getOrcidModel(orcidId);
             } catch (Exception e) {
@@ -139,23 +152,28 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
         }
 
         public Integer size() {
-            if(orcidIdList == null) {
+            if(orcidIds == null) {
                 return null;
             } else {
-                return orcidIdList.size();
+                return orcidIds.size();
             }
         }
         
         private Model getOrcidModel(String orcidId) {
-            if(orcidId.length() < 36) {
+            if(orcidId == null || orcidId.length() < 36 || !orcidId.contains("orcid.org/")) {
                 log.error("Skipping invalid orcid iD " + orcidId);
                 return ModelFactory.createDefaultModel();
             }
-            String orcidNum = orcidId.substring("http://orcid.org/".length());
+            String orcidNum = orcidId.split("orcid.org/")[1];
             String orcidRecord = getOrcidResponse(PUBLIC_API_BASE_URL + orcidNum + "/record");
-            Model record = xmlToRdf.toRDF(orcidRecord);
+            Model record = null;
+            try {
+                record = xmlToRdf.toRDF(orcidRecord);
+            } catch (Exception e) {
+                log.error("response : " + orcidRecord);
+            }
             String response = getOrcidResponse(PUBLIC_API_BASE_URL + orcidNum + "/works");
-            log.debug("Response to request for ORCID record: \n" + response);
+            log.info("Response to request for ORCID works: \n" + response);
             Model workSummaries = xmlToRdf.toRDF(response);
             Model works = ModelFactory.createDefaultModel();
             StmtIterator workIt = workSummaries.listStatements(
@@ -240,23 +258,49 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
         }
     }
     
-    protected List<String> getOrcidIds() {
-        List<String> orcidIds = new ArrayList<String>();
+    protected Map<String, String> getOrcidIds() {
         SparqlEndpoint sourceEndpoint = getSourceEndpoint();
         ResultSet rs = sourceEndpoint.getResultSet(
-                "SELECT DISTINCT ?o WHERE { ?x <" + ORCIDID + "> ?o }");
+                "SELECT DISTINCT ?o ?x WHERE { ?x <" + ORCIDID + "> ?o } \n");
         while(rs.hasNext()) {
             QuerySolution qsoln = rs.next();
-            RDFNode n = qsoln.get("o");
-            if(n.isURIResource()) {
-                orcidIds.add(n.asResource().getURI());
+            RDFNode o = qsoln.get("o");
+            RDFNode x = qsoln.get("x");
+            if(o.isURIResource() && x.isURIResource()) {
+                String orcid = o.asResource().getURI();
+                String person = x.asResource().getURI();
+                log.info("Found person " + person + " with orcid " + orcid);
+                orcidIds.put(orcid, person);
             }
         }
         return orcidIds;
     }
     
+    protected Map<String, String> getJournals() {
+        SparqlEndpoint sourceEndpoint = getSourceEndpoint();
+        ResultSet rs = sourceEndpoint.getResultSet(
+                "SELECT DISTINCT ?journal ?issn WHERE { ?journal a <" + VivoVocabulary.BIBO + "Journal> . \n "
+                        + "  ?journal <" + VivoVocabulary.BIBO + "issn> ?issn \n"
+                        + "}");
+        while(rs.hasNext()) {
+            QuerySolution qsoln = rs.next();
+            RDFNode jo = qsoln.get("journal");
+            RDFNode is = qsoln.get("issn");
+            if(jo.isURIResource() && is.isLiteral()) {
+                String journal = jo.asResource().getURI();
+                String issn = is.asLiteral().getLexicalForm();
+                log.info("Found journal " + journal + " with ISSN " + issn);
+                journals.put(issn, journal);
+            }
+        }
+        return journals;
+    }
+    
     private SparqlEndpoint getSourceEndpoint() {
         String sourceServiceURI = this.getConfiguration().getServiceURI();
+        if(sourceServiceURI == null) {
+            return this.getSparqlEndpoint();
+        }
         if(!sourceServiceURI.endsWith("/")) {
             sourceServiceURI += "/";
         }
@@ -291,6 +335,7 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
         model = renameByIdentifier(model, model.getProperty(
                 XmlToRdf.GENERIC_NS + "put-code"), WHEAT_INITIATIVE, "orcid-work-");
         List<String> queries = Arrays.asList("100-documentTypes.sparql",
+                "101-defaultType.sparql",
                 "102-authorship.sparql",
                 "103-knownPerson.sparql", 
                 "107-tempPropsForNaming.sparql");
@@ -305,14 +350,160 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
                 "105-title.sparql",
                 "113-year.sparql",
                 "114-doi.sparql",
+                "114a-pmid.sparql",
                 "115-journal.sparql",
                 "116-url.sparql",
                 "119-internalSameAs.sparql",
                 "129-sameRank.sparql"
                 );
         executeQueries(queries, model);
-        return rdfUtils.renameBNodes(
+        model = rdfUtils.renameBNodes(
                 model, NAMESPACE_ETC, model);
+        return postProcess(model);
+    }
+    
+    private Model postProcess(Model model) {
+        model = renameByOrcid(model);
+        model = mergeRemainingSameAs(model);
+        model = renameByIssn(model);
+        model = deleteExtraAuthorships(model);
+        return model;
+    }
+    
+    private Model renameByOrcid(Model model) {
+        return renameByMap(model, orcidIds, VivoVocabulary.VIVO + "orcidId");
+    }
+    
+    private Model renameByIssn(Model model) {
+        return renameByMap(model, journals, VivoVocabulary.BIBO + "issn");
+    }
+    
+    private Model renameByMap(Model model, Map<String, String> map, String propertyURI) {
+        log.info("Renaming by " + propertyURI);
+        Map<Resource, String> rename = new HashMap<Resource, String>();        
+        StmtIterator sit = model.listStatements(null, model.getProperty(
+                propertyURI), (RDFNode) null);
+        while(sit.hasNext()) {
+            Statement stmt = sit.next();
+            if(!stmt.getObject().isAnon()) {
+                String value = null;
+                if(stmt.getObject().isURIResource()) {
+                    value = stmt.getObject().asResource().getURI();
+                } else {
+                    value = stmt.getObject().asLiteral().getLexicalForm();
+                }
+                log.info("Looking for value " + value);
+                String vivoURI = map.get(value);
+                if(vivoURI != null) {
+                    log.info("Mapping " + value + " to " + vivoURI);
+                    rename.put(stmt.getSubject(), vivoURI);
+                    StmtIterator sameAsIt = model.listStatements(null, OWL.sameAs, stmt.getSubject());
+                    while(sameAsIt.hasNext()) {
+                        Statement sameAsStmt = sameAsIt.next();
+                        if(!sameAsStmt.getSubject().equals(stmt.getSubject())) {
+                            rename.put(sameAsStmt.getSubject(), vivoURI);
+                        }
+                    }
+                }
+            }
+        }
+        for(Resource r : rename.keySet()) {
+            model.removeAll(r, RDFS.label, (RDFNode) null);
+            model.removeAll(r, VivoVocabulary.HAS_CONTACT, (RDFNode) null);
+            removeOrphaned(VivoVocabulary.VCARD + "Individual", model);
+            removeOrphaned(VivoVocabulary.VCARD + "Name", model);
+            ResourceUtils.renameResource(r, rename.get(r));
+        }
+        return model;
+    }
+    
+    private Model mergeRemainingSameAs(Model model) {
+        Map<Resource, String> rename = new HashMap<Resource, String>();  
+        String queryStr = "SELECT ?x ?y WHERE { \n"
+                + "  ?x <" + OWL.sameAs.getURI() + "> ?y \n"
+                + "  FILTER(?x != ?y) \n"
+                + "  FILTER(STR(?y) < STR(?x)) \n"
+                + "  FILTER NOT EXISTS { \n"
+                + "    ?x <" + OWL.sameAs.getURI() + "> ?z \n"
+                + "    FILTER(STR(?z) < STR(?y)) \n"
+                + "  } \n"
+                + "} \n";
+        QueryExecution qe = QueryExecutionFactory.create(queryStr, model);
+        try {
+            ResultSet rs = qe.execSelect();
+            while(rs.hasNext()) {
+                QuerySolution qsoln = rs.next();
+                if(qsoln.get("x").isURIResource() && qsoln.get("y").isURIResource()) {
+                    rename.put(qsoln.getResource("x"), qsoln.getResource("y").getURI());
+                }
+             }
+        } finally {
+            if(qe != null) {
+                qe.close();
+            }
+        }
+        for(Resource r : rename.keySet()) {
+            String toURI = rename.get(r);
+            log.info("Mapping " + r.getURI() + " to " + toURI);
+            model.removeAll(r, RDFS.label, (RDFNode) null);
+            model.removeAll(r, VivoVocabulary.HAS_CONTACT, (RDFNode) null);
+            removeOrphaned(VivoVocabulary.VCARD + "Individual", model);
+            removeOrphaned(VivoVocabulary.VCARD + "Name", model);
+            ResourceUtils.renameResource(r, toURI);
+        }
+        return model;
+    }
+    
+    private Model deleteExtraAuthorships(Model model) {
+        String query = "CONSTRUCT { ?authorship ?p ?o . ?oo ?pp ?authorship } \n"
+                + "WHERE { \n " 
+                + "  ?authorship a <" + VivoVocabulary.VIVO + "Authorship> . \n"
+                + "  ?work <" + VivoVocabulary.VIVO + "relatedBy> ?authorship . \n"
+                + "  ?authorship <" + VivoVocabulary.VIVO + "relates> ?person . \n"
+                + "  FILTER(?work != ?person) \n"
+                + "  FILTER EXISTS { \n"
+                + "    ?authorship2 a <" + VivoVocabulary.VIVO + "Authorship> . \n"
+                + "    ?work <" + VivoVocabulary.VIVO + "relatedBy> ?authorship2 . \n"
+                + "    ?authorship2 <" + VivoVocabulary.VIVO + "relates> ?person . \n"
+                + "    FILTER(STR(?authorship2) < STR(?authorship)) \n"
+                + "    FILTER(?authorship2 != ?authorship) \n"
+                + "  } \n"
+                + "  ?authorship ?p ?o . \n"
+                + "  ?oo ?pp ?authorship . \n"
+                + "} \n";
+        QueryExecution qe = QueryExecutionFactory.create(query, model);
+        try {
+            Model toDelete = qe.execConstruct();
+            log.info("Deleting " + toDelete.size() + " extra authorship triples.");
+            model.remove(toDelete);
+            return model;
+        } finally {
+            if(qe != null) {
+                qe.close();
+            }
+        }
+
+    }
+    
+    /**
+     * Remove resources of the specified type if the resource does not occur
+     * as the object of any triple.
+     * @param typeURI
+     * @param model
+     */
+    private void removeOrphaned(String typeURI, Model model) {
+        List<Resource> toRemove = new ArrayList<Resource>();
+        StmtIterator sit = model.listStatements(null, RDF.type, model.getResource(typeURI));
+        while(sit.hasNext()) {
+            Statement stmt = sit.next();
+            Resource res = stmt.getSubject();
+            if(!model.contains(null, null, res)) {
+                toRemove.add(res);
+            }                  
+        }
+        for(Resource res : toRemove) {
+            model.removeAll(res, null, (RDFNode) null);
+        }
     }
     
     private void executeQueries(List<String> queries, Model model) {

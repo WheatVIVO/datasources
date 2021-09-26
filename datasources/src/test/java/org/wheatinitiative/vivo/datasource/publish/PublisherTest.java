@@ -60,7 +60,7 @@ public class PublisherTest extends ConnectorTestCase {
 
     }
     
-    public void testPublish() {
+    public void testPublish() throws InterruptedException {
         String wheatInitiativeGraph = "http://vitro.mannlib.cornell.edu/a/graph/wheatinitiative";
         String orcidGraph = "http://vitro.mannlib.cornell.edu/a/graph/ORCID";
         Dataset fromDataset = DatasetFactory.createMem();
@@ -77,16 +77,17 @@ public class PublisherTest extends ConnectorTestCase {
         fromDataset.getDefaultModel().add(kbinf);
         Publisher publisher = new InMemoryPublisher(fromDataset, toDataset);
         publisher.runIngest();
+        String timestamp = publisher.getTimestamp();
         String publishedWheatinitiativeFile = "/publisher/publishedWheatinitiative.n3";
         String publishedOrcidFile = "/publisher/publishedOrcid.n3";
         Model publishedWheatinitiative = loadModelFromResource(publishedWheatinitiativeFile);
         Model publishedOrcid = loadModelFromResource(publishedOrcidFile);
-        assertTrue("contents of " + wheatInitiativeGraph + " do not match " + publishedWheatinitiativeFile, 
-                toDataset.getNamedModel(wheatInitiativeGraph).isIsomorphicWith(publishedWheatinitiative));
-        assertTrue("contents of " + orcidGraph + " do not match " + publishedOrcidFile, 
-                toDataset.getNamedModel(orcidGraph).isIsomorphicWith(publishedOrcid));
-        assertEquals(18, toDataset.getNamedModel("http://vitro.mannlib.cornell.edu/a/graph/wheatinitiative").size());
-        assertEquals(31, toDataset.getNamedModel("http://vitro.mannlib.cornell.edu/a/graph/ORCID").size());
+        assertTrue("contents of " + wheatInitiativeGraph + timestamp + " do not match " + publishedWheatinitiativeFile, 
+                toDataset.getNamedModel(wheatInitiativeGraph + timestamp).isIsomorphicWith(publishedWheatinitiative));
+        assertTrue("contents of " + orcidGraph + timestamp + " do not match " + publishedOrcidFile, 
+                toDataset.getNamedModel(orcidGraph + timestamp).isIsomorphicWith(publishedOrcid));
+        assertEquals(18, toDataset.getNamedModel("http://vitro.mannlib.cornell.edu/a/graph/wheatinitiative" + timestamp).size());
+        assertEquals(31, toDataset.getNamedModel("http://vitro.mannlib.cornell.edu/a/graph/ORCID" + timestamp).size());
     }
     
     private class InMemoryPublisher extends Publisher {

@@ -20,26 +20,18 @@ PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>
 PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
-PREFIX wi:       <http://www.wheatinitiative.org/administration/users/ontology/>
-PREFIX wia:      <http://www.wheatinitiative.org/administration/users/>
-PREFIX afn:      <http://jena.hpl.hp.com/ARQ/function#>
+PREFIX g:        <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/> 
+PREFIX abox:     <https://wheatinitiative.org/individual/>
 
 CONSTRUCT {
-    ?org a foaf:Organization .
-    ?org rdfs:label ?orgName .
-    ?position a vivo:Position .
-    ?x vivo:relatedBy ?position .
-    ?position vivo:relates ?org .
-    ?position wi:Employment_Sector ?employmentSector .
-    ?position rdfs:label ?roleLabel 
+    ?x vivo:hasSubjectArea ?subjectArea .
+    ?subjectArea vivo:subjectAreaOf ?x .
+    ?subjectArea a skos:Concept .
+    ?subjectArea rdfs:label ?fN .
 } WHERE {
-    ?x wi:Institution-Company ?orgName .
-    OPTIONAL {
-        ?x wi:Employment_Sector ?employmentSector .
-    }
-    OPTIONAL {
-        ?x wi:Your_role-position_in_your_organisation ?roleLabel
-    }
-    BIND(IRI(CONCAT(STR(wia:), REPLACE(REPLACE(STR(?orgName), " ", "-"), "[^-a-zA-Z0-9]", ""))) AS ?org)
-    BIND(IRI(CONCAT(STR(?x), "-position-", afn:localname(?org))) AS ?position)
+    ?x a bibo:Article .
+    ?x g:F ?f .
+    ?f g:FN ?fN .
+    ?f g:FId ?fId .
+    BIND(IRI(CONCAT(STR(abox:), "msracad-", STR(?fId))) AS ?subjectArea)
 }

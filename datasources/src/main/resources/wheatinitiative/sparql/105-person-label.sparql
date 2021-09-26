@@ -26,7 +26,7 @@ CONSTRUCT {
     ?x rdfs:label ?label
 } WHERE {
     ?x a foaf:Person .
-    ?x wi:lastName ?lastName .
-    ?x wi:firstName ?firstName .
+    ?x wi:Last_Name ?lastName .
+    ?x wi:First_Name ?firstName .
     BIND(concat(?lastName, ", ", ?firstName) AS ?label)
 }

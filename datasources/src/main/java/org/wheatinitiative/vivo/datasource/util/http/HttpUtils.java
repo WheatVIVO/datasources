@@ -64,6 +64,10 @@ public class HttpUtils {
                 .build();
     }
     
+    public HttpClient getHttpClient() {
+        return this.httpClient;
+    }
+    
     public String getHttpResponse(String url) throws IOException {
         HttpGet get = new HttpGet(url);
         get.setHeader("Accept-charset", "utf-8");

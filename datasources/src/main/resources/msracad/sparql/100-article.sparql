@@ -1,0 +1,112 @@
+PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd:      <http://www.w3.org/2001/XMLSchema#>
+PREFIX owl:      <http://www.w3.org/2002/07/owl#>
+PREFIX swrl:     <http://www.w3.org/2003/11/swrl#>
+PREFIX swrlb:    <http://www.w3.org/2003/11/swrlb#>
+PREFIX vitro:    <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>
+PREFIX bibo:     <http://purl.org/ontology/bibo/>
+PREFIX c4o:      <http://purl.org/spar/c4o/>
+PREFIX cito:     <http://purl.org/spar/cito/>
+PREFIX event:    <http://purl.org/NET/c4dm/event.owl#>
+PREFIX fabio:    <http://purl.org/spar/fabio/>
+PREFIX foaf:     <http://xmlns.com/foaf/0.1/>
+PREFIX geo:      <http://aims.fao.org/aos/geopolitical.owl#>
+PREFIX obo:      <http://purl.obolibrary.org/obo/>
+PREFIX ocrer:    <http://purl.org/net/OCRe/research.owl#>
+PREFIX ocresd:   <http://purl.org/net/OCRe/study_design.owl#>
+PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
+PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>
+PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
+PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
+PREFIX g:        <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/> 
+
+CONSTRUCT {
+    ?x a bibo:Article .
+    ?x vivo:identifier ?identifier .
+    ?x <https://wheatvivo.org/ontology/local/language> ?lang .
+    ?x <https://wheatvivo.org/ontology/local/citationCount> ?cc .
+    ?x <https://wheatvivo.org/ontology/local/estimatedCitationCount> ?ecc .
+    ?x vivo:dateTimeValue ?dtv .
+    ?dtv a vivo:DateTimeValue .
+    ?dtv vivo:dateTime ?dateTime .
+    ?dtv vivo:dateTimePrecision vivo:yearPrecision .
+    ?x rdfs:label ?title .
+    ?x bibo:doi ?doi .
+    ?x bibo:volume ?volume .
+    ?x bibo:issue ?issue .
+    ?x bibo:pageStart ?pageStart .
+    ?x bibo:pageEnd ?pageEnd .
+} WHERE {
+    ?x g:Ty "0" . # Type 0 = Article
+    ?x g:Id ?id
+    BIND(CONCAT("msracad-", STR(?id)) AS ?identifier)
+    ?x g:D ?d .
+    BIND(xsd:dateTime(CONCAT(STR(?d), "T00:00:00")) AS ?dateTime)
+    BIND(IRI(CONCAT(STR(?x), "-dtv")) AS ?dtv)
+    ?x g:DN ?title .
+    FILTER(!REGEX(STR(?title), "flour", "i"))
+    FILTER(!REGEX(STR(?title), "bread", "i"))
+    FILTER(!REGEX(STR(?title), "bake", "i"))
+    FILTER(!REGEX(STR(?title), "baking", "i"))
+    FILTER(!REGEX(STR(?title), "waste", "i"))
+    FILTER(!REGEX(STR(?title), "dough", "i"))
+    FILTER(!REGEX(STR(?title), "liquor", "i"))
+    FILTER(!REGEX(STR(?title), "milling", "i"))
+    FILTER(!REGEX(STR(?title), "diet", "i"))
+    FILTER(!REGEX(STR(?title), "feed", "i"))
+    FILTER NOT EXISTS {
+      ?x g:F ?f .
+      ?f g:FN "production efficiency"
+    }
+    FILTER NOT EXISTS {
+      ?x g:F ?f .
+      ?f g:FN "materials science"
+    }
+    FILTER NOT EXISTS {
+      ?x g:F ?f .
+      ?f g:FN "food type"
+    }
+    FILTER NOT EXISTS {
+      ?x g:F ?f .
+      ?f g:FN "food products"
+    }
+    FILTER NOT EXISTS {
+      ?x g:F ?f .
+      ?f g:FN "food processing"
+    }
+    FILTER NOT EXISTS {
+      ?x g:F ?f .
+      ?f g:FN "animal science"
+    }
+    FILTER NOT EXISTS {
+      ?x g:F ?f .
+      ?f g:FN "growing rabbit"
+    }
+    FILTER NOT EXISTS {
+      ?x g:F ?f .
+      ?f g:FN "wheat flour"
+    }
+    FILTER NOT EXISTS {
+      ?x g:F ?f .
+      ?f g:FN "food science"
+    }
+    FILTER NOT EXISTS {
+      ?x g:F ?f .
+      ?f g:FN "flavour"
+    }
+    FILTER NOT EXISTS {
+      ?x g:F ?f .
+      ?f g:FN "wine"
+    }
+   
+    OPTIONAL { ?x g:DOI ?doi }
+    OPTIONAL { ?x g:L ?lang }
+    OPTIONAL { ?x g:CC ?cc } 
+    OPTIONAL { ?x g:ECC ?ecc }
+    OPTIONAL { ?x g:V ?volume }
+    OPTIONAL { ?x g:I ?issue }
+    OPTIONAL { ?x g:FP ?pageStart }
+    OPTIONAL { ?x g:LP ?pageEnd }
+}

@@ -11,7 +11,7 @@
   <name>datasources</name>
   <url>http://maven.apache.org</url>
   <properties>
-	<jackson.version>2.10.0.pr1</jackson.version>
+	<jackson.version>2.10.0</jackson.version>
   </properties>
   
   <build>
@@ -125,6 +125,12 @@
     </dependency>
 
     <dependency>
+      <groupId>com.fasterxml</groupId>
+      <artifactId>jackson-xml-databind</artifactId>
+      <version>0.6.2</version>
+    </dependency>
+
+    <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>servlet-api</artifactId>
       <version>2.5</version>
@@ -161,6 +167,20 @@
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-text</artifactId>
       <version>1.1</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml -->
+    <dependency>
+      <groupId>org.apache.poi</groupId>
+      <artifactId>poi-ooxml</artifactId>
+      <version>4.1.1</version>
+    </dependency>
+
+    <!-- dependency required for Java 11+ -->
+    <dependency>
+      <groupId>javax.xml.bind</groupId>
+      <artifactId>jaxb-api</artifactId>
+      <version>2.3.0</version>
     </dependency>
 
   </dependencies>

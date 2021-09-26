@@ -8,6 +8,7 @@ import org.apache.commons.logging.LogFactory;
 import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.connector.ConnectorDataSource;
 import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
+import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
@@ -22,25 +23,31 @@ public class PostmergeDataSource extends ConnectorDataSource implements DataSour
     @Override
     public void runIngest() {
         log.info("Starting postmerge processing");
-        getSparqlEndpoint();
         List<String> queries = Arrays.asList(
                 "geoqueries.sparql",
                 "participatesIn.sparql",
                 "secondTierLocatedIn.sparql",
                 "externalToWheatPublicationsQuery.sparql",
-                "externalToWheatPeopleQuery.sparql",
-                "externalToWheatProjectsQuery.sparql",
+                "externalToWheatPublicationsQuery2.sparql",
+                "externalToWheatPublicationsQuery3.sparql",
                 "externalToWheatGrantsQuery.sparql",
-                "externalToWheatOrganizationsQuery.sparql"
+                "externalToWheatProjectsQuery.sparql",
+                "externalToWheatPeopleQuery.sparql",
+                "externalToWheatPeopleQuery2.sparql",
+                "externalToWheatPeopleQuery3.sparql",
+                "externalToWheatPeopleQuery4.sparql",
+                "externalToWheatOrganizationsQuery.sparql",                
+                "externalToWheatJournalsQuery.sparql",
+                "externalToWheatConceptsQuery.sparql",
+                "externalToWheatInactivePersonsQuery.sparql"
                 );
-        getSparqlEndpoint().clearGraph(this.getConfiguration().getResultsGraphURI());
-        for(String query : queries) {
-            Model model = ModelFactory.createDefaultModel();
-            log.debug("Executing query " + query);
-            log.debug("Pre-query model size: " + model.size());
-            construct(SPARQL_RESOURCE_DIR + query, model, NAMESPACE_ETC);
-            log.debug("Post-query model size: " + model.size());
-            getSparqlEndpoint().writeModel(model, this.getConfiguration().getResultsGraphURI());
+        SparqlEndpoint endpoint = getSparqlEndpoint();
+        String resultsGraphURI = this.getConfiguration().getResultsGraphURI();
+        endpoint.clearGraph(resultsGraphURI);
+        for(String query : queries) {            
+            Model model = endpoint.construct(loadQuery("/postmerge/sparql/" + query));
+            log.info("Postmerge query " + query + " constructed " + model.size());
+            endpoint.writeModel(model, resultsGraphURI);
         }
     }
 

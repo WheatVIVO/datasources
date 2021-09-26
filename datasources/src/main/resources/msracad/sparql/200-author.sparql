@@ -20,26 +20,35 @@ PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>
 PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
-PREFIX wi:       <http://www.wheatinitiative.org/administration/users/ontology/>
-PREFIX wia:      <http://www.wheatinitiative.org/administration/users/>
-PREFIX afn:      <http://jena.hpl.hp.com/ARQ/function#>
+PREFIX g:        <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/> 
+PREFIX abox:     <https://wheatvivo.org/individual/>
 
 CONSTRUCT {
-    ?org a foaf:Organization .
-    ?org rdfs:label ?orgName .
-    ?position a vivo:Position .
-    ?x vivo:relatedBy ?position .
-    ?position vivo:relates ?org .
-    ?position wi:Employment_Sector ?employmentSector .
-    ?position rdfs:label ?roleLabel 
+    ?authorship a vivo:Authorship .
+    ?x vivo:relatedBy ?authorship .
+    ?authorship vivo:relates ?x .
+    ?authorship vivo:relates ?author .
+    ?authorship vivo:rank ?rank .
+    ?author vivo:relatedBy ?authorship .
+    ?author a foaf:Person .
+    ?author rdfs:label ?authorLabel .
+    ?author obo:ARG_2000028 ?vcard .
+    ?vcard a vcard:Individual .
+    ?vcard vcard:hasName ?name .
+    ?name a vcard:Name .
+    ?name vcard:familyName ?lastName .
+    ?name vcard:givenName ?firstName .
 } WHERE {
-    ?x wi:Institution-Company ?orgName .
-    OPTIONAL {
-        ?x wi:Employment_Sector ?employmentSector .
-    }
-    OPTIONAL {
-        ?x wi:Your_role-position_in_your_organisation ?roleLabel
-    }
-    BIND(IRI(CONCAT(STR(wia:), REPLACE(REPLACE(STR(?orgName), " ", "-"), "[^-a-zA-Z0-9]", ""))) AS ?org)
-    BIND(IRI(CONCAT(STR(?x), "-position-", afn:localname(?org))) AS ?position)
+    ?x a bibo:Article .
+    ?x g:AA ?aa .
+    ?aa g:AuId ?auId .
+    ?aa g:S ?s .
+    ?aa g:lastName ?lastName .
+    ?aa g:firstName ?firstName .
+    BIND(CONCAT(?lastName, ", ", ?firstName) as ?authorLabel)
+    BIND(xsd:integer(?s) AS ?rank)
+    BIND(IRI(CONCAT(STR(?x), "-authorship", STR(?rank))) AS ?authorship)
+    BIND(IRI(CONCAT(STR(abox:), "msracad-", STR(?auId))) AS ?author)
+    BIND(IRI(CONCAT(STR(?author), "-vcard")) AS ?vcard)
+    BIND(IRI(CONCAT(STR(?author), "-vcard-name")) AS ?name)
 }

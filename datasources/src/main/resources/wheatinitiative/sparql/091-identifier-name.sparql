@@ -28,7 +28,7 @@ PREFIX wi:       <http://www.wheatinitiative.org/administration/users/ontology/>
 CONSTRUCT {
     ?x wi:identifier ?identifier 
 } WHERE {
-    ?x wi:lastName ?lastName .
+    ?x wi:Last_Name ?lastName .
     FILTER NOT EXISTS { ?x wi:firstName ?firstName }
     FILTER NOT EXISTS { ?x vivo:orcidId ?orcidId }
     BIND(REPLACE(STR(?lastName), "\\W", "") AS ?identifier)

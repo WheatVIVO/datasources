@@ -1,9 +1,11 @@
 package org.wheatinitiative.vivo.datasource.publish;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -21,6 +23,8 @@ import org.wheatinitiative.vivo.datasource.DataSourceDescription;
 import org.wheatinitiative.vivo.datasource.SparqlEndpointParams;
 import org.wheatinitiative.vivo.datasource.VivoVocabulary;
 import org.wheatinitiative.vivo.datasource.dao.DataSourceDao;
+import org.wheatinitiative.vivo.datasource.postmerge.PostmergeDataSource;
+import org.wheatinitiative.vivo.datasource.util.indexinginference.IndexingInference;
 import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
 
 import com.hp.hpl.jena.query.QuerySolution;
@@ -46,13 +50,13 @@ import com.hp.hpl.jena.vocabulary.RDFS;
  *
  */
 public class Publisher extends DataSourceBase implements DataSource {
-    
+
     private static final Log log = LogFactory.getLog(Publisher.class);
     private static final String GRAPH_FILTER = 
             "    FILTER(!regex(str(?g),\"filegraph\")) \n" +
-            "    FILTER(!regex(str(?g),\"application\")) \n" +
-            "    FILTER(!regex(str(?g),\"tbox\")) \n" +
-            "    FILTER(!regex(str(?g),\"kb-inf\")) \n";
+                    "    FILTER(!regex(str(?g),\"application\")) \n" +
+                    "    FILTER(!regex(str(?g),\"tbox\")) \n" +
+                    "    FILTER(!regex(str(?g),\"kb-inf\")) \n";
     private static final String KB2 = 
             "http://vitro.mannlib.cornell.edu/default/vitro-kb-2";
     private static final String ADMINAPP_ASSERTIONS = 
@@ -64,99 +68,151 @@ public class Publisher extends DataSourceBase implements DataSource {
     private static final String DATETIMEINTERVAL = "http://vivoweb.org/ontology/core#dateTimeInterval";
     private static final String HASCONTACTINFO = "http://purl.obolibrary.org/obo/ARG_2000028";
     private static final String POSTMERGE_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/postmerge";
-    
+
     private DataSourceDao dataSourceDao;
-    
+    private String timestamp;
+
     protected DataSourceDao getDataSourceDao() {
         if(dataSourceDao == null) {
             this.dataSourceDao = new DataSourceDao(getSparqlEndpoint());
         }
         return this.dataSourceDao;
     }
-    
+
     @Override
-    protected void runIngest() {
+    protected void runIngest() throws InterruptedException {
+        Date currentDateTime = Calendar.getInstance().getTime();
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        this.timestamp = "--" + df.format(currentDateTime);
         SparqlEndpoint sourceEndpoint = getSourceEndpoint();
         SparqlEndpoint destinationEndpoint = getSparqlEndpoint();
-        Set<String> functionalPropertyURIs = getFunctionalPropertyURIs();  
-        emptyDestination(sourceEndpoint, destinationEndpoint);
-        log.info("Getting graph preference list");
-        List<String> graphURIPreferenceList = getGraphURIPreferenceList(
-                sourceEndpoint);
-        log.info("Graph URI preference list: " + graphURIPreferenceList);
-        //OntModel sameAsModel = getSameAsModel(sourceEndpoint);
-        log.info("Starting to publish");
-        this.getStatus().setMessage("publishing individuals");
-        // iterate through data source graphs in order of priority
-        Map<String, Model> buffer = new HashMap<String, Model>();
-        int individualCount = 0;
-        Set<String> completedIndividuals = new HashSet<String>();
-        for(String graphURI : graphURIPreferenceList) {
-            if(graphURI == null) {
-                continue;
-            }                     
-            IndividualURIIterator indIt = new IndividualURIIterator(
-                    sourceEndpoint, graphURI);
-            while(indIt.hasNext()) {
-                long start = System.currentTimeMillis();
-                individualCount++;
-                String individualURI = indIt.next();
-                if(completedIndividuals.contains(individualURI)) {
-                    if(!indIt.hasNext()) {
-                        flushBufferToDestination(buffer);
+        IndexingInference inf = null;
+        if(destinationEndpoint.getSparqlEndpointParams().getEndpointURI() != null) {
+            inf = new IndexingInference(destinationEndpoint);    
+        }        
+        if(inf != null && inf.isAvailable()) {
+            inf.unregisterReasoner();
+            inf.unregisterSearchIndexer();
+            log.info("Unregistered reasoner and search indexer");
+        } else {
+            log.warn("IndexingInferenceService not available on destination endpoint");
+        }
+        boolean errorOccurred = false;
+        try {
+            Set<String> functionalPropertyURIs = getFunctionalPropertyURIs();  
+            log.info("Getting graph preference list");
+            List<String> graphURIPreferenceList = getGraphURIPreferenceList(
+                    sourceEndpoint);
+            log.info("Graph URI preference list: " + graphURIPreferenceList);
+            //OntModel sameAsModel = getSameAsModel(sourceEndpoint);
+            log.info("Starting to publish");
+            this.getStatus().setMessage("publishing individuals");
+            // iterate through data source graphs in order of priority
+            Map<String, Model> buffer = new HashMap<String, Model>();
+            int individualCount = 0;
+            Set<String> completedIndividuals = new HashSet<String>();
+            try {
+                for(String graphURI : graphURIPreferenceList) {
+                    if(graphURI == null) {
+                        continue;
+                    }                     
+                    IndividualURIIterator indIt = new IndividualURIIterator(
+                            sourceEndpoint, graphURI);
+                    while(indIt.hasNext()) {
+                        long start = System.currentTimeMillis();
+                        individualCount++;
+                        String individualURI = indIt.next();
+                        if(completedIndividuals.contains(individualURI)) {
+                            if(!indIt.hasNext()) {
+                                flushBufferToDestination(buffer, this.timestamp);
+                            }
+                            continue;
+                        }
+                        List<String> sameAsURIs = getSameAsURIList(individualURI, sourceEndpoint);
+                        List<Quad> individualQuads = getIndividualQuads(individualURI, 
+                                sourceEndpoint);
+                        for (String sameAsURI : sameAsURIs) {
+                            sameAsCache.put(sameAsURI, individualURI);
+                        }
+                        Map<String, Model> quadStore = new HashMap<String, Model>();   
+                        log.debug("Adding " + individualURI + " to store");
+                        addQuadsToStore(
+                                rewrite(individualQuads, graphURIPreferenceList, 
+                                        sourceEndpoint), quadStore);
+                        report(quadStore);
+                        log.debug("same as URIs " + sameAsURIs);
+                        // don't waste memory recording an individual if we won't 
+                        // encounter it again later
+                        if(quadStore.keySet().size() <= 1 && !sameAsURIs.isEmpty()) {
+                            completedIndividuals.add(individualURI);
+                        }
+                        for (String sameAsURI : sameAsURIs) {
+                            log.debug("Adding " + sameAsURI + " to store");
+                            completedIndividuals.add(sameAsURI);
+                            List<Quad> sameAsQuads = getIndividualQuads(
+                                    sameAsURI, sourceEndpoint);
+                            addQuadsToStore(
+                                    rewrite(sameAsQuads, graphURIPreferenceList, 
+                                            sourceEndpoint), quadStore);
+                            report(quadStore);
+                        }
+                        dedupFunctionalProperties(quadStore, functionalPropertyURIs, 
+                                graphURIPreferenceList);  
+                        filterIrrelevantGraphs(quadStore, graphURIPreferenceList);
+                        // TODO filter non-VIVO predicate namespaces?
+                        addQuadStoreToBuffer(quadStore, buffer);
+                        long duration = System.currentTimeMillis() - start;
+                        if (duration > 1000) {
+                            log.info(duration + " ms to process individual " + individualURI);
+                        }
+                        this.getStatus().setProcessedRecords(completedIndividuals.size());
+                        if(individualCount % BATCH_SIZE == 0 || !indIt.hasNext()) {
+                            flushBufferToDestination(buffer, this.timestamp);    
+                        }
                     }
-                    continue;
                 }
-                List<String> sameAsURIs = getSameAsURIList(individualURI, sourceEndpoint);
-                List<Quad> individualQuads = getIndividualQuads(individualURI, 
-                        sourceEndpoint);
-                for (String sameAsURI : sameAsURIs) {
-                    sameAsCache.put(sameAsURI, individualURI);
+            } catch(Throwable t) {
+                log.error(t, t);
+                errorOccurred = true;
+            }
+            if(!errorOccurred) {
+                this.getStatus().setMessage("clearing old data");
+                cleanUpDestination(sourceEndpoint, destinationEndpoint, timestamp);
+            }
+        } finally {
+            if(inf != null && inf.isAvailable()) {
+                inf.registerReasoner();
+                log.info("Registered reasoner");
+                inf.registerSearchIndexer();
+                log.info("Registered search indexer");
+                inf.recompute();
+                log.info("Recomputing inferences");
+                this.getStatus().setMessage("Recomputing inferences");
+                do {
+                    Thread.sleep(10000);
+                } while (inf.isReasonerIsRecomputing());
+                // indexing kicked off after requested inference recompute
+                this.getStatus().setMessage("Rebuilding search index");
+                do {
+                    Thread.sleep(10000);
+                } while (inf.isReasonerIsRecomputing());
+                if(!errorOccurred) {
+                    this.getStatus().setMessage("augmenting data via additional construct queries");
+                    PostmergeDataSource postmerge = new PostmergeDataSource();
+                    postmerge.setConfiguration(this.getConfiguration());
+                    postmerge.runIngest();
                 }
-                Map<String, Model> quadStore = new HashMap<String, Model>();   
-                log.debug("Adding " + individualURI + " to store");
-                addQuadsToStore(
-                        rewrite(individualQuads, graphURIPreferenceList, 
-                                sourceEndpoint), quadStore);
-                report(quadStore);
-                log.debug("same as URIs " + sameAsURIs);
-                // don't waste memory recording an individual if we won't 
-                // encounter it again later
-                if(quadStore.keySet().size() <= 1 && !sameAsURIs.isEmpty()) {
-                    completedIndividuals.add(individualURI);
-                }
-                for (String sameAsURI : sameAsURIs) {
-                    log.debug("Adding " + sameAsURI + " to store");
-                    completedIndividuals.add(sameAsURI);
-                    List<Quad> sameAsQuads = getIndividualQuads(
-                            sameAsURI, sourceEndpoint);
-                    addQuadsToStore(
-                            rewrite(sameAsQuads, graphURIPreferenceList, 
-                                    sourceEndpoint), quadStore);
-                    report(quadStore);
-                }
-                dedupFunctionalProperties(quadStore, functionalPropertyURIs, 
-                        graphURIPreferenceList);  
-                filterIrrelevantGraphs(quadStore, graphURIPreferenceList);
-                // TODO filter non-VIVO predicate namespaces?
-                addQuadStoreToBuffer(quadStore, buffer);
-                long duration = System.currentTimeMillis() - start;
-                if (duration > 1000) {
-                    log.info(duration + " ms to process individual " + individualURI);
-                }
-                this.getStatus().setProcessedRecords(completedIndividuals.size());
-                if(individualCount % BATCH_SIZE == 0 || !indIt.hasNext()) {
-                    flushBufferToDestination(buffer);    
-                }
+            } else {
+                log.warn("IndexingInferenceService not available on destination endpoint");
             }
         }
-        this.getStatus().setMessage("clearing old data");
-        cleanUpDestination(sourceEndpoint, destinationEndpoint);
-        this.getStatus().setMessage("augmenting data via additional construct queries");
-        runPostmergeQueries(destinationEndpoint);
         log.info("ending");
     }
-    
+
+    public String getTimestamp() {
+        return this.timestamp;
+    }
+
     private void report(Map<String, Model> quadStore) {
         if(log.isDebugEnabled()) {
             for(String graph : quadStore.keySet()) {
@@ -164,7 +220,7 @@ public class Publisher extends DataSourceBase implements DataSource {
             }
         }
     }
-    
+
     private List<String> getGraphURIPreferenceList(
             SparqlEndpoint sourceEndpoint) {
         List<String> graphURIPreferenceList = new ArrayList<String>();
@@ -190,9 +246,9 @@ public class Publisher extends DataSourceBase implements DataSource {
         }
         return graphURIPreferenceList;
     }
-    
+
     Map<String, List<String>> uriSetCache = new HashMap<String, List<String>>();
-    
+
     /**
      * 
      * @return list via reasoned transitive closure of owl:sameAs statements
@@ -218,7 +274,7 @@ public class Publisher extends DataSourceBase implements DataSource {
             return uris;
         }
     }
-    
+
     /**
      * 
      * @return OntModel with transitive closure of owl:sameAs statements
@@ -228,13 +284,13 @@ public class Publisher extends DataSourceBase implements DataSource {
         String sameAsQuery = "CONSTRUCT { \n" +
                 "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
                 "} WHERE { \n" +
-                "    <" + individualURI + "> <" + OWL.sameAs.getURI() + ">* ?ind2 \n" +
+                "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
                 "} \n";
         return endpoint.construct(sameAsQuery);
     }
-    
+
     private static Map<String, String> sameAsCache = new HashMap<String, String>();
-    
+
     private String getSameAs(String individualURI, 
             List<String> graphURIPreferenceList, SparqlEndpoint endpoint) {
         if(sameAsCache.containsKey(individualURI)) {
@@ -261,10 +317,10 @@ public class Publisher extends DataSourceBase implements DataSource {
             }
         }
         //if(System.currentTimeMillis() - start > 2) {
-            sameAsCache.put(individualURI, uriToMapTo);
-            for(String sameAsURI : sameAsURIs) {
-                sameAsCache.put(sameAsURI, uriToMapTo);
-            }
+        sameAsCache.put(individualURI, uriToMapTo);
+        for(String sameAsURI : sameAsURIs) {
+            sameAsCache.put(sameAsURI, uriToMapTo);
+        }
         //}
         long duration = System.currentTimeMillis() - start;
         if(duration > 10000) {
@@ -279,9 +335,9 @@ public class Publisher extends DataSourceBase implements DataSource {
             List<String> graphURIPreferenceList) {
         String graphURI = null;
         String homeGraphQuery = "SELECT DISTINCT ?graph WHERE { \n" +
-//                "    { <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?something } \n" +
-//                "    UNION \n" +
-//                "    { ?something2 <" + OWL.sameAs.getURI() + "> <" + individualURI + "> } \n" +
+                //                "    { <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?something } \n" +
+                //                "    UNION \n" +
+                //                "    { ?something2 <" + OWL.sameAs.getURI() + "> <" + individualURI + "> } \n" +
                 "    GRAPH ?graph { <" + individualURI + "> a ?typeDeclaration } \n" +
                 "} \n";
         ResultSet homeGraphRs = endpoint.getResultSet(homeGraphQuery);
@@ -304,7 +360,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         log.debug("Home graph for " + individualURI + " is " + graphURI);
         return graphURI;
     }  
-    
+
     /**
      * @param graphURI1
      * @param graphURI2
@@ -321,7 +377,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         int graphURI2position = getListPosition(graphURI2, graphURIPreferenceList);
         return(graphURI1position < graphURI2position);
     }
-    
+
     /**
      * 
      * @param graphURI
@@ -341,7 +397,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         }
         return Integer.MAX_VALUE;
     }
-    
+
     private void filterIrrelevantGraphs(Map<String, Model> quadStore, 
             List<String> graphURIPreferenceList) {
         for(String graphURI : quadStore.keySet()) {
@@ -350,7 +406,7 @@ public class Publisher extends DataSourceBase implements DataSource {
             }
         }
     }
-    
+
     protected void dedupFunctionalProperties(Map<String, Model> quadStore, 
             Set<String> functionalPropertyURIs, 
             List<String> graphURIPreferenceList) {
@@ -384,13 +440,13 @@ public class Publisher extends DataSourceBase implements DataSource {
             }
         }
     }
-    
+
     private class StatementSorter implements Comparator<Statement> {
-        
+
         public int compare(Statement stmt1, Statement stmt2) {
             return getObjectAsString(stmt1).compareTo(getObjectAsString(stmt2));
         }
-        
+
         private String getObjectAsString(Statement stmt) {
             if(stmt.getObject().isLiteral()) {
                 return stmt.getObject().asLiteral().toString();
@@ -400,9 +456,9 @@ public class Publisher extends DataSourceBase implements DataSource {
                 return "";
             }
         }
-        
+
     }
-    
+
     private Set<Property> getPredicatesInUse(Model model) {
         Set<Property> predSet = new HashSet<Property>();
         // we could issue a query if iterating is too slow
@@ -413,30 +469,21 @@ public class Publisher extends DataSourceBase implements DataSource {
         }
         return predSet;
     }
-    
-    private void emptyDestination(SparqlEndpoint sourceEndpoint, 
-            SparqlEndpoint destinationEndpoint) {
-        // need to empty the destination only of graphs that exist in BOTH
-        // the source and the destination
+
+    private void cleanUpDestination(SparqlEndpoint sourceEndpoint, 
+            SparqlEndpoint destinationEndpoint, String timestamp) {
+        // After main loop, clear any destination graphs that do not 
+        // exist in the source (except kb2).
+        // Because the timestamp of publishing has been appended to the graphs
+        // in the destination endpoint, we will also append the same timestamp
+        // to the source graphs for comparison.  That way we will only clear
+        // out old versions of the graphs and not the same graphs we just 
+        // wrote to the destination.
         List<String> sourceGraphURIs = getGraphURIsInEndpoint(sourceEndpoint);
-        // KB2 will get rewritten as ADMINAPP_ASSERTIONS, thus pretend it exists
-        sourceGraphURIs.add(ADMINAPP_ASSERTIONS);
-        List<String> destinationGraphURIs = getGraphURIsInEndpoint(destinationEndpoint);
-        for(String destGraphURI : destinationGraphURIs) {
-            if(sourceGraphURIs.contains(destGraphURI)) {
-                if(!KB2.equals(destGraphURI)) {
-                    log.info("Clearing destination graph " + destGraphURI);
-                    destinationEndpoint.clearGraph(destGraphURI);                                         
-                }
-            }
+        for(int i = 0; i < sourceGraphURIs.size(); i++) {
+            sourceGraphURIs.set(i, sourceGraphURIs.get(i) + timestamp);
         }
-    }
-    
-    private void cleanUpDestination(SparqlEndpoint sourceEndpoint, SparqlEndpoint destinationEndpoint) {
-        // after main loop, clear any destination graphs that do not 
-        // exist in the source (except kb2)
-        List<String> sourceGraphURIs = getGraphURIsInEndpoint(sourceEndpoint);
-        sourceGraphURIs.add(ADMINAPP_ASSERTIONS);
+        sourceGraphURIs.add(ADMINAPP_ASSERTIONS + timestamp);
         List<String> destinationGraphURIs = getGraphURIsInEndpoint(destinationEndpoint);
         for(String destGraphURI : destinationGraphURIs) {
             if(!sourceGraphURIs.contains(destGraphURI)) {
@@ -447,7 +494,7 @@ public class Publisher extends DataSourceBase implements DataSource {
             }
         }
     }
-    
+
     private List<String> getGraphURIsInEndpoint(SparqlEndpoint endpoint) {
         List<String> graphURIs = new ArrayList<String>();
         String graphQuery = "SELECT DISTINCT ?g WHERE { \n" +
@@ -474,12 +521,19 @@ public class Publisher extends DataSourceBase implements DataSource {
             destination.add(source);
         }
     }
-    
-    private void flushBufferToDestination(Map<String, Model> buffer) {
-        writeQuadStoreToDestination(buffer);
+
+    /**
+     * Write a buffer of quads to the destination SPARQL endpoint, appending
+     * the current timestamp to the end of each graph URI.
+     * @param buffer
+     * @param timestamp
+     */
+    private void flushBufferToDestination(Map<String, Model> buffer, 
+            String timestamp) {
+        writeQuadStoreToDestination(buffer, timestamp);
         buffer.clear();
     }
-    
+
     /**
      * Pause to let the remote VIVO catch up with search index updates, etc.
      */
@@ -490,12 +544,22 @@ public class Publisher extends DataSourceBase implements DataSource {
             throw new RuntimeException(e);
         }
     }
-    
-    private void writeQuadStoreToDestination(Map<String, Model> quadStore) {
+
+    /**
+     * Write a quad store to the destination SPARQL endpoint, appending
+     * an optional timestamp string to the end of each graph URI.
+     * @param quadStore
+     * @param timestamp may be null.
+     */
+    private void writeQuadStoreToDestination(Map<String, Model> quadStore, 
+            String timestamp) {
         for(String graphURI : quadStore.keySet()) {
             Model m = quadStore.get(graphURI);
             if(m.size() == 0) {
                 continue;
+            }
+            if(timestamp != null) {
+                graphURI += timestamp;
             }
             log.info("Writing " + m.size() + " triples to graph " + graphURI);
             long start = System.currentTimeMillis();
@@ -504,7 +568,7 @@ public class Publisher extends DataSourceBase implements DataSource {
             pause();
         }
     }
-    
+
     private void addQuadsToStore(List<Quad> quads, Map<String, Model> store) {
         for(Quad quad : quads) {
             Model m = store.get(quad.getGraphURI());
@@ -517,7 +581,7 @@ public class Publisher extends DataSourceBase implements DataSource {
                     quad.getObject());
         }
     }
-    
+
     /**
      * Rewrite all subjects in the list of quads with the supplied URI
      * @return list of rewritten quads
@@ -544,7 +608,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         }
         return rewrittenQuads;
     }
-    
+
     private List<Quad> getIndividualQuads(String individualURI, 
             SparqlEndpoint sparqlEndpoint) {
         String quadsQuery = "SELECT ?g ?s ?p ?o WHERE { \n" +
@@ -572,26 +636,26 @@ public class Publisher extends DataSourceBase implements DataSource {
         log.debug(System.currentTimeMillis() - start + " to get individual quads");
         return quads;
     }
-    
+
     private class IndividualURIIterator implements Iterator<String> {
 
         private static final int INDIVIDUAL_BATCH_SIZE = 5000;
         int individualOffset = 0;
-        
+
         Queue<String> currentBatch = null;
-        
+
         private SparqlEndpoint sparqlEndpoint;
         private String graphURI;
-        
+
         public IndividualURIIterator(SparqlEndpoint sparqlEndpoint) {
             this.sparqlEndpoint = sparqlEndpoint;        
         }
-        
+
         public IndividualURIIterator(SparqlEndpoint sparqlEndpoint, String graphURI) {
             this(sparqlEndpoint);
             this.graphURI = graphURI;
         }
-        
+
         public boolean hasNext() {
             if(currentBatch == null || currentBatch.isEmpty()) {
                 fetchNextBatch();
@@ -608,7 +672,7 @@ public class Publisher extends DataSourceBase implements DataSource {
                 return currentBatch.poll();
             }
         }
-        
+
         private void fetchNextBatch() {
             String individualsBatch = "SELECT DISTINCT ?s WHERE { \n" +
                     ((graphURI != null) ? "GRAPH <" + graphURI + "> { \n" : "") +
@@ -629,14 +693,14 @@ public class Publisher extends DataSourceBase implements DataSource {
             this.currentBatch = batch;
         }        
     }
-    
+
     private class Quad {
-        
+
         private String graphURI;
         private String subjectURI;
         private String predicateURI;
         private RDFNode object;
-        
+
         public Quad(String graphURI, 
                 String subjectURI, String predicateURI, RDFNode object) {
             this.graphURI = graphURI;
@@ -644,23 +708,23 @@ public class Publisher extends DataSourceBase implements DataSource {
             this.predicateURI = predicateURI;
             this.object = object;
         }
-        
+
         public String getGraphURI() {
             return this.graphURI;
         }
-        
+
         public String getSubjectURI() {
             return this.subjectURI;
         }
-        
+
         public String getPredicateURI() {
             return this.predicateURI;
         }
-        
+
         public RDFNode getObject() {
             return this.object;
         }
-        
+
     }
 
     protected SparqlEndpoint getSourceEndpoint() {
@@ -677,7 +741,7 @@ public class Publisher extends DataSourceBase implements DataSource {
                 this.getConfiguration().getEndpointParameters().getPassword());
         return new SparqlEndpoint(params);
     }
-    
+
     protected Set<String> getFunctionalPropertyURIs() {
         Set<String> funcPropSet = new HashSet<String>();
         String funcPropsQuery = "SELECT DISTINCT ?funcProp WHERE { \n" +
@@ -710,87 +774,65 @@ public class Publisher extends DataSourceBase implements DataSource {
         funcPropSet.add("<http://www.w3.org/2006/vcard/ns#url");
         return funcPropSet;
     }
- 
-    protected void runPostmergeQueries(SparqlEndpoint destinationEndpoint) {
-        log.info("Starting postmerge processing");
-        List<String> queries = Arrays.asList(
-                "geoqueries.sparql",
-                "participatesIn.sparql",
-                "secondTierLocatedIn.sparql",
-                "externalToWheatPublicationsQuery.sparql",
-                "externalToWheatGrantsQuery.sparql",
-                "externalToWheatProjectsQuery.sparql",
-                "externalToWheatPeopleQuery.sparql",
-                "externalToWheatOrganizationsQuery.sparql",
-                "externalToWheatJournalsQuery.sparql",
-                "externalToWheatConceptsQuery.sparql",
-                "externalToWheatInactivePersonsQuery.sparql"
-                );
-        destinationEndpoint.clearGraph(POSTMERGE_GRAPH);
-        for(String query : queries) {            
-            Model model = destinationEndpoint.construct(loadQuery("/postmerge/sparql/" + query));
-            log.info("Postmerge query " + query + " constructed " + model.size());
-            destinationEndpoint.writeModel(model, POSTMERGE_GRAPH);
-        }
-    }
-    
-//    /**
-//     * @param endpoint
-//     * @return map of individual URI to URI of the highest-priority graph in 
-//     * which it has a type declaration
-//     */ 
-//    private Map<String, String> getHomeGraphMap(SparqlEndpoint endpoint, 
-//          List<String> graphURIPreferenceList) {
-//      Map<String, String> individualToGraphMap = new HashMap<String, String>();
-//      String homeGraphQuery = "SELECT ?ind ?graph WHERE { \n" +
-//                 "    { ?ind <" + OWL.sameAs.getURI() + "> ?something } \n" +
-//                 "    UNION \n" +
-//                 "    { ?something2 <" + OWL.sameAs.getURI() + "> ?ind } \n" +
-//                 "    GRAPH ?graph { ?ind a ?typeDeclaration } \n" +
-//                 "} \n";
-//      ResultSet homeGraphRs = endpoint.getResultSet(homeGraphQuery);
-//      while(homeGraphRs.hasNext()) {
-//          QuerySolution qsoln = homeGraphRs.next();
-//          RDFNode n = qsoln.get("ind");
-//          if(!n.isURIResource()) {
-//              continue;
-//          }
-//          String ind = n.asResource().getURI();
-//          RDFNode g = qsoln.get("graph");
-//          if(!g.isURIResource()) {
-//              continue;
-//          }
-//          String graph = g.asResource().getURI();
-//          String currentGraph = individualToGraphMap.get(ind);
-//          if(currentGraph == null) {
-//              individualToGraphMap.put(ind, graph);
-//          } else {
-//              if(isHigherPriorityThan(graph, currentGraph, 
-//                      graphURIPreferenceList)) {
-//                  individualToGraphMap.put(ind, graph);
-//              }
-//          }
-//          
-//      }
-//      return individualToGraphMap;
-//  }
-    
-//    private List<String> getSameAsURIs(String individualURI, 
-//            Map<String, Model> quadStore) {
-//        List<String> sameAsURIs = new ArrayList<String>();
-//        for(Model model : quadStore.values()) {
-//            NodeIterator nit = model.listObjectsOfProperty(
-//                    model.getResource(individualURI), OWL.sameAs);
-//            while(nit.hasNext()) {
-//                RDFNode node = nit.next();
-//                if(node.isURIResource()) {
-//                    sameAsURIs.add(node.asResource().getURI());
-//                }
-//            }
-//        }
-//        return sameAsURIs;
-//    }
-    
+
+
+    //    /**
+    //     * @param endpoint
+    //     * @return map of individual URI to URI of the highest-priority graph in 
+    //     * which it has a type declaration
+    //     */ 
+    //    private Map<String, String> getHomeGraphMap(SparqlEndpoint endpoint, 
+    //          List<String> graphURIPreferenceList) {
+    //      Map<String, String> individualToGraphMap = new HashMap<String, String>();
+    //      String homeGraphQuery = "SELECT ?ind ?graph WHERE { \n" +
+    //                 "    { ?ind <" + OWL.sameAs.getURI() + "> ?something } \n" +
+    //                 "    UNION \n" +
+    //                 "    { ?something2 <" + OWL.sameAs.getURI() + "> ?ind } \n" +
+    //                 "    GRAPH ?graph { ?ind a ?typeDeclaration } \n" +
+    //                 "} \n";
+    //      ResultSet homeGraphRs = endpoint.getResultSet(homeGraphQuery);
+    //      while(homeGraphRs.hasNext()) {
+    //          QuerySolution qsoln = homeGraphRs.next();
+    //          RDFNode n = qsoln.get("ind");
+    //          if(!n.isURIResource()) {
+    //              continue;
+    //          }
+    //          String ind = n.asResource().getURI();
+    //          RDFNode g = qsoln.get("graph");
+    //          if(!g.isURIResource()) {
+    //              continue;
+    //          }
+    //          String graph = g.asResource().getURI();
+    //          String currentGraph = individualToGraphMap.get(ind);
+    //          if(currentGraph == null) {
+    //              individualToGraphMap.put(ind, graph);
+    //          } else {
+    //              if(isHigherPriorityThan(graph, currentGraph, 
+    //                      graphURIPreferenceList)) {
+    //                  individualToGraphMap.put(ind, graph);
+    //              }
+    //          }
+    //          
+    //      }
+    //      return individualToGraphMap;
+    //  }
+
+    //    private List<String> getSameAsURIs(String individualURI, 
+    //            Map<String, Model> quadStore) {
+    //        List<String> sameAsURIs = new ArrayList<String>();
+    //        for(Model model : quadStore.values()) {
+    //            NodeIterator nit = model.listObjectsOfProperty(
+    //                    model.getResource(individualURI), OWL.sameAs);
+    //            while(nit.hasNext()) {
+    //                RDFNode node = nit.next();
+    //                if(node.isURIResource()) {
+    //                    sameAsURIs.add(node.asResource().getURI());
+    //                }
+    //            }
+    //        }
+    //        return sameAsURIs;
+    //    }
+
     @Override
     public Model getResult() {
         // This method is not used with this data source.

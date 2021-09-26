@@ -25,9 +25,10 @@ PREFIX wi:       <http://www.wheatinitiative.org/administration/users/ontology/>
 CONSTRUCT {
     ?vcard vcard:hasEmail ?email .
     ?email a vcard:Email .
+    ?email a vcard:Work .
     ?email vcard:email ?emailAddress .
 } WHERE {
-    ?x wi:mail ?emailAddress .
+    ?x wi:Email_Address ?emailAddress .
     ?x a foaf:Person .
     ?x obo:ARG_2000028 ?vcard .
     ?vcard a vcard:Individual .

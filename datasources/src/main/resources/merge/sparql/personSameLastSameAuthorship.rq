@@ -1,0 +1,54 @@
+PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd:      <http://www.w3.org/2001/XMLSchema#>
+PREFIX owl:      <http://www.w3.org/2002/07/owl#>
+PREFIX swrl:     <http://www.w3.org/2003/11/swrl#>
+PREFIX swrlb:    <http://www.w3.org/2003/11/swrlb#>
+PREFIX vitro:    <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>
+PREFIX p1:       <http://vivo.wheatinitiative.org/ontology/adminapp/>
+PREFIX bibo:     <http://purl.org/ontology/bibo/>
+PREFIX c4o:      <http://purl.org/spar/c4o/>
+PREFIX cito:     <http://purl.org/spar/cito/>
+PREFIX event:    <http://purl.org/NET/c4dm/event.owl#>
+PREFIX fabio:    <http://purl.org/spar/fabio/>
+PREFIX foaf:     <http://xmlns.com/foaf/0.1/>
+PREFIX geo:      <http://aims.fao.org/aos/geopolitical.owl#>
+PREFIX obo:      <http://purl.obolibrary.org/obo/>
+PREFIX ocrer:    <http://purl.org/net/OCRe/research.owl#>
+PREFIX ocresd:   <http://purl.org/net/OCRe/study_design.owl#>
+PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
+PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>
+PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
+PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
+
+CONSTRUCT {
+    ?x owl:sameAs ?y .
+    ?y owl:sameAs ?x .
+} WHERE {
+    ?x a <http://xmlns.com/foaf/0.1/Person> .
+    ?x <http://vivoweb.org/ontology/core#relatedBy> ?relationship1 .
+    ?relationship1 a <http://vivoweb.org/ontology/core#Authorship> .
+    ?relationship1 <http://vivoweb.org/ontology/core#relates> ?value .
+    FILTER NOT EXISTS { ?value a <http://xmlns.com/foaf/0.1/Person> } .
+    ?relationship1 <http://vivoweb.org/ontology/core#rank> ?dataPropertyValue .
+    ?value <http://www.w3.org/2002/07/owl#sameAs> ?value2 .
+    ?relationship2 <http://vivoweb.org/ontology/core#relates> ?value2 .
+    ?relationship2 <http://vivoweb.org/ontology/core#rank> ?dataPropertyValue .
+    FILTER(?relationship1 != ?relationship2)
+    ?relationship2 a <http://vivoweb.org/ontology/core#Authorship> .
+    ?y <http://vivoweb.org/ontology/core#relatedBy> ?relationship2 .
+    ?y a <http://xmlns.com/foaf/0.1/Person> .
+    FILTER NOT EXISTS { ?x <http://www.w3.org/2002/07/owl#sameAs> ?y }
+    FILTER NOT EXISTS { ?y <http://www.w3.org/2002/07/owl#sameAs> ?x }
+    FILTER NOT EXISTS { ?x <http://www.w3.org/2002/07/owl#differentFrom> ?y }
+    FILTER NOT EXISTS { ?y <http://www.w3.org/2002/07/owl#differentFrom> ?x }
+    FILTER EXISTS {
+      ?x obo:ARG_2000028 ?vcard .
+      ?vcard vcard:hasName ?vcardName .
+      ?vcardName vcard:familyName ?familyName .
+      ?yvcardName vcard:familyName ?familyName .
+      ?yvcard vcard:hasName ?yvcardName .
+      ?y obo:ARG_2000028 ?yvcard .
+    }
+}

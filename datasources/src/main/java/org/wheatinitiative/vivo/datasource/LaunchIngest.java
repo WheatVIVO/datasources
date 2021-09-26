@@ -9,11 +9,10 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wheatinitiative.vivo.datasource.DataSource;
-import org.wheatinitiative.vivo.datasource.SparqlEndpointParams;
 import org.wheatinitiative.vivo.datasource.connector.cordis.Cordis;
 import org.wheatinitiative.vivo.datasource.connector.cornell.Cornell;
 import org.wheatinitiative.vivo.datasource.connector.florida.Florida;
+import org.wheatinitiative.vivo.datasource.connector.msracad.MicrosoftAcademicConnector;
 import org.wheatinitiative.vivo.datasource.connector.openaire.OpenAire;
 import org.wheatinitiative.vivo.datasource.connector.orcid.OrcidConnector;
 import org.wheatinitiative.vivo.datasource.connector.prodinra.Prodinra;
@@ -25,6 +24,7 @@ import org.wheatinitiative.vivo.datasource.connector.wheatinitiative.WheatInitia
 import org.wheatinitiative.vivo.datasource.normalizer.AuthorNameForSameAsNormalizer;
 import org.wheatinitiative.vivo.datasource.normalizer.LiteratureNameForSameAsNormalizer;
 import org.wheatinitiative.vivo.datasource.normalizer.OrganizationNameForSameAsNormalizer;
+import org.wheatinitiative.vivo.datasource.postmerge.PostmergeDataSource;
 
 import com.hp.hpl.jena.rdf.model.Model;
 
@@ -35,8 +35,8 @@ public class LaunchIngest {
     public static void main(String[] args) {
         if(args.length < 3) {
             System.out.println("Usage: LaunchIngest" 
-                    + " openaire|cordis|rcuk|prodinra|wheatinitiative|florida"
-                    + "normalizePerson|normalizeOrganization|normalizeLiterature"
+                    + " openaire|cordis|rcuk|msracad|prodinra|wheatinitiative|florida"
+                    + "normalizePerson|normalizeOrganization|normalizeLiterature|postmerge"
                     + " outputfile" 
                     + " [endpointURI= endpointUpdateURI= username= password= dataDir= graph=]"
                     + " queryTerm ... [queryTermN] [limit]");
@@ -90,6 +90,8 @@ public class LaunchIngest {
             connector = new Rcuk();
             connector.getConfiguration().setServiceURI(
                     "http://gtr.ukri.org/gtr/api/");
+        } else if ("msracad".equals(connectorName)) {
+            connector = new MicrosoftAcademicConnector();
         } else if ("prodinra".equals(connectorName)) {
             connector = new Prodinra();
             connector.getConfiguration().setServiceURI(
@@ -126,6 +128,8 @@ public class LaunchIngest {
             connector = new LiteratureNameForSameAsNormalizer();
         } else if ("normalizeOrganization".equals(connectorName)) {
             connector = new OrganizationNameForSameAsNormalizer();
+        } else if ("postmerge".equals(connectorName)) {
+            connector = new PostmergeDataSource();
         } else {
             throw new RuntimeException("Connector not found: " 
                     + connectorName);

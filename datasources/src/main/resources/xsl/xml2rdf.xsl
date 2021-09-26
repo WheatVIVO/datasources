@@ -63,10 +63,7 @@
                     <vitro:value><xsl:copy-of select="text()"/></vitro:value>
             </xsl:if>
                                                             
-            <xsl:if test="matches(../name(),$positionParentRegex) or 
-                          matches(concat(../namespace-uri(),../local-name()),$positionParentRegex)">                            
-                <vitro:position><xsl:value-of select="position()"/></vitro:position>
-            </xsl:if>
+            <vitro:position><xsl:value-of select="position()"/></vitro:position>
 
             </rdf:Description>
         </xsl:element>
@@ -87,6 +84,7 @@
 		    </xsl:if>
                     <xsl:value-of select="."/>
                 </vitro:value>
+                <vitro:position><xsl:value-of select="position()"/></vitro:position>
             </rdf:Description>
         </xsl:element>
     </xsl:template>

@@ -12,45 +12,53 @@ PREFIX event:    <http://purl.org/NET/c4dm/event.owl#>
 PREFIX fabio:    <http://purl.org/spar/fabio/>
 PREFIX foaf:     <http://xmlns.com/foaf/0.1/>
 PREFIX geo:      <http://aims.fao.org/aos/geopolitical.owl#>
+PREFIX p1:       <http://purl.org/dc/terms/>
+PREFIX p2:       <http://purl.org/vocab/vann/>
+PREFIX p3:       <http://www.ebi.ac.uk/efo/swo/>
 PREFIX obo:      <http://purl.obolibrary.org/obo/>
 PREFIX ocrer:    <http://purl.org/net/OCRe/research.owl#>
 PREFIX ocresd:   <http://purl.org/net/OCRe/study_design.owl#>
+PREFIX p4:       <http://purl.obolibrary.org/obo/ro.owl#>
 PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
+PREFIX p5:       <http://purl.org/net/OCRe/statistics.owl#>
+PREFIX p6:       <http://purl.org/net/OCRe/study_protocol.owl#>
 PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>
 PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+PREFIX vlocal:   <http://research-hub.urosario.edu.co/ontology/vlocal#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
-PREFIX prodinra: <http://record.prodinra.inra.fr/>
 PREFIX orcidwork:   <http://www.orcid.org/ns/work/>
 PREFIX orcidcommon: <http://www.orcid.org/ns/common/>
 PREFIX orcidrecord: <http://www.orcid.org/ns/record/>
 PREFIX orcidperson: <http://www.orcid.org/ns/person/>
 PREFIX generic: <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
-PREFIX temp: <http://example.org/tmp/>
-PREFIX abox: <http://vivo.wheatinitiative.org/individual/>
 
 CONSTRUCT {
-    ?authorship a vivo:Authorship .
-    ?authorship vivo:relates ?x .
-    ?x vivo:relatedBy ?authorship .
-    ?authorship vivo:relates ?knownperson .
-    ?knownperson vivo:relatedBy ?authorship .
-    ?knownperson a foaf:Person .
-    ?knownperson orcidcommon:label ?personLabel .
-    ?knownperson vivo:orcidId ?orcidId .
-    ?orcidId a owl:Thing .
+  ?x owl:sameAs ?y .
+  ?y owl:sameAs ?x .
 } WHERE {
-    ?x a orcidwork:work .
-    ?x generic:path ?workPath .
-    BIND(strbefore(?workPath, "/work") AS ?path)
-    BIND(strafter(?path, "/") AS ?rawOrcid)
-    BIND(IRI(concat("https://orcid.org/", ?rawOrcid)) AS ?orcidId)
-    BIND(concat("/", ?rawOrcid, "/person") AS ?personPath)
-    ?person generic:path ?personPath .
-    ?person orcidperson:name ?name .
-    OPTIONAL { ?name <http://www.orcid.org/ns/personal-details/family-name> ?familyName }
-    OPTIONAL { ?name  <http://www.orcid.org/ns/personal-details/given-names> ?givenName }
-    BIND(concat(?familyName, ", ", ?givenName) AS ?personLabel)
-    BIND(IRI(CONCAT(STR(abox:), "orcid-", ?rawOrcid)) AS ?knownperson)
-    BIND(IRI(CONCAT(STR(?x), "-authorship-", ?rawOrcid)) AS ?authorship)
+ {
+  ?x <https://wheatvivo.org/ontology/local/hasNN> ?nn1 .
+  ?nn1 ?xNormP ?value .
+  ?nn2 ?yNormP ?value .
+  ?y <https://wheatvivo.org/ontology/local/hasNN> ?nn2 .
+  FILTER(?x != ?y)
+  FILTER NOT EXISTS { ?x owl:differentFrom ?y }
+  FILTER( ( NOT EXISTS { ?nn1 ?guardP ?something } && NOT EXISTS { ?nn1 ?guardPx ?somethingPx} ) 
+          && ( NOT EXISTS { ?nn2 ?guardP ?somethingElse } && NOT EXISTS { ?nn2 ?guardPx ?somethingElsePx } ) )
+ } UNION {
+  ?x <https://wheatvivo.org/ontology/local/hasNN> ?nn1 .
+  ?nn1 ?xNormP ?value .
+  ?nn2 ?yNormP ?value .
+  ?y <https://wheatvivo.org/ontology/local/hasNN> ?nn2 .
+  FILTER NOT EXISTS {
+    ?nn3 ?yNormP ?value .
+    ?z <https://wheatvivo.org/ontology/local/hasNN> ?nn3 .
+    FILTER(STR(?z) < STR(?y))
+  }
+  FILTER(?x != ?y)
+  FILTER NOT EXISTS { ?x owl:differentFrom ?y }
+  FILTER( ( NOT EXISTS { ?nn1 ?guardP ?something } && NOT EXISTS { ?nn1 ?guardPx ?somethingPx} ) )
+#          || ( NOT EXISTS { ?nn2 ?guardP ?somethingElse } && NOT EXISTS { ?nn2 ?guardPx ?somethingElsePx } ) )
+ }
 }

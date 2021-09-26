@@ -26,8 +26,12 @@ PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
 PREFIX wi:       <http://www.wheatinitiative.org/administration/users/ontology/>
 
 CONSTRUCT {
-    ?x wi:identifier ?identifier
+    ?x wi:identifier ?identifier .
+    ?x vivo:orcidId ?orcidIRI .
+    ?orcidIRI a owl:Thing .
 } WHERE {
-    ?x vivo:orcidId ?orcidId .
-    BIND(CONCAT("orcid-", SUBSTR(STR(?orcidId), 18)) AS ?identifier)
+    ?x wi:OrcidID ?orcidId .
+    FILTER(REGEX(STR(?orcidId), "^https"))
+    BIND(IRI(REPLACE(STR(?orcidId), "\\s+", "")) AS ?orcidIRI)
+    BIND(CONCAT("orcid-", SUBSTR(STR(?orcidId), 19)) AS ?identifier)
 }

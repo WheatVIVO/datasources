@@ -13,9 +13,14 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.DataSourceBase;
 import org.wheatinitiative.vivo.datasource.DataSourceConfiguration;
+import org.wheatinitiative.vivo.datasource.normalizer.AuthorNameForSameAsNormalizer;
+import org.wheatinitiative.vivo.datasource.normalizer.LiteratureNameForSameAsNormalizer;
+import org.wheatinitiative.vivo.datasource.normalizer.OrganizationNameForSameAsNormalizer;
 import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
+import org.wheatinitiative.vivo.datasource.util.indexinginference.IndexingInference;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
@@ -29,7 +34,7 @@ import com.hp.hpl.jena.util.ResourceUtils;
 import com.hp.hpl.jena.vocabulary.RDF;
 
 public abstract class ConnectorDataSource extends DataSourceBase {
-    
+
     private static final Log log = LogFactory.getLog(ConnectorDataSource.class);
     /* number of iterator elements to be processed at once in memory 
     before being flushed to a SPARQL endpoint */
@@ -37,9 +42,9 @@ public abstract class ConnectorDataSource extends DataSourceBase {
     private static final List<String> FILTER_OUT_GENERIC = Arrays.asList(
             "generalizedXMLtoRDF/0.1", "vitro/0.7#position", "vitro/0.7#value", "XMLSchema-instance");
     private static final String FILTER_OUT_RES = "match_nothing"; 
-    
+
     protected Model result;
-    
+
     /**
      * to be overridden by subclasses
      * @return Model representing a discrete "record" in the source data,
@@ -47,7 +52,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
      * filtered for relevance 
      */
     protected abstract IteratorWithSize<Model> getSourceModelIterator();
-    
+
     /**
      * The number of table rows to be processed at once in memory before
      * being flushed to a SPARQL endpoint
@@ -56,7 +61,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
     protected int getBatchSize() {
         return DEFAULT_BATCH_SIZE;
     }
-    
+
     /**
      * to be overridden by subclasses
      * @param model
@@ -64,14 +69,14 @@ public abstract class ConnectorDataSource extends DataSourceBase {
      * terms or other criteria
      */
     protected abstract Model filter(Model model);
-    
+
     /**
      * to be overridden by subclasses
      * @param model
      * @return model with VIVO-compatible statements added
      */
     protected abstract Model mapToVIVO(Model model);
- 
+
     @Override
     public void runIngest() throws InterruptedException {
         Date currentDateTime = Calendar.getInstance().getTime();
@@ -83,95 +88,144 @@ public abstract class ConnectorDataSource extends DataSourceBase {
         if(!activeEndpointForResults()) {
             result = ModelFactory.createDefaultModel();
         }
-        IteratorWithSize<Model> it = getSourceModelIterator();
-        Integer totalRecords = it.size();
-        if(totalRecords != null) {
-            this.getStatus().setTotalRecords(totalRecords);
-            log.info(it.size() + " total records");
+        IndexingInference inf = null;
+        if(getSparqlEndpoint().getSparqlEndpointParams().getEndpointURI() != null) {
+            inf = new IndexingInference(getSparqlEndpoint());    
         }        
-        Model buffer = ModelFactory.createDefaultModel();
-        this.getStatus().setMessage("harvesting records");
-        boolean dataWrittenToEndpoint = false;
-        int count = 0;
-        while(it.hasNext() && count < this.getConfiguration().getLimit()) {
-            try {
-                if(this.getStatus().isStopRequested()) {
-                    throw new InterruptedException();
-                }
-                count++;                
-                Model model = mapToVIVO(it.next());
-                log.debug(model.size() + " statements before filtering");
-                if(this.getStatus().isStopRequested()) {
-                    throw new InterruptedException();
-                }
-                model = filter(model);
-                log.debug(model.size() + " statements after filtering");
-                if(this.getStatus().isStopRequested()) {
-                    throw new InterruptedException();
-                }
-                String defaultNamespace = getDefaultNamespace(this.getConfiguration());
-                if(defaultNamespace != null && !(this instanceof VivoDataSource)) {
-                    model = rewriteUris(model, defaultNamespace, getPrefixName());
-                }
-                if(this.getStatus().isStopRequested()) {
-                    throw new InterruptedException();
-                }
-                if(activeEndpointForResults()) {
-                    buffer.add(model);                
-                    if(count % getBatchSize() == 0 || !it.hasNext() 
-                            || count == this.getConfiguration().getLimit()) {
-                        if(buffer.size() > 0) {
-                            dataWrittenToEndpoint = true;
-                        }
-                        log.debug("Adding " + buffer.size() + " triples to endpoint");
-                        addToEndpoint(buffer, graphURI + graphTimeSuffix);
-                        buffer.removeAll();
+        if(inf != null && inf.isAvailable()) {
+            inf.unregisterReasoner();
+            inf.unregisterSearchIndexer();
+            log.info("Unregistered reasoner and search indexer");
+        } else {
+            log.warn("IndexingInferenceService not available on destination endpoint");
+        }
+        try {
+            IteratorWithSize<Model> it = getSourceModelIterator();
+            Integer totalRecords = it.size();
+            if(totalRecords != null) {
+                this.getStatus().setTotalRecords(totalRecords);
+                log.info(it.size() + " total records");
+            }        
+            Model buffer = ModelFactory.createDefaultModel();
+            this.getStatus().setMessage("harvesting records");
+            boolean dataWrittenToEndpoint = false;
+            int count = 0;
+            while(it.hasNext() && count < this.getConfiguration().getLimit()) {
+                try {
+                    if(this.getStatus().isStopRequested()) {
+                        throw new InterruptedException();
                     }
-                } else {
-                    result.add(model);
+                    count++;                
+                    Model model = mapToVIVO(it.next());
+                    log.debug(model.size() + " statements before filtering");
+                    if(this.getStatus().isStopRequested()) {
+                        throw new InterruptedException();
+                    }
+                    model = filter(model);
+                    log.debug(model.size() + " statements after filtering");
+                    if(this.getStatus().isStopRequested()) {
+                        throw new InterruptedException();
+                    }
+                    String defaultNamespace = getDefaultNamespace(this.getConfiguration());
+                    if(defaultNamespace != null && !(this instanceof VivoDataSource)) {
+                        model = rewriteUris(model, defaultNamespace, getPrefixName());
+                    }
+                    if(this.getStatus().isStopRequested()) {
+                        throw new InterruptedException();
+                    }
+                    if(activeEndpointForResults()) {
+                        buffer.add(model);                
+                        if(count % getBatchSize() == 0 || !it.hasNext() 
+                                || count == this.getConfiguration().getLimit()) {
+                            if(buffer.size() > 0) {
+                                dataWrittenToEndpoint = true;
+                            }
+                            log.debug("Adding " + buffer.size() + " triples to endpoint");
+                            addToEndpoint(buffer, graphURI + graphTimeSuffix);
+                            buffer.removeAll();
+                        }
+                    } else {
+                        result.add(model);
+                    }
+                    this.getStatus().setProcessedRecords(count);                
+                    if(totalRecords != null && totalRecords > 0) {
+                        float completionPercentage = ((float) count / (float) totalRecords) * 100;
+                        log.info("Completion percentage " + completionPercentage);
+                        this.getStatus().setCompletionPercentage((int) completionPercentage);
+                    }
+                } catch (InterruptedException e) {
+                    throw(e); // this is the one exception we want to throw 
+                } catch (Exception e) {
+                    log.error(e, e);
+                    this.getStatus().setErrorRecords(this.getStatus().getErrorRecords() + 1);
                 }
-                this.getStatus().setProcessedRecords(count);                
-                if(totalRecords != null && totalRecords > 0) {
-                    float completionPercentage = ((float) count / (float) totalRecords) * 100;
-                    log.info("Completion percentage " + completionPercentage);
-                    this.getStatus().setCompletionPercentage((int) completionPercentage);
-                }
-            } catch (InterruptedException e) {
-                throw(e); // this is the one exception we want to throw 
-            } catch (Exception e) {
-                log.error(e, e);
-                this.getStatus().setErrorRecords(this.getStatus().getErrorRecords() + 1);
             }
-        }
-        boolean skipClearingOldData = false;
-        if(!dataWrittenToEndpoint) {
-            if(totalRecords == null) {
-                skipClearingOldData = true;
-            } else if (this.getStatus().getErrorRecords() > (totalRecords / 5)) {
-                skipClearingOldData = true;
+            runNormalizers();
+            boolean skipClearingOldData = false;
+            if(!dataWrittenToEndpoint) {
+                if(totalRecords == null) {
+                    skipClearingOldData = true;
+                } else if (this.getStatus().getErrorRecords() > (totalRecords / 5)) {
+                    skipClearingOldData = true;
+                }
             }
-        }
-        if(activeEndpointForResults() && !skipClearingOldData) {
-            this.getStatus().setMessage("removing old data");
-            List<String> allVersionsOfSource = getGraphsWithBaseURI(graphURI, 
-                    getSparqlEndpoint());
-            for(String version : allVersionsOfSource) {
-                if(this.getStatus().isStopRequested()) {
-                    throw new InterruptedException();
+            if(activeEndpointForResults() && !skipClearingOldData) {
+                this.getStatus().setMessage("removing old data");
+                List<String> allVersionsOfSource = getGraphsWithBaseURI(graphURI, 
+                        getSparqlEndpoint());
+                for(String version : allVersionsOfSource) {
+                    if(this.getStatus().isStopRequested()) {
+                        throw new InterruptedException();
+                    }
+                    if(version.startsWith(graphURI) 
+                            && !version.endsWith(graphTimeSuffix)) {
+                        log.info("Clearing graph " + version);
+                        getSparqlEndpoint().clearGraph(version);
+                    }
                 }
-                if(version.startsWith(graphURI) 
-                        && !version.endsWith(graphTimeSuffix)) {
-                    log.info("Clearing graph " + version);
-                    getSparqlEndpoint().clearGraph(version);
-                }
+            }
+        } finally {
+            if(inf != null && inf.isAvailable()) {
+                inf.registerReasoner();
+                log.info("Registered reasoner");
+                inf.registerSearchIndexer();
+                log.info("Registered search indexer");
+                inf.recompute();
+                log.info("Recomputing inferences");
+                this.getStatus().setMessage("Recomputing inferences");
+                do {
+                    Thread.sleep(10000);
+                } while (inf.isReasonerIsRecomputing());
+                // indexing kicked off after requested inference recompute
+                this.getStatus().setMessage("Rebuilding search index");
+                do {
+                    Thread.sleep(10000);
+                } while (inf.isReasonerIsRecomputing()); 
+            } else {
+                log.warn("IndexingInferenceService not available on destination endpoint");
             }
         }
     }
     
+    private void runNormalizers() {
+        this.getStatus().setMessage("Running person name normalizer");
+        DataSource norm = new AuthorNameForSameAsNormalizer();
+        norm.setConfiguration(this.getConfiguration());
+        norm.run();
+        this.getStatus().setMessage("Running organization name normalizer");
+        norm = new OrganizationNameForSameAsNormalizer();
+        norm.setConfiguration(this.getConfiguration());
+        norm.run();
+        this.getStatus().setMessage("Running literature name normalizer");
+        norm = new LiteratureNameForSameAsNormalizer();
+        norm.setConfiguration(this.getConfiguration());
+        norm.run();
+    }
+
     protected String getDefaultNamespace() {
         return getDefaultNamespace(getConfiguration());
     }
-    
+
     private String getDefaultNamespace(DataSourceConfiguration configuration) {
         Object o = configuration.getParameterMap().get("Vitro.defaultNamespace");
         if(o instanceof String) {
@@ -184,12 +238,12 @@ public abstract class ConnectorDataSource extends DataSourceBase {
     protected boolean activeEndpointForResults() {
         return (this.getConfiguration().getEndpointParameters() != null);
     }
-    
+
     @Override
     public Model getResult() {
         return this.result;
     }
-    
+
     protected Model renameByIdentifier(Model m, Property identifier, 
             String namespace, String localNamePrefix) {
         Map<Resource, String> idMap = new HashMap<Resource, String>();
@@ -207,7 +261,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
         }
         return m;
     }
-    
+
     protected Model rewriteUris(Model model, String namespace, String localNamePrefix) {
         Model out = ModelFactory.createDefaultModel();
         StmtIterator sit = model.listStatements();
@@ -222,7 +276,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
         }
         return out;
     }
-    
+
     protected Resource rewriteResource(Resource res, String namespace, String localNamePrefix) {
         if(!res.isURIResource()) {
             return res;
@@ -247,7 +301,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
             return res;
         }                
     }
-    
+
     /**
      * A filter that removes raw statements produced by
      * XML (or JSON) to RDF lifting as well as other statements
@@ -267,7 +321,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
             Statement stmt = sit.next();
             String typeURI = null;
             if( (RDF.type.equals(stmt.getPredicate()))
-                        && (stmt.getObject().isURIResource()) ) { 
+                    && (stmt.getObject().isURIResource()) ) { 
                 typeURI = stmt.getObject().asResource().getURI();
             } 
             boolean retainStatement = true;
@@ -284,7 +338,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
         }
         return filtered;
     }
-    
+
     protected abstract String getPrefixName();
-    
+
 }

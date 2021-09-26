@@ -27,6 +27,10 @@ CONSTRUCT {
 #SELECT (count(distinct ?x) AS ?count)
 WHERE {
     ?x a foaf:Person .
+    FILTER NOT EXISTS { 
+      GRAPH ?g { ?x a ?something }
+      FILTER(REGEX(STR(?g), "wheatinitiative"))
+    }
     FILTER NOT EXISTS {
         ?x vivo:relatedBy ?internalauthorship .
         ?internalauthorship a vivo:Authorship .
