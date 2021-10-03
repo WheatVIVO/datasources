@@ -28,31 +28,31 @@ CONSTRUCT {
   ?x owl:sameAs ?y .
   ?y owl:sameAs ?x 
 } WHERE {
-    ?vcard1 owl:sameAs ?vcard2 .
-    ?vcard1 a vcard:Kind .
-    ?vcard2 a vcard:Kind .
-    OPTIONAL {
-        ?vcard1 vcard:hasName ?x .
-        ?vcard2 vcard:hasName ?y .
-    }
-# Don't merge addresses
-#    OPTIONAL {
+# (for now) Don't merge addresses
 #        ?vcard1 vcard:hasAddress ?x .
 #        ?vcard2 vcard:hasAddress ?y .
-#    }
-    OPTIONAL {
+    {
+        ?vcard1 a vcard:Kind .
+        ?vcard1 vcard:hasName ?x .
+        ?vcard1 owl:sameAs ?vcard2 .
+        ?vcard2 vcard:hasName ?y .
+    } UNION {
+        ?vcard1 a vcard:Kind .
+        ?vcard1 owl:sameAs ?vcard2 .
         ?vcard1 vcard:hasEmail ?x .
 	?x vcard:email ?value .
 	?y vcard:email ?value .
         ?vcard2 vcard:hasEmail ?y .
-    } 
-    OPTIONAL {
+    } UNION  {
+        ?vcard1 a vcard:Kind .
+        ?vcard1 owl:sameAs ?vcard2 .
         ?vcard1 vcard:hasTelephone ?x .
 	?x vcard:telephone ?value .
 	?y vcard:telephone ?value .
         ?vcard2 vcard:hasTelephone ?y .
-    }
-    OPTIONAL {
+    } UNION {
+        ?vcard1 a vcard:Kind .
+        ?vcard1 owl:sameAs ?vcard2 .
         ?vcard1 vcard:hasURL ?x .
 	?x vcard:url ?value .
 	?y vcard:url ?value .
