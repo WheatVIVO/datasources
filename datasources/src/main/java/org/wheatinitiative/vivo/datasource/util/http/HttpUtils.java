@@ -8,6 +8,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -58,9 +59,15 @@ public class HttpUtils {
     }
     
     private void buildHttpClient() {
+        int timeout = 5;
+        RequestConfig requestConfig = RequestConfig.custom()
+          .setConnectTimeout(timeout * 1000)
+          .setConnectionRequestTimeout(timeout * 1000)
+          .setSocketTimeout(timeout * 1000).build();
         this.httpClient = HttpClients.custom()
                 .setRedirectStrategy(new LaxRedirectStrategy())
                 .setUserAgent(userAgent)
+                .setDefaultRequestConfig(requestConfig)
                 .build();
     }
     
@@ -89,15 +96,15 @@ public class HttpUtils {
                 }
             }
         }
-        if(response.getStatusLine().getStatusCode() >= 400) {
-            throw new RuntimeException(response.getStatusLine().getStatusCode() 
-                    + ": " + response.getStatusLine().getReasonPhrase() + " (" + url + ")");    
-        }
-        try {            
+        try {
+            if(response.getStatusLine().getStatusCode() >= 400) {
+                throw new RuntimeException(response.getStatusLine().getStatusCode()
+                        + ": " + response.getStatusLine().getReasonPhrase() + " (" + url + ")");
+            }
             return EntityUtils.toString(response.getEntity(), "UTF-8");
         } finally {
             EntityUtils.consume(response.getEntity());
-        }   
+        }
     }
     
     private HttpResponse execute(HttpUriRequest request, HttpClient httpClient) 
