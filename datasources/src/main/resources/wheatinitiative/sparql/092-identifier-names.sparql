@@ -30,6 +30,6 @@ CONSTRUCT {
 } WHERE {
     ?x wi:Last_Name ?lastName .
     ?x wi:First_Name ?firstName .
-    FILTER NOT EXISTS { ?x wi:OrcidId ?orcidId }
+    FILTER NOT EXISTS { ?x wi:OrcidID ?orcidId }
     BIND(CONCAT(REPLACE(STR(?firstName), "\\W+", "-"), "-", REPLACE(STR(?lastName), "\\W+", "-")) AS ?identifier)
 }
