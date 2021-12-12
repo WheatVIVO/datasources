@@ -39,10 +39,10 @@ CONSTRUCT {
     ?grant grdc:Administration_Organisation ?orgLabel .
     OPTIONAL { 
       ?grant grdc:Administration_Organisation_Contact ?email .
-      BIND(IRI(CONCAT(STR(?grant), "-adminOrgVcard")) ?vcard)
-      BIND(IRI(CONCAT(STR(?grant), "-adminOrgVcardEmail")) ?vcardEmail)
+      BIND(IRI(CONCAT(STR(?grant), "-adminOrgVcard")) AS ?vcard)
+      BIND(IRI(CONCAT(STR(?grant), "-adminOrgVcardEmail")) AS ?vcardEmail)
     }
     ?grant vivo:fundingVehicleFor ?project .
-    BIND(IRI(CONCAT(STR(?grant), "-adminOrg")) ?org)
-    BIND(IRI(CONCAT(STR(?grant), "-adminOrgRole")) ?role)
+    BIND(IRI(CONCAT(STR(?grant), "-adminOrg")) AS ?org)
+    BIND(IRI(CONCAT(STR(?grant), "-adminOrgRole")) AS ?role)
 }

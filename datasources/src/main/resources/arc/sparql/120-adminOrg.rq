@@ -33,6 +33,6 @@ CONSTRUCT {
 } WHERE {
     ?grant arc:Administration_Organisation ?orgLabel .
     ?grant vivo:fundingVehicleFor ?project .
-    BIND(IRI(CONCAT(STR(?grant), "-adminOrg")) ?org)
-    BIND(IRI(CONCAT(STR(?grant), "-adminOrgRole")) ?role)
+    BIND(IRI(CONCAT(STR(?grant), "-adminOrg")) AS ?org)
+    BIND(IRI(CONCAT(STR(?grant), "-adminOrgRole")) AS ?role)
 }

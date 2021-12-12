@@ -53,9 +53,7 @@ public class GrdcConnector extends WheatInitiative {
                 "100-grant.rq", 
                 "110-funder.rq",
                 "120-adminOrg.rq",
-                "130-dti.rq",
-                "200-pi.rq",
-                "210-investigator.rq"
+                "130-dti.rq"
                 );
         for(String query : queries) {
             construct(SPARQL_RESOURCE_DIR + query, m, ABOX);

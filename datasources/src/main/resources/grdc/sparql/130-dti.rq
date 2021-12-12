@@ -38,9 +38,9 @@ CONSTRUCT {
     BIND(xsd:dateTime(CONCAT(STR(?startYear), "T00:00:00Z")) AS ?dateTimeStart)
     OPTIONAL {
       ?grant grdc:Anticipated_End_Date ?endDate .
-      BIND(IRI(CONCAT(STR(?grant), "-dti-start")) ?dti)
+      BIND(IRI(CONCAT(STR(?grant), "-dti-end")) AS ?end)
       BIND(xsd:dateTime(CONCAT(STR(?endDate), "T00:00:00Z")) AS ?dateTimeEnd)
     }
-    BIND(IRI(CONCAT(STR(?grant), "-dti")) ?dti)
-    BIND(IRI(CONCAT(STR(?grant), "-dti-start")) ?dti)
+    BIND(IRI(CONCAT(STR(?grant), "-dti")) AS ?dti)
+    BIND(IRI(CONCAT(STR(?grant), "-dti-start")) AS ?start)
 }

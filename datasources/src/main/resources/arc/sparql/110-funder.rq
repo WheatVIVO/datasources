@@ -24,6 +24,7 @@ PREFIX arc:      <https://wheatvivo.org/ontology/arc/>
 
 CONSTRUCT {
     ?grant vivo:assignedBy arc:ARC .
+    arc:ARC a vivo:FundingOrganization .
     arc:ARC vivo:assigns ?grant .
     arc:ARC rdfs:label "Australian Research Council (ARC)" .
     arc:ARC owl:sameAs <https://wheatvivo.org/individual/msracad-1337719021> .

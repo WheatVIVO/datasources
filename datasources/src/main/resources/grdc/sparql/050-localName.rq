@@ -32,5 +32,5 @@ CONSTRUCT {
   OPTIONAL {
     ?x grdc:Funding_Commencement_Year ?year .
   }
-  BIND(CONCAT(LCASE(REPLACE(REPLACE(STR(?title), ".$", ""), "\\W+", "-")), "-", STRBEFORE(STR(?year), "-"))) AS ?localName)
+  BIND(CONCAT(LCASE(REPLACE(REPLACE(STR(?title), ".$", ""), "\\W+", "-")), "-", STRBEFORE(STR(?year), "-")) AS ?localName)
 }
