@@ -23,7 +23,7 @@ PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX grdc:      <https://wheatvivo.org/ontology/grdc/>
 
 CONSTRUCT {
-    ?grant vivo:assignedBy grdc:CRG .
+    ?grant vivo:assignedBy grdc:GRDC .
     grdc:GRDC vivo:assigns ?grant .
     grdc:GRDC a vivo:FundingOrganization .
     grdc:GRDC rdfs:label "Grains Research and Development Corporation (GRDC)" .

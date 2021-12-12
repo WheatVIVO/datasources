@@ -38,16 +38,18 @@ CONSTRUCT {
     ?vcardName vcard:familyName ?lastName .
     ?vcardName vcard:givenName ?firstName .
     ?vcard vcard:hasEmail ?vcardEmail .
-    ?vcardUrl a vcard:Email, vcard:Work .
-    ?vcardUrl vcard:email ?email .
+    ?vcardEmail a vcard:Email, vcard:Work .
+    ?vcardEmail vcard:email ?email .
 } WHERE {
     ?grant vivo:fundingVehicleFor ?project .
     ?grant arc:Lead_InvestigatorSplit ?investigator .
     ?investigator g:firstName ?firstName .
     ?investigator g:lastName ?lastName .
-    ?investigator g:rank ?rank .
+    ?investigator vivo:rank ?rank .
     OPTIONAL {
-      ?grant arc:Email_Address_of_Lead_Investigator ?email  
+      ?grant arc:Email_Address_of_Lead_Investigator ?email .
+      ?grant arc:Lead_InvestigatorSplit ?investigator .
+      ?investigator vivo:rank ?rank .
       BIND(IRI(CONCAT(STR(?grant), "-pi", STR(?rank), "-vcard-email")) AS ?vcardEmail) 
     }
     BIND(CONCAT(STR(?lastName), ", ", STR(?firstName)) AS ?personLabel)

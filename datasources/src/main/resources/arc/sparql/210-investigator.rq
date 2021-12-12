@@ -42,7 +42,7 @@ CONSTRUCT {
     ?grant arc:Other_InvestigatorsSplit ?investigator .
     ?investigator g:firstName ?firstName .
     ?investigator g:lastName ?lastName .
-    ?investigator g:rank ?rank .
+    ?investigator vivo:rank ?rank .
     BIND(CONCAT(STR(?lastName), ", ", STR(?firstName)) AS ?personLabel)
     BIND(IRI(CONCAT(STR(?grant), "-investigatorRole", STR(?rank))) AS ?role) 
     BIND(IRI(CONCAT(STR(?grant), "-investigator", STR(?rank))) AS ?person) 

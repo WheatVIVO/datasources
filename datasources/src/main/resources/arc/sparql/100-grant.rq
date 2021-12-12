@@ -36,5 +36,5 @@ CONSTRUCT {
     ?grant arc:Project_Title ?title .
     OPTIONAL { ?grant arc:Project_Summary ?summary }
     OPTIONAL { ?grant arc:Funding_Amount ?amount }
-    BIND(IRI(CONCAT(STR(?x), "-project")) AS ?project)
+    BIND(IRI(CONCAT(STR(?grant), "-project")) AS ?project)
 }

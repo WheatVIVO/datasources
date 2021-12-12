@@ -36,5 +36,5 @@ CONSTRUCT {
     ?grant grdc:Project_Title ?title .
     OPTIONAL { ?grant grdc:Project_Summary ?summary }
     OPTIONAL { ?grant grdc:Funding_Amount ?amount }
-    BIND(IRI(CONCAT(STR(?x), "-project")) AS ?project)
+    BIND(IRI(CONCAT(STR(?grant), "-project")) AS ?project)
 }

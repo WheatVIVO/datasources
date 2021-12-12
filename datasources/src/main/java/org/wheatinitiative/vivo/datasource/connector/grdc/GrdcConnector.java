@@ -26,7 +26,7 @@ public class GrdcConnector extends WheatInitiative {
     
     @Override
     protected int getHeaderRow() {
-        return 2;
+        return 3;
     }
 
     @Override
