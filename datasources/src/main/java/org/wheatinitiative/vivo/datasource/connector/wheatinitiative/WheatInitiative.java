@@ -3,11 +3,14 @@ package org.wheatinitiative.vivo.datasource.connector.wheatinitiative;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -38,22 +41,45 @@ public class WheatInitiative extends ConnectorDataSource implements DataSource {
             "http://www.wheatinitiative.org/administration/users/ontology/";
     private static final String ABOX = 
             "http://www.wheatinitiative.org/administration/users/";
-    private static final String ABOX_ETC = ABOX + "n";
-    private static final String VIVO_NS = "http://vivoweb.org/ontology/core#";
     private static final String SPARQL_RESOURCE_DIR = "/wheatinitiative/sparql/";
     public static final String EXCEL_SUBDIR = "/wheatInitiative";
     private static final int MAX_COLS = 13;
+    private static final int HEADER_ROW = 1;
     private static final Log log = LogFactory.getLog(WheatInitiative.class);
-
+    protected Map<String, SimpleDateFormat> propDateFormat = new HashMap<String, SimpleDateFormat>();    
+     
+    public WheatInitiative() {
+        propDateFormat.put("DATE", new java.text.SimpleDateFormat("dd/MM/yyyy"));
+        propDateFormat.put("YEAR", new java.text.SimpleDateFormat("dd/MM/yyyy"));
+        propDateFormat.put("START", new java.text.SimpleDateFormat("dd/MM/yyyy"));
+        propDateFormat.put("END", new java.text.SimpleDateFormat("dd/MM/yyyy"));
+    }
+    
+    protected int getHeaderRow() {
+        return HEADER_ROW;
+    }
+    
+    protected String getExcelSubdirectory() {
+        return EXCEL_SUBDIR;
+    }
+    
+    protected String getTBoxNS() {
+        return TBOX;
+    }
+    
+    protected String getABoxNS() {
+        return ABOX;
+    }
+    
     @Override
     protected IteratorWithSize<Model> getSourceModelIterator() {
         Object dataDir = this.getConfiguration().getParameterMap().get("dataDir");
         if(!(dataDir instanceof String)) {
             throw new RuntimeException("dataDir parameter must point to " 
-                    + "a directory containing a subdirectory " + EXCEL_SUBDIR 
-                    + " of researcher Excel files");
+                    + "a directory containing a subdirectory " + getExcelSubdirectory() 
+                    + " of Excel files");
         }
-        return new WheatInitiativeIterator((String) dataDir + EXCEL_SUBDIR);
+        return new WheatInitiativeIterator((String) dataDir + getExcelSubdirectory());
     }
 
     private class WheatInitiativeIterator implements IteratorWithSize<Model> {        
@@ -94,25 +120,28 @@ public class WheatInitiative extends ConnectorDataSource implements DataSource {
                     sheetNum++;                    
                     for (Row row : sheet) {
                         rowNum++;
+                        if(rowNum < getHeaderRow()) {
+                            continue;
+                        }
                         int lastCellNum = row.getLastCellNum();
                         log.info("Last cell num is " + lastCellNum);
                         if(lastCellNum >= MAX_COLS) {
                             lastCellNum = MAX_COLS - 1;
                         }
-                        if(rowNum == 1) {
+                        if(rowNum == getHeaderRow()) {
                             // header row
                             log.info("Processing header.");
                             for(int i = row.getFirstCellNum(); i <= lastCellNum; i++) {                                
                                 String header = fmt.formatCellValue(row.getCell(i));
                                 String localName = localNameFromHeader(header);
-                                String ontologyURI = TBOX;
+                                String ontologyURI = getTBoxNS();
                                 propertyURIs.add(i, ontologyURI + localName);
                             }
                             continue;
                         } else {
                             log.info("Processing row " + rowNum);
                         }
-                        String resourceURI = ABOX + localNamePrefix;
+                        String resourceURI = getABoxNS() + localNamePrefix;
                         if(sheetNum > 1) {
                             resourceURI += "-s" + sheetNum;
                         }
@@ -136,17 +165,19 @@ public class WheatInitiative extends ConnectorDataSource implements DataSource {
                             } else {
                                 text = fmt.formatCellValue(row.getCell(i));
                             }
-                            // sometimes Excel doesn't recognize the date fields
-                            // TODO refactor this : also used in PublicationsConnector
-                            if(propertyURI.contains("DATE") || propertyURI.contains("YEAR") 
-                                    || propertyURI.contains("START") || propertyURI.contains("END")) {
-                                java.text.SimpleDateFormat oldFmt = new java.text.SimpleDateFormat("dd/MM/yyyy");
-                                java.text.SimpleDateFormat newFmt = new java.text.SimpleDateFormat("yyyy-MM-dd");
-                                try {
-                                    Date d = oldFmt.parse(text);
-                                    text = newFmt.format(d);
-                                } catch (ParseException e) {
-                                    log.debug("Cannot parse " + text + " as date");
+                            // transform date fields not recognized by Excel
+                            for(String key : propDateFormat.keySet()) {
+                                if(propertyURI.contains(key)) {
+                                    java.text.SimpleDateFormat oldFmt = propDateFormat.get(key) ;
+                                    java.text.SimpleDateFormat newFmt = new java.text.SimpleDateFormat(
+                                            "yyyy-MM-dd");
+                                    try {
+                                        Date d = oldFmt.parse(text);
+                                        text = newFmt.format(d);
+                                    } catch (ParseException e) {
+                                        log.debug("Cannot parse " + text + " as date");
+                                    }
+                                    break;
                                 }
                             }
                             // non-breaking space
@@ -204,11 +235,11 @@ public class WheatInitiative extends ConnectorDataSource implements DataSource {
      * @return model with VIVO RDF added
      */
     protected Model mapToVIVO(Model m) {
-        construct(SPARQL_RESOURCE_DIR + "090-identifier-orcid.sparql", m, ABOX);
-        construct(SPARQL_RESOURCE_DIR + "091-identifier-name.sparql", m, ABOX);
-        construct(SPARQL_RESOURCE_DIR + "092-identifier-names.sparql", m, ABOX);
+        construct(SPARQL_RESOURCE_DIR + "090-identifier-orcid.sparql", m, getABoxNS());
+        construct(SPARQL_RESOURCE_DIR + "091-identifier-name.sparql", m, getABoxNS());
+        construct(SPARQL_RESOURCE_DIR + "092-identifier-names.sparql", m, getABoxNS());
         m = renameByIdentifier(m, m.getProperty(
-                TBOX + "identifier"), ABOX, "");
+                getTBoxNS() + "identifier"), getABoxNS(), "");
         List<String> queries = Arrays.asList( 
                 "100-person-vcard-name.sparql", 
                 "105-person-label.sparql",
@@ -221,7 +252,7 @@ public class WheatInitiative extends ConnectorDataSource implements DataSource {
                 "200-organization-name.sparql"
                 );
         for(String query : queries) {
-            construct(SPARQL_RESOURCE_DIR + query, m, ABOX);
+            construct(SPARQL_RESOURCE_DIR + query, m, getABoxNS());
         }
         return m;
     }

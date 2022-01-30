@@ -242,7 +242,7 @@ public abstract class DataSourceBase {
         String queryStr = "SELECT DISTINCT ?g WHERE { \n" +
                           "    GRAPH ?g { ?s ?p ?o } \n" +
                           "    FILTER(REGEX(STR(?g), \"^" + baseURI + "\")) \n" +
-                          "}";
+                          "} ORDER BY ?g";
         ResultSet rs = endpoint.getResultSet(queryStr);
         while(rs.hasNext()) {
             QuerySolution qsoln = rs.next();

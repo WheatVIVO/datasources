@@ -23,13 +23,14 @@ PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
-PREFIX wi:       <http://www.wheatinitiative.org/administration/users/ontology/>
+PREFIX grdc:       <https://wheatvivo.org/ontology/grdc/>
 
 CONSTRUCT {
-    ?x wi:identifier ?identifier 
+  ?x grdc:localName ?localName
 } WHERE {
-    ?x wi:Last_Name ?lastName .
-    ?x wi:First_Name ?firstName .
-    FILTER NOT EXISTS { ?x wi:OrcidID ?orcidId }
-    BIND(CONCAT(REPLACE(STR(?firstName), "\\W+", "-"), "-", REPLACE(STR(?lastName), "\\W+", "-")) AS ?identifier)
+  ?x grdc:Project_Title ?title .
+  OPTIONAL {
+    ?x grdc:Funding_Commencement_Year ?year .
+  }
+  BIND(CONCAT(LCASE(REPLACE(REPLACE(STR(?title), ".$", ""), "\\W+", "-")), "-", STRBEFORE(STR(?year), "-")) AS ?localName)
 }

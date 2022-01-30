@@ -16,20 +16,36 @@ PREFIX obo:      <http://purl.obolibrary.org/obo/>
 PREFIX ocrer:    <http://purl.org/net/OCRe/research.owl#>
 PREFIX ocresd:   <http://purl.org/net/OCRe/study_design.owl#>
 PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
-PREFIX nih:      <http://vivo.scripps.edu/ontology/nih#>
-PREFIX tsri:     <http://vivo.scripps.edu/ontology/tsri#>
 PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>
 PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
-PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
-PREFIX wi:       <http://www.wheatinitiative.org/administration/users/ontology/>
+PREFIX arc:      <https://wheatvivo.org/ontology/arc/>
+PREFIX g:        <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
 
 CONSTRUCT {
-    ?x wi:identifier ?identifier 
+    ?grant vivo:relates ?person .
+    ?grant vivo:relates ?role .
+    ?role a vivo:InvestigatorRole .
+    ?role obo:RO_0000052 ?person .
+    ?role obo:BFO_0000054 ?project .
+    ?person a foaf:Person .
+    ?person rdfs:label ?personLabel .
+    ?person obo:ARG_2000028 ?vcard .
+    ?vcard a vcard:Individual .
+    ?vcard vcard:hasName ?vcardName .
+    ?vcardName a vcard:Name .
+    ?vcardName vcard:familyName ?lastName .
+    ?vcardName vcard:givenName ?firstName .
 } WHERE {
-    ?x wi:Last_Name ?lastName .
-    ?x wi:First_Name ?firstName .
-    FILTER NOT EXISTS { ?x wi:OrcidID ?orcidId }
-    BIND(CONCAT(REPLACE(STR(?firstName), "\\W+", "-"), "-", REPLACE(STR(?lastName), "\\W+", "-")) AS ?identifier)
+    ?grant vivo:fundingVehicleFor ?project .
+    ?grant arc:Other_InvestigatorsSplit ?investigator .
+    ?investigator g:firstName ?firstName .
+    ?investigator g:lastName ?lastName .
+    ?investigator vivo:rank ?rank .
+    BIND(CONCAT(STR(?lastName), ", ", STR(?firstName)) AS ?personLabel)
+    BIND(IRI(CONCAT(STR(?grant), "-investigatorRole", STR(?rank))) AS ?role) 
+    BIND(IRI(CONCAT(STR(?grant), "-investigator", STR(?rank))) AS ?person) 
+    BIND(IRI(CONCAT(STR(?grant), "-investigator", STR(?rank), "-vcard")) AS ?vcard) 
+    BIND(IRI(CONCAT(STR(?grant), "-investigator", STR(?rank), "-vcard-name")) AS ?vcardName) 
 }

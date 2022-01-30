@@ -16,20 +16,25 @@ PREFIX obo:      <http://purl.obolibrary.org/obo/>
 PREFIX ocrer:    <http://purl.org/net/OCRe/research.owl#>
 PREFIX ocresd:   <http://purl.org/net/OCRe/study_design.owl#>
 PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
-PREFIX nih:      <http://vivo.scripps.edu/ontology/nih#>
-PREFIX tsri:     <http://vivo.scripps.edu/ontology/tsri#>
 PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>
 PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
-PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
-PREFIX wi:       <http://www.wheatinitiative.org/administration/users/ontology/>
+PREFIX arc:      <https://wheatvivo.org/ontology/arc/>
 
 CONSTRUCT {
-    ?x wi:identifier ?identifier 
+    ?grant a vivo:Grant .
+    ?grant rdfs:label ?title .
+    ?grant vivo:description ?summary .
+    ?grant vivo:totalAwardAmount ?amount . 
+    ?grant vivo:fundingVehicleFor ?project .
+    ?project a vivo:Project .
+    ?project rdfs:label ?title .
+    ?project vivo:description ?summary .
+    ?project <http://vivo.wheatinitiative.org/ontology/grant/status> ?status .
 } WHERE {
-    ?x wi:Last_Name ?lastName .
-    ?x wi:First_Name ?firstName .
-    FILTER NOT EXISTS { ?x wi:OrcidID ?orcidId }
-    BIND(CONCAT(REPLACE(STR(?firstName), "\\W+", "-"), "-", REPLACE(STR(?lastName), "\\W+", "-")) AS ?identifier)
+    ?grant arc:Project_Title ?title .
+    OPTIONAL { ?grant arc:Project_Summary ?summary }
+    OPTIONAL { ?grant arc:Funding_Amount ?amount }
+    BIND(IRI(CONCAT(STR(?grant), "-project")) AS ?project)
 }

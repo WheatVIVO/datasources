@@ -16,20 +16,31 @@ PREFIX obo:      <http://purl.obolibrary.org/obo/>
 PREFIX ocrer:    <http://purl.org/net/OCRe/research.owl#>
 PREFIX ocresd:   <http://purl.org/net/OCRe/study_design.owl#>
 PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
-PREFIX nih:      <http://vivo.scripps.edu/ontology/nih#>
-PREFIX tsri:     <http://vivo.scripps.edu/ontology/tsri#>
 PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>
 PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
-PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
-PREFIX wi:       <http://www.wheatinitiative.org/administration/users/ontology/>
+PREFIX arc:      <https://wheatvivo.org/ontology/arc/>
 
 CONSTRUCT {
-    ?x wi:identifier ?identifier 
+    ?grant vivo:dateTimeInterval ?dti .
+    ?dti a vivo:DateTimeInterval .
+    ?dti vivo:start ?start .
+    ?start a vivo:DateTimeValue .
+    ?start vivo:dateTime ?dateTimeStart .
+    ?start vivo:dateTimePrecision vivo:yearPrecision .
+    ?dti vivo:end ?end .
+    ?end a vivo:DateTimeValue .
+    ?end vivo:dateTime ?dateTimeEnd .
+    ?end vivo:dateTimePrecision vivo:yearMonthDayPrecision .
 } WHERE {
-    ?x wi:Last_Name ?lastName .
-    ?x wi:First_Name ?firstName .
-    FILTER NOT EXISTS { ?x wi:OrcidID ?orcidId }
-    BIND(CONCAT(REPLACE(STR(?firstName), "\\W+", "-"), "-", REPLACE(STR(?lastName), "\\W+", "-")) AS ?identifier)
+    ?grant arc:Funding_Commencement_Year ?startYear .
+    BIND(xsd:dateTime(CONCAT(STR(?startYear), "-01-01T00:00:00Z")) AS ?dateTimeStart)
+    OPTIONAL {
+      ?grant arc:Anticipated_End_Date ?endDate .
+      BIND(IRI(CONCAT(STR(?grant), "-dti-end")) AS ?end)
+      BIND(xsd:dateTime(CONCAT(STR(?endDate), "T00:00:00Z")) AS ?dateTimeEnd)
+    }
+    BIND(IRI(CONCAT(STR(?grant), "-dti")) AS ?dti)
+    BIND(IRI(CONCAT(STR(?grant), "-dti-start")) AS ?start)
 }

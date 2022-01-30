@@ -16,20 +16,33 @@ PREFIX obo:      <http://purl.obolibrary.org/obo/>
 PREFIX ocrer:    <http://purl.org/net/OCRe/research.owl#>
 PREFIX ocresd:   <http://purl.org/net/OCRe/study_design.owl#>
 PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>
-PREFIX nih:      <http://vivo.scripps.edu/ontology/nih#>
-PREFIX tsri:     <http://vivo.scripps.edu/ontology/tsri#>
 PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>
 PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>
 PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
-PREFIX rcukp:    <http://gtr.rcuk.ac.uk/gtr/api/person/>
-PREFIX wi:       <http://www.wheatinitiative.org/administration/users/ontology/>
+PREFIX grdc:      <https://wheatvivo.org/ontology/grdc/>
 
 CONSTRUCT {
-    ?x wi:identifier ?identifier 
+    ?org a foaf:Organization .
+    ?org rdfs:label ?orgLabel .
+    ?grant vivo:relates ?org .
+    ?grant vivo:relates ?role .
+    ?role a vivo:AdministratorRole . 
+    ?role obo:RO_0000052 ?org .
+    ?role obo:BFO_0000054 ?project .
+    ?org obo:ARG_2000028 ?vcard .
+    ?vcard a vcard:Organization .
+    ?vcard vcard:hasEmail ?vcardEmail .
+    ?vcardEmail a vcard:Email , vcard:Work .
+    ?vcardEmail vcard:email ?email .
 } WHERE {
-    ?x wi:Last_Name ?lastName .
-    ?x wi:First_Name ?firstName .
-    FILTER NOT EXISTS { ?x wi:OrcidID ?orcidId }
-    BIND(CONCAT(REPLACE(STR(?firstName), "\\W+", "-"), "-", REPLACE(STR(?lastName), "\\W+", "-")) AS ?identifier)
+    ?grant grdc:Administration_Organisation ?orgLabel .
+    OPTIONAL { 
+      ?grant grdc:Administration_Organisation_Contact ?email .
+      BIND(IRI(CONCAT(STR(?grant), "-adminOrgVcard")) AS ?vcard)
+      BIND(IRI(CONCAT(STR(?grant), "-adminOrgVcardEmail")) AS ?vcardEmail)
+    }
+    ?grant vivo:fundingVehicleFor ?project .
+    BIND(IRI(CONCAT(STR(?grant), "-adminOrg")) AS ?org)
+    BIND(IRI(CONCAT(STR(?grant), "-adminOrgRole")) AS ?role)
 }

@@ -89,7 +89,8 @@ public abstract class ConnectorDataSource extends DataSourceBase {
             result = ModelFactory.createDefaultModel();
         }
         IndexingInference inf = null;
-        if(getSparqlEndpoint().getSparqlEndpointParams().getEndpointURI() != null) {
+        if(activeEndpointForResults() 
+                && getSparqlEndpoint().getSparqlEndpointParams().getEndpointURI() != null) {
             inf = new IndexingInference(getSparqlEndpoint());    
         }        
         if(inf != null && inf.isAvailable()) {
@@ -160,7 +161,9 @@ public abstract class ConnectorDataSource extends DataSourceBase {
                     this.getStatus().setErrorRecords(this.getStatus().getErrorRecords() + 1);
                 }
             }
-            runNormalizers();
+            if(activeEndpointForResults()) {
+                runNormalizers();
+            }
             boolean skipClearingOldData = false;
             if(!dataWrittenToEndpoint) {
                 if(totalRecords == null) {

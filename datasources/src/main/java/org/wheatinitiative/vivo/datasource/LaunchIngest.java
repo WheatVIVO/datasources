@@ -9,9 +9,11 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wheatinitiative.vivo.datasource.connector.arc.ArcConnector;
 import org.wheatinitiative.vivo.datasource.connector.cordis.Cordis;
 import org.wheatinitiative.vivo.datasource.connector.cornell.Cornell;
 import org.wheatinitiative.vivo.datasource.connector.florida.Florida;
+import org.wheatinitiative.vivo.datasource.connector.grdc.GrdcConnector;
 import org.wheatinitiative.vivo.datasource.connector.msracad.MicrosoftAcademicConnector;
 import org.wheatinitiative.vivo.datasource.connector.openaire.OpenAire;
 import org.wheatinitiative.vivo.datasource.connector.orcid.OrcidConnector;
@@ -35,7 +37,7 @@ public class LaunchIngest {
     public static void main(String[] args) {
         if(args.length < 3) {
             System.out.println("Usage: LaunchIngest" 
-                    + " openaire|cordis|rcuk|msracad|prodinra|wheatinitiative|florida"
+                    + " openaire|cordis|rcuk|msracad|prodinra|wheatinitiative|florida|arc|grdc|"
                     + "normalizePerson|normalizeOrganization|normalizeLiterature|postmerge"
                     + " outputfile" 
                     + " [endpointURI= endpointUpdateURI= username= password= dataDir= graph=]"
@@ -104,6 +106,10 @@ public class LaunchIngest {
             connector = new WheatInitiative();
             connector.getConfiguration().setServiceURI(
                     "http://www.wheatinitiative.org/administration/users/csv");
+        } else if ("arc".equals(connectorName)) {
+            connector = new ArcConnector();            
+        } else if ("grdc".equals(connectorName)) {
+            connector = new GrdcConnector();            
         } else if ("openaire".equals(connectorName)) {
             connector = new OpenAire();
             connector.getConfiguration().setServiceURI(

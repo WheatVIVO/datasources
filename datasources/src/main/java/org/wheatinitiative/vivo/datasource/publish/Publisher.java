@@ -200,6 +200,7 @@ public class Publisher extends DataSourceBase implements DataSource {
                     this.getStatus().setMessage("augmenting data via additional construct queries");
                     PostmergeDataSource postmerge = new PostmergeDataSource();
                     postmerge.setConfiguration(this.getConfiguration());
+                    postmerge.getConfiguration().setResultsGraphURI(POSTMERGE_GRAPH);
                     postmerge.runIngest();
                 }
             } else {
