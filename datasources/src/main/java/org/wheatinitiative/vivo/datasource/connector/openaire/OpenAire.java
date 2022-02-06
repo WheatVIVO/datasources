@@ -118,14 +118,17 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		 * Iterate over different chunks of data.
 		 */
 		public Model next() {
-			Model nextModel = fetchNextPublication();
-			currentPage++;
-			if(currentPage >= totals.get(currentQueryTerm)) {
-			    currentQueryTerm++;
-	            currentPage = 1;
-			}
-			return nextModel;
-		}		
+		    try {
+		        Model nextModel = fetchNextPublication();
+		        return nextModel;
+		    } finally {
+		        currentPage++;
+		        if(currentPage >= totals.get(currentQueryTerm)) {
+		            currentQueryTerm++;
+		            currentPage = 1;
+		        }
+		    }
+		}
 		
 		/**
 		 * Fetch the publications' related data.
