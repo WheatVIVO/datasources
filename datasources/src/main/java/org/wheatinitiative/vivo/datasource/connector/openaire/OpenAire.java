@@ -70,7 +70,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	
 	// narrow results to stay close to 10000 result search limit
 	private String adjustQueryTerm(String queryTerm) {
-	    return queryTerm + " crop science";
+	    return queryTerm + " crop";
 	}
 	
 	private class OpenAireIterator implements IteratorWithSize<Model> {		
@@ -172,7 +172,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	    	while ( listIt.hasNext() ) {
 				try {
 					URIBuilder uriB = new URIBuilder(SEARCH_PROJECTS);
-					uriB.addParameter( "keywords", listIt.next().toString() );
+					uriB.addParameter( "keywords", "\"" + listIt.next().toString() + "\"" );
 					uriB.addParameter( "format", "xml" );
 					
 					String request = uriB.build().toString();
