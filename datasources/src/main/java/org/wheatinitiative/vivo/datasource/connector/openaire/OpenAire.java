@@ -413,15 +413,18 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
                     count++;
                     QuerySolution soln = rs.next();
 
-                    Resource res = soln.getResource(type);
-                    
-                //	If we are retrieving projects, then we should also retrieve the related grants.
-                    if( type == "Project" ) {
-                    	res = soln.getResource("Grant");
-                    }
+                    Resource res = soln.getResource(type);                    
                     
                     if(res != null) {
                         relevantResources.add(res);
+                    }
+                    
+                    //  If we are retrieving projects, then we should also retrieve the related grants.
+                    if( type == "Project" ) {
+                        res = soln.getResource("Grant");
+                        if(res != null) {
+                            relevantResources.add(res);
+                        }
                     }
                 }
                 log.info(count + " relevant resources for query term " + queryTerm);
