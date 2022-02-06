@@ -140,8 +140,12 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 				String request = uriB.build().toString();
 				log.info(request);
 				String response = httpUtils.getHttpResponse(request);
-				Model model = xmlToRdf.toRDF(response);				
-				model.add( getPubRelatedProjects( model ) );	
+				Model model = xmlToRdf.toRDF(response);
+				try {
+				    model.add( getPubRelatedProjects( model ) );
+				} catch (Exception e) {
+				    log.error(e, e);
+				}
 		        model = rdfUtils.renameBNodes(model, NAMESPACE_ETC + "-" + currentPage + "-n", model);
 				model = splitNames(model);
 				return model;
