@@ -16,6 +16,8 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.client.utils.URIBuilder;
 import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.connector.ConnectorDataSource;
+import org.wheatinitiative.vivo.datasource.connector.orcid.Name;
+import org.wheatinitiative.vivo.datasource.connector.orcid.NameProcessor;
 import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
 import org.wheatinitiative.vivo.datasource.util.http.HttpUtils;
 import org.wheatinitiative.vivo.datasource.util.xml.XmlToRdf;
@@ -29,6 +31,9 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
 
 public class OpenAire extends ConnectorDataSource implements DataSource {
 	
@@ -36,8 +41,8 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	
 	private static final String OPEN_AIRE_API_URL = "http://api.openaire.eu/";
 	private static final String SEARCH_PUBLICATIONS = OPEN_AIRE_API_URL + "search/publications";
-	private static final String SEARCH_PROJECTS = OPEN_AIRE_API_URL + "search/publications";
-	private static final String OPEN_AIRE_ABOX_NS = "http://vivo.openaire.eu/individual/";
+	private static final String SEARCH_PROJECTS = OPEN_AIRE_API_URL + "search/projects";
+	private static final String OPEN_AIRE_ABOX_NS = "https://wheatvivo.org/individual/openaire-";
 	
 	private static final String NAMESPACE_ETC = OPEN_AIRE_ABOX_NS + "n";
 	
@@ -63,6 +68,10 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
         }
 	}
 	
+	// narrow results to stay close to 10000 result search limit
+	private String adjustQueryTerm(String queryTerm) {
+	    return queryTerm + " crop science";
+	}
 	
 	private class OpenAireIterator implements IteratorWithSize<Model> {		
 
@@ -77,7 +86,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 			for(String keyword : getConfiguration().getQueryTerms()) {
 			    URIBuilder b = new URIBuilder(SEARCH_PUBLICATIONS);
 			    b.addParameter("size", Integer.toString(RESULTS_PER_PAGE));
-			    b.addParameter("keywords", keyword);
+			    b.addParameter("keywords", adjustQueryTerm(keyword));
 			    b.addParameter("format", "xml");
 			    String url = b.toString();
 			    log.info("Retrieving " + url);
@@ -125,15 +134,17 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
             try {
 			    URIBuilder uriB = new URIBuilder(SEARCH_PUBLICATIONS);
 			    uriB.addParameter("page", Integer.toString(currentPage));
-			    uriB.addParameter("keywords", getConfiguration().getQueryTerms()
-			            .get(currentQueryTerm));
+			    uriB.addParameter("keywords", adjustQueryTerm(getConfiguration().getQueryTerms()
+			            .get(currentQueryTerm)));
 			    uriB.addParameter("format", "xml");
 				String request = uriB.build().toString();
 				log.info(request);
 				String response = httpUtils.getHttpResponse(request);
 				Model model = xmlToRdf.toRDF(response);				
-				model.add( getPubRelatedProjects( model ) );				
-				return model;				
+				model.add( getPubRelatedProjects( model ) );	
+		        model = rdfUtils.renameBNodes(model, NAMESPACE_ETC + "-" + currentPage + "-n", model);
+				model = splitNames(model);
+				return model;
 			} catch (Exception e) {
 			    log.error(e, e);
 				throw new RuntimeException(e);
@@ -235,6 +246,42 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		
 	}
 	
+	private Model splitNames(Model rdf) {
+        NameProcessor nameProc = new NameProcessor();
+        List<Statement> additions = new ArrayList<Statement>();
+        StmtIterator creatorIt = rdf.listStatements(null, rdf.getProperty(
+                XmlToRdf.GENERIC_NS + "creator"), (RDFNode) null);
+        while(creatorIt.hasNext()) {            
+            Statement creatorStmt = creatorIt.next();
+            if(!creatorStmt.getObject().isURIResource()) {
+                continue;
+            }
+            Resource creator = creatorStmt.getObject().asResource();
+            if(rdf.contains(creator, rdf.getProperty(
+                    XmlToRdf.GENERIC_NS + "surname"), (RDFNode) null)) {
+                continue;
+            }
+            StmtIterator nameIt = rdf.listStatements(creator, rdf.getProperty(
+                            XmlToRdf.VITRO_NS + "value"), (RDFNode) null);
+            while(nameIt.hasNext()) {
+                Statement nameStmt = nameIt.next();
+                if(nameStmt.getObject().isLiteral()) {
+                    Name name = nameProc.parseName(nameStmt.getObject().asLiteral().getLexicalForm());
+                    additions.add(ResourceFactory.createStatement(
+                            nameStmt.getSubject(), rdf.getProperty(
+                                    XmlToRdf.GENERIC_NS + "name"), 
+                            ResourceFactory.createPlainLiteral(name.getGivenName())));
+                    additions.add(ResourceFactory.createStatement(
+                            nameStmt.getSubject(), rdf.getProperty(
+                                    XmlToRdf.GENERIC_NS + "surname"), 
+                            ResourceFactory.createPlainLiteral(name.getFamilyName())));
+                }
+            }
+        }
+        rdf.add(additions);
+        return rdf;
+    }
+	
 	
 	/**
 	 * Transform the raw RDF into VIVO RDF. 
@@ -242,7 +289,6 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	@Override
 	protected Model mapToVIVO(Model model) {
 		
-		model = rdfUtils.renameBNodes(model, NAMESPACE_ETC, model);
 		model = constructForVIVO(model);
 		
 		return model;
@@ -253,49 +299,72 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	 * Sparql CONSTRUCT queries to transform the data.
 	 */
 	private Model constructForVIVO(Model model) {
-		
-		List<String> queries = Arrays.asList(
-											  "100-project.sparql"
-											 ,"110-project-title_only.sparql"
+	    construct(SPARQL_RESOURCE_DIR + "100-project.sparql", model, NAMESPACE_ETC);
+        model = renameByIdentifier(model, model.getProperty(
+                XmlToRdf.GENERIC_NS + "projectId"), OPEN_AIRE_ABOX_NS, "project-");
+        model = renameByIdentifier(model, model.getProperty(
+                XmlToRdf.GENERIC_NS + "grantId"), OPEN_AIRE_ABOX_NS, "grant-");
+		List<String> queries = Arrays.asList(											  
+											 "110-project-title_only.sparql"
 											 ,"111-project-title_with_empty_acronym.sparql"
 											 ,"112-project-title_with_acronym.sparql"
-											 ,"120-project-vcard_url.sparql"
+											 //,"120-project-vcard_url.sparql"
 											 ,"130-project-date.sparql"
 											 ,"140-project-keywords.sparql"
-											 ,"150-project-organization.sparql"
-											 ,"155-project-organization_vcard_address.sparql"
-											 ,"160-project-participant_organization.sparql"
-											 ,"200-publication.sparql"
-											 ,"201-publication_article.sparql"
+											 //,"150-project-organization.sparql"
+											 //,"155-project-organization_vcard_address.sparql"
+											 //,"160-project-participant_organization.sparql"
+											 ,"200-publication.sparql");
+		for (String query : queries) {
+            log.debug("Executing query " + query);
+            log.debug("Pre-query model size: " + model.size());
+            long preSize = model.size();
+            construct(SPARQL_RESOURCE_DIR + query, model, NAMESPACE_ETC);
+            log.debug("Post-query model size: " + model.size());
+            if(model.size() == preSize) {
+                log.info(query + " produced no results");
+            }
+        }
+		model = renameByIdentifier(model, model.getProperty(
+                XmlToRdf.GENERIC_NS + "pubId"), OPEN_AIRE_ABOX_NS, "doi-");
+		queries = Arrays.asList(
+											 "201-publication_article.sparql"
 											 ,"202-publication_manuscript.sparql"
 											 ,"203-publication-thesis.sparql"
 											 ,"204-publication-conference_paper.sparql"
-											 ,"210-publication-vcard_url.sparql"
+											 //,"210-publication-vcard_url.sparql"
+											 ,"215-publication-year.sparql"
 											 ,"220-publication-keywords.sparql"
 											 ,"230-publication-authorship.sparql"
-											 ,"235-publication-author_vcard_name.sparql"
+											 //,"235-publication-author_vcard_name.sparql"
 											 ,"300-project-publication-connection.sparql"
 											 ,"400-journal.sparql"
 											 ,"410-journal-publisher.sparql"
 											);
 		
 		for (String query : queries) {
-			log.debug("Executing query " + query);
-			log.debug("Pre-query model size: " + model.size());
-			construct(SPARQL_RESOURCE_DIR + query, model, NAMESPACE_ETC);
-			log.debug("Post-query model size: " + model.size());
+		    log.debug("Executing query " + query);
+            log.debug("Pre-query model size: " + model.size());
+            long preSize = model.size();
+            construct(SPARQL_RESOURCE_DIR + query, model, NAMESPACE_ETC);
+            log.debug("Post-query model size: " + model.size());
+            if(model.size() == preSize) {
+                log.info(query + " produced no results");
+            }
 		}
 		
 		return model;
 	}
-	
 	
 	/**
 	 * Filter the model so that we keep only data related to the query terms.
 	 */
     @Override
     protected Model filter(Model model) {
-    	
+        if(false) {
+            return model;
+        }
+        model = this.filterGeneric(model);
         Model filtered = ModelFactory.createDefaultModel();
         List<Resource> relevantResources = null;
         
@@ -389,6 +458,10 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		subgraph.add(constructQuery(
                 SPARQL_RESOURCE_DIR + "getRelatedJournals.sparql", model, 
                 NAMESPACE_ETC, substitutions));
+		
+		subgraph.add(constructQuery(
+                SPARQL_RESOURCE_DIR + "getRelatedDateTimeValues.sparql", model, 
+                NAMESPACE_ETC, substitutions));
         
     	return subgraph;
     }
@@ -425,7 +498,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 
     @Override
     protected String getPrefixName() {
-        return "openaire";
+        return "openaireeeee";
     }
     
 }

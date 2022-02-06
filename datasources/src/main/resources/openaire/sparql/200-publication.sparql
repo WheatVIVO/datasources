@@ -21,14 +21,16 @@ CONSTRUCT {
     ?pub bibo:abstract ?fulltext .
 
     ?pub bibo:doi ?doiValue .
+
+    ?pub ingest:pubId ?pubId .
     
 } WHERE {
 
     ?x oaf:result ?pub .
-    
+
     ?pub ingest:title ?title .
     ?title vitro:value ?titleStr .
-    
+ 
     OPTIONAL {
     	?pub ingest:language ?lang .
     	?lang ingest:classname ?langStr .
@@ -43,5 +45,6 @@ CONSTRUCT {
         ?pub ingest:pid ?pid .
         ?pid ingest:classid "doi" .
         ?pid vitro:value ?doiValue .
+	BIND(REPLACE(STR(?doiValue), "[^a-zA-Z0-9\\.]+", "-") AS ?pubId)
     }
 }

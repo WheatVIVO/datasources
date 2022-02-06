@@ -1,15 +1,17 @@
+PREFIX owl:     <http://www.w3.org/2002/07/owl#>
 PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
 PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX foaf:    <http://xmlns.com/foaf/0.1/>
 PREFIX bibo:    <http://purl.org/ontology/bibo/>
 PREFIX vivo:    <http://vivoweb.org/ontology/core#>
-
-
+PREFIX vitro:   <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>
+PREFIX obo:     <http://purl.obolibrary.org/obo/>
+PREFIX vcard:   <http://www.w3.org/2006/vcard/ns#>
 
 CONSTRUCT {
 
     ?author a foaf:Person .
-    ?author rdfs:label ?fullname .
+    ?author rdfs:label ?label .
     
     ?authorship a vivo:Authorship .
     
@@ -17,16 +19,46 @@ CONSTRUCT {
     ?authorship vivo:relates ?pub .
     ?authorship vivo:relates ?author .
 
+    ?author obo:ARG_2000028 ?vcard .
+    ?vcard a vcard:Individual .
+    ?vcard vcard:hasName ?name .
+    ?name a vcard:Name .
+    ?name vcard:familyName ?lastName .
+    ?name vcard:givenName ?firstName .
+    ?author vivo:orcidId ?orcidId .
+    ?orcidId a owl:Thing
 } WHERE {
-
-    ?pub a bibo:Document .
-    
-    ?pub ingest:rels ?rels .
-    ?rels ingest:rel ?rel .
-    
-    ?rel ingest:ranking ?rank.
-    ?rel ingest:fullname ?fullname .
-
-    BIND(IRI(CONCAT(STR(?pub), "-author-", REPLACE(?fullname, "\\W", ""))) AS ?author)
-    BIND(IRI(CONCAT(STR(?pub), "-authorship-", REPLACE(?fullname, "\\W", ""))) AS ?authorship)
+    {
+      SELECT ?pub ?creator ?microsoftId WHERE {
+        ?pub a bibo:Document .
+        ?pub ingest:creator ?creator .
+        OPTIONAL {
+	  ?creator ingest:URL ?rawUrl .
+	}
+        OPTIONAL {
+	  ?creator ingest:URL ?url .
+	  FILTER(REGEX(STR(?url), "academic.microsoft.com"))
+          BIND(STRAFTER(STR(?url), "/detail/") AS ?microsoftId)
+        }
+      }
+    }
+    ?creator ingest:rank ?rank.
+    ?creator ingest:name ?givenName .
+    ?creator ingest:surname ?familyName .
+    ?creator vitro:value ?fullname
+    OPTIONAL { ?creator ingest:orcid ?orcid 
+               BIND(IRI(CONCAT("https://orcid.org/", STR(?orcid))) AS ?orcidId) 
+    }
+    OPTIONAL { ?creator ingest:orcid_pending ?orcid 
+               FILTER NOT EXISTS { ?creator ingest:orcid ?orcid }
+               BIND(IRI(CONCAT("https://orcid.org/", STR(?orcid))) AS ?orcidId) 
+    }
+    BIND(CONCAT(STR(?familyName), ", ", ?givenName) AS ?label)
+    BIND(IF(BOUND(?microsoftId), IRI(CONCAT("https://wheatvivo.org/individual/msracad-", ?microsoftId)),
+      IRI(CONCAT(STR(?pub), "-author-", REPLACE(?fullname, "\\W+", "-")))) AS ?author)
+    BIND(IRI(CONCAT(STR(?pub), "-authorship-", REPLACE(?fullname, "\\W+", "-"))) AS ?authorship)
+    BIND(IF(BOUND(?microsoftId), IRI(CONCAT("https://wheatvivo.org/individual/msracad-", ?microsoftId, "-vcard")),
+      IRI(CONCAT(STR(?pub), "-author-", REPLACE(?fullname, "\\W+", "-"), "-vcard"))) AS ?vcard)
+    BIND(IF(BOUND(?microsoftId), IRI(CONCAT("https://wheatvivo.org/individual/msracad-", ?microsoftId, "vcard-name")),
+      IRI(CONCAT(STR(?pub), "-author-", REPLACE(?fullname, "\\W+", "-"), "-vcard-name"))) AS ?name)
 }

@@ -9,10 +9,12 @@ CONSTRUCT {
 
     ?project a vivo:Project .
     ?project vivo:identifier ?project_id .
-    
+    ?project ingest:projectId ?project_id .
+
     ?grant a vivo:Grant .
     ?grant vivo:identifier ?project_id .
     ?grant vivo:fundingVehicleFor ?project .
+    ?grant ingest:grantId ?project_id .
 
 } WHERE {
 

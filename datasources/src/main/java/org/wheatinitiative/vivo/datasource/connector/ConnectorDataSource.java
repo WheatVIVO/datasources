@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +17,7 @@ import org.apache.commons.logging.LogFactory;
 import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.DataSourceBase;
 import org.wheatinitiative.vivo.datasource.DataSourceConfiguration;
+import org.wheatinitiative.vivo.datasource.connector.openaire.OpenAire;
 import org.wheatinitiative.vivo.datasource.normalizer.AuthorNameForSameAsNormalizer;
 import org.wheatinitiative.vivo.datasource.normalizer.LiteratureNameForSameAsNormalizer;
 import org.wheatinitiative.vivo.datasource.normalizer.OrganizationNameForSameAsNormalizer;
@@ -128,7 +130,8 @@ public abstract class ConnectorDataSource extends DataSourceBase {
                         throw new InterruptedException();
                     }
                     String defaultNamespace = getDefaultNamespace(this.getConfiguration());
-                    if(defaultNamespace != null && !(this instanceof VivoDataSource)) {
+                    if(defaultNamespace != null && !(this instanceof VivoDataSource) 
+                            && !(this instanceof OpenAire)) {
                         model = rewriteUris(model, defaultNamespace, getPrefixName());
                     }
                     if(this.getStatus().isStopRequested()) {
@@ -340,6 +343,10 @@ public abstract class ConnectorDataSource extends DataSourceBase {
             }
         }
         return filtered;
+    }
+    
+    public Model filterGeneric(Model model) {
+        return filterGeneric(model, new ArrayList<String>(0));
     }
 
     protected abstract String getPrefixName();

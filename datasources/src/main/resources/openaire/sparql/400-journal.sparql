@@ -24,7 +24,8 @@ CONSTRUCT {
     ?pub ingest:journal ?jrnl .
     ?jrnl vitro:value ?journalName .
 
-    BIND(IRI(CONCAT(STR(?pub), "-journal")) AS ?journal)
+    #BIND(IRI(CONCAT(STR(?pub), "-journal")) AS ?journal)
+    BIND(IRI(CONCAT("https://wheatvivo.org/individual/openaire-journal-", REPLACE(STR(?journalName), "\\W+", "-"))) AS ?journal)
     
     OPTIONAL {
        ?journal ingest:issn ?issn .

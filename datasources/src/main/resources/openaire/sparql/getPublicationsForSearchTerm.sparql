@@ -9,6 +9,7 @@ SELECT DISTINCT ?Publication
 WHERE {
 
     ?Publication a bibo:Document .
+    FILTER EXISTS { ?Publication bibo:doi ?doi }
     
     { ?Publication rdfs:label ?value }
     UNION

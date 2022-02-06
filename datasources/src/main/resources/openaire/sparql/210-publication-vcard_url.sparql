@@ -4,7 +4,7 @@ PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
 PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
 PREFIX bibo:    <http://purl.org/ontology/bibo/>
 PREFIX obo:		<http://purl.obolibrary.org/obo/>
-
+PREFIX vitro:   <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>
 
 
 CONSTRUCT {
@@ -24,8 +24,9 @@ CONSTRUCT {
     ?child ingest:instance ?inst .
     ?inst ingest:webresource ?res .
     ?res ingest:url ?pubUrlStr .
+    ?res vitro:position ?position .
     
     BIND ( xsd:anyURI( ?pubUrlStr ) AS ?pubUrl )
     BIND(IRI(CONCAT(STR(?pub), "-vcard")) AS ?vcard)
-    BIND(IRI(CONCAT(STR(?pub), "-vcard-url")) AS ?url)
+    BIND(IRI(CONCAT(STR(?pub), "-vcard-url-", STR(?position))) AS ?url)
 }

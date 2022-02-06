@@ -1,0 +1,19 @@
+PREFIX ingest:  <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>
+PREFIX vivo:    <http://vivoweb.org/ontology/core#>
+PREFIX bibo:    <http://purl.org/ontology/bibo/>
+PREFIX vitro:   <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>
+PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
+
+
+CONSTRUCT {
+
+    ?pub vivo:dateTimeValue ?dtv .
+    ?dtv a vivo:DateTimeValue .
+    ?dtv vivo:dateTimePrecision vivo:yearPrecision .
+    ?dtv vivo:dateTime ?dateTime .
+} WHERE {
+    ?pub a bibo:Document .
+    ?pub ingest:dateofacceptance ?dateOfAcceptance .
+    BIND(xsd:dateTime(CONCAT(STRBEFORE(STR(?dateOfAcceptance), "-"), "-01-01T00:00:00Z")) AS ?dateTime)
+    BIND(IRI(CONCAT(STR(?pub), "-dtv")) AS ?dtv)
+}

@@ -20,7 +20,8 @@ CONSTRUCT {
     
     ?pub ingest:publisher ?publisherLegalName .
     
-    BIND(IRI(CONCAT(STR(?pub), "-publisher")) AS ?org)
+#    BIND(IRI(CONCAT(STR(?pub), "-publisher")) AS ?org)
+    BIND(IRI(CONCAT("https://wheatvivo.org/individual/openaire-publisher-", REPLACE(STR(?publisherLegalName), "\\W+", "-"))) AS ?org)
 
 #   There might be more than one publishers in the same string, separated with " / "
 #   See how to distinguish them.

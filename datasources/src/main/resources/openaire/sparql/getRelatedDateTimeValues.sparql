@@ -1,0 +1,10 @@
+PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+
+
+
+CONSTRUCT {
+  ?dtv ?dtvP ?dtvO .
+} WHERE {
+  ?entity vivo:dateTimeValue ?dtv .
+  ?dtv ?dtvP ?dtvO .
+}
