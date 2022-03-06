@@ -38,11 +38,11 @@ CONSTRUCT {
 	BIND(vivo:GovernmentAgency AS ?type)
     }
     OPTIONAL {
-        ?x wI:Employment_Sector "Private" .
+        ?x wi:Employment_Sector "Private" .
 	BIND(vivo:PrivateCompany AS ?type)
     }
     OPTIONAL {
-        ?x wI:Employment_Sector "International Organisation" .
+        ?x wi:Employment_Sector "International Organisation" .
 	BIND(wheat:InternationalOrganisation AS ?type)
     }
 }
