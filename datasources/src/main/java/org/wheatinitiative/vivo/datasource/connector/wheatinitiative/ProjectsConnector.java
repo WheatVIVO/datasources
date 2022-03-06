@@ -1,13 +1,6 @@
 package org.wheatinitiative.vivo.datasource.connector.wheatinitiative;
 
-import java.util.Arrays;
-import java.util.List;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.wheatinitiative.vivo.datasource.connector.arc.ArcConnector;
-
-import com.hp.hpl.jena.rdf.model.Model;
 
 /**
  * A generic projects connector, using the same format as ARC
