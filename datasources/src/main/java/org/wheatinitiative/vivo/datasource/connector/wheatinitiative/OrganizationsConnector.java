@@ -7,7 +7,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 
 public class OrganizationsConnector extends WheatInitiative {
 
-    private static final String SPARQL_RESOURCE_DIR = "/organizations/sparql/";
+    private static final String SPARQL_RESOURCE_DIR = "/wheatinitiative/organizations/sparql/";
     public static final String EXCEL_SUBDIR = "/organizations";
     private static final String ABOX = 
             "https://wheatvivo.org/";
