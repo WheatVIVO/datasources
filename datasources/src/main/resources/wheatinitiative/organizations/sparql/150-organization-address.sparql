@@ -36,6 +36,6 @@ CONSTRUCT {
     ?x wi:Country ?country .
     ?x a foaf:Organization .
     OPTIONAL { ?x wi:City ?locality }
+    BIND(IRI(CONCAT(STR(?x), "-vcard")) AS ?vcard)
     BIND(IRI(CONCAT(STR(?x), "-vcard-address")) AS ?address)
-    BIND(IRI(CONCAT(STR(?x), "-vcard-vcard")) AS ?vcard)
 }
