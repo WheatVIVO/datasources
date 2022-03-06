@@ -248,7 +248,9 @@ public class WheatInitiative extends ConnectorDataSource implements DataSource {
                 "156-person-mail.sparql",
                 "157-person-alternative-email.sparql",
                 "159-person-webpage.sparql",
+                "159b-person-webpage.sparql",
                 "160-person-webpage2.sparql",
+                "160b-person-webpage2.sparql",
                 "200-organization-name.sparql"
                 );
         for(String query : queries) {
