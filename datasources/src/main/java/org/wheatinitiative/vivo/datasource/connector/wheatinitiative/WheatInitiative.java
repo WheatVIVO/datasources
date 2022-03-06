@@ -150,7 +150,7 @@ public class WheatInitiative extends ConnectorDataSource implements DataSource {
                         if(row.getFirstCellNum() < 0) {
                             break;
                         }                        
-                        for(int i = row.getFirstCellNum(); i <= lastCellNum; i++) {
+                        for(int i = row.getFirstCellNum(); (i <= lastCellNum && i < propertyURIs.size()); i++) {
                             String propertyURI = propertyURIs.get(i);
                             Cell cell = row.getCell(i);
                             if(cell == null) {
