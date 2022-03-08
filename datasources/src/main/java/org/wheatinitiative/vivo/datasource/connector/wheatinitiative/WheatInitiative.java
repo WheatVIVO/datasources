@@ -24,6 +24,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.wheatinitiative.vivo.datasource.DataSource;
+import org.wheatinitiative.vivo.datasource.DataSourceConfiguration;
 import org.wheatinitiative.vivo.datasource.connector.ConnectorDataSource;
 import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
 
@@ -53,6 +54,14 @@ public class WheatInitiative extends ConnectorDataSource implements DataSource {
         propDateFormat.put("YEAR", new java.text.SimpleDateFormat("dd/MM/yyyy"));
         propDateFormat.put("START", new java.text.SimpleDateFormat("dd/MM/yyyy"));
         propDateFormat.put("END", new java.text.SimpleDateFormat("dd/MM/yyyy"));
+    }
+    
+    @Override
+    public void setConfiguration(DataSourceConfiguration config) {
+        super.setConfiguration(config);
+        // Since these connectors deal with small spreadsheets, inference and
+        // index in real time instead of waiting for a recompute.
+        this.getConfiguration().getParameterMap().put("realTimeInferenceIndexing", true);
     }
     
     protected int getHeaderRow() {

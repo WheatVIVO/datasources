@@ -90,12 +90,17 @@ public abstract class ConnectorDataSource extends DataSourceBase {
         if(!activeEndpointForResults()) {
             result = ModelFactory.createDefaultModel();
         }
+        boolean unregisterListeners = true;
+        if(this.getConfiguration().getParameterMap().containsKey("realTimeInferenceIndexing")) {
+            unregisterListeners = false;
+            log.info("realTimeInferenceIndexing is set; not unregistering listeners.");            
+        }
         IndexingInference inf = null;
         if(activeEndpointForResults() 
                 && getSparqlEndpoint().getSparqlEndpointParams().getEndpointURI() != null) {
             inf = new IndexingInference(getSparqlEndpoint());    
         }        
-        if(inf != null && inf.isAvailable()) {
+        if(unregisterListeners && inf != null && inf.isAvailable()) {
             inf.unregisterReasoner();
             inf.unregisterSearchIndexer();
             log.info("Unregistered reasoner and search indexer");
@@ -191,7 +196,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
                 }
             }
         } finally {
-            if(inf != null && inf.isAvailable()) {
+            if(unregisterListeners && inf != null && inf.isAvailable()) {
                 inf.registerReasoner();
                 log.info("Registered reasoner");
                 inf.registerSearchIndexer();
