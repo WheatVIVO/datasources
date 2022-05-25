@@ -211,7 +211,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
                 this.getStatus().setMessage("Rebuilding search index");
                 do {
                     Thread.sleep(10000);
-                } while (inf.isReasonerIsRecomputing()); 
+                } while (inf.isSearchIndexerIsIndexing()); 
             } else {
                 log.warn("IndexingInferenceService not available on destination endpoint");
             }
