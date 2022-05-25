@@ -239,11 +239,13 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
             qe.close();
         }
         for (String uri : linkedURIs) {
+            // 2022-05 the API has a bug where gtr is doubled, leading to 404s
+            uri = uri.replaceAll("gtr\\.gtr\\.", "gtr.");
             try {
                 if(retrievedURIs.contains(uri)) {
                     // add dummy type to prevent the pruner from pruning this
                     m.add(m.getResource(uri), RDF.type, m.getResource("rcuk:retrieved"));
-                    log.info("Skipping already-retrieved resource " + uri);
+                    log.debug("Skipping already-retrieved resource " + uri);
                     continue;
                 }
                 log.info(uri); 
@@ -373,8 +375,14 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
                     if (totalPages > getConfiguration().getLimit()) {
                         totalPages = getConfiguration().getLimit();
                     }
+                    if(totalPages == 0) {
+                        // We already already retrieved it, even if it has no data.
+                        // Simpler to include it than to skip over it.
+                        totalPages = 1; 
+                    }
                     pageTotals.put(queryTerm, totalPages);
                     size += totalPages;
+                    log.info(queryTerm + " : " + totalPages);
                     log.info("RCUK iterator size is " + size);
                 }
             } catch (URISyntaxException e) {

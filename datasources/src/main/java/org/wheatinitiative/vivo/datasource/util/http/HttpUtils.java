@@ -59,7 +59,7 @@ public class HttpUtils {
     }
     
     private void buildHttpClient() {
-        int timeout = 5;
+        int timeout = 10; // seconds
         RequestConfig requestConfig = RequestConfig.custom()
           .setConnectTimeout(timeout * 1000)
           .setConnectionRequestTimeout(timeout * 1000)
@@ -78,22 +78,31 @@ public class HttpUtils {
     public String getHttpResponse(String url) throws IOException {
         HttpGet get = new HttpGet(url);
         get.setHeader("Accept-charset", "utf-8");
-        HttpResponse response;
+        HttpResponse response = null;
         try {
             response = execute(get, httpClient);
         } catch (Exception e) {
+            log.error("Error fetching " + url + ". Retrying in 2 seconds " + e);
             try {
                 Thread.sleep(2000);
                 response = execute(get, httpClient);
             } catch (InterruptedException e1) {
                 throw new RuntimeException(e1);
             } catch (Exception e2) {
-                try {
-                    Thread.sleep(4000);
-                    response = execute(get, httpClient);
-                } catch (InterruptedException e3) {
-                    throw new RuntimeException(e3);
-                }
+                log.error("Error fetching " + url + ". Retrying in 4 seconds " + e);
+                int tries = 10;
+                int i = 0;
+                do {
+                    i++;
+                    try {
+                        Thread.sleep(4000);
+                        response = execute(get, httpClient);
+                    } catch (InterruptedException e3) {
+                        throw new RuntimeException(e3);
+                    } catch (Exception e3) {
+                        log.error("Error fetching " + url + ". Retrying in 4 seconds " + e);
+                    }
+                } while(response == null && i < tries);
             }
         }
         try {

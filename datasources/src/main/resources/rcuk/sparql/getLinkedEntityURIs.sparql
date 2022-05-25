@@ -29,6 +29,12 @@ SELECT DISTINCT ?x WHERE {
     FILTER NOT EXISTS { 
 	 ?xuri rcuk:href ?href 
     }
+    FILTER(
+      REGEX(STR(?x), "/organisations/")
+      || REGEX(STR(?x), "/persons/")
+      || REGEX(STR(?x), "/publications/")
+      || REGEX(STR(?x), "/funds/")
+    )
     # some employment links in the data are dirty and link to all organizations
     FILTER (?xuri != <http://gtr.rcuk.ac.uk:80/gtr/api/organisations/>)
 } ORDER BY ?x 
