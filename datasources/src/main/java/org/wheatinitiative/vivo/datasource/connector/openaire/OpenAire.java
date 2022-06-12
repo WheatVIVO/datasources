@@ -135,7 +135,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		        return nextModel;
 		    } finally {
 		        currentPage++;
-		        if(currentPage >= totals.get(currentQueryTerm)) {
+		        if(currentPage > totals.get(currentQueryTerm)) {
 		            currentQueryTerm++;
 		            currentPage = 1;
 		        }
