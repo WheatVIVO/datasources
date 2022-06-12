@@ -2,8 +2,11 @@ package org.wheatinitiative.vivo.datasource.connector.openaire;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
@@ -11,6 +14,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.client.utils.URIBuilder;
@@ -78,15 +82,23 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 	    private List<Integer> totals = new ArrayList<Integer>();
 		private int currentQueryTerm = 0;
 		private int currentPage = 1;
+		private String fromDateStr;				
 		
 		public OpenAireIterator() throws IOException, URISyntaxException {
+		    // search last two years to stay under retrieval limit
+            // TODO support multiple year ranges to retrieve full history
+            Date date = Calendar.getInstance().getTime();
+            date = DateUtils.addYears(date, -2);
+            SimpleDateFormat ymdFormat = new SimpleDateFormat("yyyy-MM-dd");
+            this.fromDateStr= ymdFormat.format(date);
 		    int queryTermsSize = getConfiguration().getQueryTerms().size();
 		    log.info(queryTermsSize + " query terms");
 		    Pattern r = Pattern.compile("<total>(\\d+)</total>");
 			for(String keyword : getConfiguration().getQueryTerms()) {
 			    URIBuilder b = new URIBuilder(SEARCH_PUBLICATIONS);
 			    b.addParameter("size", Integer.toString(RESULTS_PER_PAGE));
-			    b.addParameter("keywords", adjustQueryTerm(keyword));
+			    b.addParameter("keywords", adjustQueryTerm(keyword));			    
+			    b.addParameter("fromDateAccepted", fromDateStr);
 			    b.addParameter("format", "xml");
 			    String url = b.toString();
 			    log.info("Retrieving " + url);
@@ -136,9 +148,11 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 		private Model fetchNextPublication() {		
             try {
 			    URIBuilder uriB = new URIBuilder(SEARCH_PUBLICATIONS);
+			    uriB.addParameter("size", Integer.toString(RESULTS_PER_PAGE));
 			    uriB.addParameter("page", Integer.toString(currentPage));
 			    uriB.addParameter("keywords", adjustQueryTerm(getConfiguration().getQueryTerms()
 			            .get(currentQueryTerm)));
+			    uriB.addParameter("fromDateAccepted", fromDateStr);
 			    uriB.addParameter("format", "xml");
 				String request = uriB.build().toString();
 				log.info(request);
