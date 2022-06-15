@@ -261,7 +261,11 @@ public class OrcidConnector extends ConnectorDataSource implements DataSource {
     protected Map<String, String> getOrcidIds() {
         SparqlEndpoint sourceEndpoint = getSourceEndpoint();
         ResultSet rs = sourceEndpoint.getResultSet(
-                "SELECT DISTINCT ?o ?x WHERE { ?x <" + ORCIDID + "> ?o } \n");
+                "SELECT DISTINCT ?o ?x WHERE { \n"
+              + "  GRAPH ?g { ?x <" + ORCIDID + "> ?o } \n"
+	      + "  FILTER(REGEX(STR(?g), \"wheatinitiative\")"
+	      + "    || REGEX(STR(?g), \"kb-2\"))"
+	      + "} \n");
         while(rs.hasNext()) {
             QuerySolution qsoln = rs.next();
             RDFNode o = qsoln.get("o");
