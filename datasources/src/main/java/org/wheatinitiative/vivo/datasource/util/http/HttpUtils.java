@@ -74,10 +74,17 @@ public class HttpUtils {
     public HttpClient getHttpClient() {
         return this.httpClient;
     }
-    
+        
     public String getHttpResponse(String url) throws IOException {
+        return getHttpResponse(url, null);
+    }
+    
+    public String getHttpResponse(String url, String contentType) throws IOException {
         HttpGet get = new HttpGet(url);
         get.setHeader("Accept-charset", "utf-8");
+        if(contentType != null) {
+            get.setHeader("Accept", contentType);
+        }
         HttpResponse response = null;
         try {
             response = execute(get, httpClient);
