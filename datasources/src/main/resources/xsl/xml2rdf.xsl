@@ -45,7 +45,7 @@
       <rdf:Description>                             
         <xsl:element name="rdf:type">
           <xsl:attribute name="rdf:resource" 
-                         select="concat((if(namespace-uri())then (concat(namespace-uri(),'/')) else $defaultNS),local-name())"/>
+                         select="concat((if(namespace-uri() and  not(ends-with(namespace-uri(), '/')))then (concat(namespace-uri(),'#')) else if (namespace-uri() and ends-with(namespace-uri(), '/')) then namespace-uri() else $defaultNS),local-name())"/>
         </xsl:element>
         <xsl:apply-templates select="*|@*"/>
       </rdf:Description>
@@ -55,7 +55,7 @@
     <xsl:template match="*">
         <xsl:element 
             name="{ local-name() }" 
-            namespace="{ (if(namespace-uri() and string-length(namespace-uri())>0 )then (concat(namespace-uri(),'/')) else $defaultNS) }" >
+            namespace="{ (if(namespace-uri() and string-length(namespace-uri())>0 and not(ends-with(namespace-uri(), '/')) )then (concat(namespace-uri(),'#')) else if (namespace-uri() and string-length(namespace-uri())>0 and ends-with(namespace-uri(), '/')) then namespace-uri() else $defaultNS) }" >
             <rdf:Description>
             <xsl:apply-templates select="*|@*"/>
                 
@@ -73,7 +73,7 @@
     <xsl:template  match="*[not(*) and @* and string-length(text())>0]">
         <xsl:element
             name="{ local-name() }" 
-            namespace="{ (if(namespace-uri() and string-length(namespace-uri())>0 )then (concat(namespace-uri(),'/')) else $defaultNS) }" >                                                   
+            namespace="{ (if(namespace-uri() and string-length(namespace-uri())>0 and not(ends-with(namespace-uri(), '/')) )then (concat(namespace-uri(),'#')) else if (namespace-uri() and string-length(namespace-uri())>0 and ends-with(namespace-uri(), '/')) then namespace-uri() else $defaultNS) }" >
             <rdf:Description>
                 <xsl:apply-templates  select="@*"/>
                 <vitro:value>
@@ -95,7 +95,7 @@
     <xsl:template match="@*[name(.)!='xml:lang']">       
         <xsl:element 
             name="{ local-name() }" 
-            namespace="{ (if(namespace-uri() and string-length(namespace-uri())>0 )then (concat(namespace-uri(),'/')) else $defaultNS) }" >                                   
+            namespace="{ (if(namespace-uri() and string-length(namespace-uri())>0 and not(ends-with(namespace-uri(), '/')) )then (concat(namespace-uri(),'#')) else if (namespace-uri() and string-length(namespace-uri())>0 and ends-with(namespace-uri(), '/')) then namespace-uri() else $defaultNS) }" >
             <xsl:value-of select="."/>
         </xsl:element>
     </xsl:template>
@@ -104,7 +104,7 @@
     <xsl:template match="*[not(*) and not(@*) and string-length(text())>0]">       
         <xsl:element 
             name="{ local-name() }" 
-            namespace="{ (if(namespace-uri() and string-length(namespace-uri())>0 )then (concat(namespace-uri(),'/')) else $defaultNS) }" >             
+            namespace="{ (if(namespace-uri() and string-length(namespace-uri())>0 and not(ends-with(namespace-uri(), '/')) )then (concat(namespace-uri(),'#')) else if (namespace-uri() and string-length(namespace-uri())>0 and ends-with(namespace-uri(), '/')) then namespace-uri() else $defaultNS) }" >
             <xsl:value-of select="."/>
         </xsl:element>
     </xsl:template>
