@@ -137,7 +137,7 @@ public abstract class ConnectorDataSource extends DataSourceBase {
                     String defaultNamespace = getDefaultNamespace(this.getConfiguration());
                     if(defaultNamespace != null && !(this instanceof VivoDataSource) 
                             && !(this instanceof OpenAire)) {
-                        model = rewriteUris(model, defaultNamespace, getPrefixName());
+                      //  model = rewriteUris(model, defaultNamespace, getPrefixName());
                     }
                     if(this.getStatus().isStopRequested()) {
                         throw new InterruptedException();
