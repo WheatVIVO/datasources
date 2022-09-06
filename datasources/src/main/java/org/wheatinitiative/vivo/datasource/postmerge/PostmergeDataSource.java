@@ -45,10 +45,13 @@ public class PostmergeDataSource extends ConnectorDataSource implements DataSour
         String resultsGraphURI = this.getConfiguration().getResultsGraphURI();
         endpoint.clearGraph(resultsGraphURI);
         for(String query : queries) {            
-            Model model = endpoint.construct(loadQuery("/postmerge/sparql/" + query));
+            Model model = endpoint.construct(loadQuery(SPARQL_RESOURCE_DIR + query));
             log.info("Postmerge query " + query + " constructed " + model.size());
             endpoint.writeModel(model, resultsGraphURI);
         }
+        Model timestamps = endpoint.construct(loadQuery(SPARQL_RESOURCE_DIR + "timestamp.rq"));
+        log.info("Writing " + timestamps.size() + " timestamps for newly-ingested individuals");
+        endpoint.writeModel(timestamps, "http://vitro.mannlib.cornell.edu/default/vitro-kb-2");
     }
 
     @Override
