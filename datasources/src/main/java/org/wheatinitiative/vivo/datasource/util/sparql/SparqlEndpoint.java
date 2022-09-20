@@ -26,15 +26,15 @@ import org.apache.http.util.EntityUtils;
 import org.wheatinitiative.vivo.datasource.SparqlEndpointParams;
 import org.wheatinitiative.vivo.datasource.dao.ModelConstructor;
 
-import com.hp.hpl.jena.query.QueryParseException;
-import com.hp.hpl.jena.query.QuerySolution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.ResultSetFactory;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.hp.hpl.jena.sparql.resultset.ResultSetException;
+import org.apache.jena.query.QueryParseException;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFactory;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.sparql.resultset.ResultSetException;
 
 public class SparqlEndpoint implements ModelConstructor {
 

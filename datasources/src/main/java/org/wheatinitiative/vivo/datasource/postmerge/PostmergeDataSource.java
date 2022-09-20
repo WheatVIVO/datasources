@@ -10,8 +10,8 @@ import org.wheatinitiative.vivo.datasource.connector.ConnectorDataSource;
 import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
 import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 
 public class PostmergeDataSource extends ConnectorDataSource implements DataSource {
 

@@ -8,7 +8,7 @@ import org.apache.commons.logging.LogFactory;
 import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.connector.VivoDataSource;
 
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Model;
 
 
 

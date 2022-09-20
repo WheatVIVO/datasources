@@ -1,6 +1,6 @@
 package org.wheatinitiative.vivo.datasource.dao;
 
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Model;
 
 /**
  * A simple interface with a method that returns the results of a 

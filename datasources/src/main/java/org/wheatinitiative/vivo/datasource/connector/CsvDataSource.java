@@ -6,10 +6,10 @@ import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
 import org.wheatinitiative.vivo.datasource.util.csv.CsvToRdf;
 import org.wheatinitiative.vivo.datasource.util.http.HttpUtils;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.vocabulary.RDF;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.vocabulary.RDF;
 
 public abstract class CsvDataSource extends ConnectorDataSource {
     

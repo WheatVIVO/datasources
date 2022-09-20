@@ -2,8 +2,8 @@
 
 package org.wheatinitiative.vitro.webapp.ontology.update;
 
-import com.hp.hpl.jena.ontology.OntModel;
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.ontology.OntModel;
+import org.apache.jena.rdf.model.Model;
 
 public class UpdateSettings {
 

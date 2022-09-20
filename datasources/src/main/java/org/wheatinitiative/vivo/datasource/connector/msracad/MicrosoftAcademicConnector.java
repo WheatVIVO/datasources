@@ -30,13 +30,13 @@ import org.wheatinitiative.vivo.datasource.util.json.JsonToXml;
 import org.wheatinitiative.vivo.datasource.util.xml.XmlToRdf;
 import org.wheatinitiative.vivo.datasource.util.xml.rdf.RdfUtils;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.hp.hpl.jena.vocabulary.RDF;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.vocabulary.RDF;
 
 public class MicrosoftAcademicConnector extends ConnectorDataSource implements DataSource {
     
