@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -200,7 +201,7 @@ public class SparqlEndpoint implements ModelConstructor {
 
     public void update(String updateString) {
         HttpPost post = new HttpPost(endpointParams.getEndpointUpdateURI());
-        post.addHeader("Content-Type", "application/x-www-form-urlencoded");
+        post.addHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
         try {
             List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
             nameValuePairs.add(new BasicNameValuePair(
@@ -210,7 +211,7 @@ public class SparqlEndpoint implements ModelConstructor {
             nameValuePairs.add(new BasicNameValuePair(
                     "update", updateString));
             UrlEncodedFormEntity entity = new UrlEncodedFormEntity(
-                    nameValuePairs);
+                    nameValuePairs, "UTF-8");
             post.setEntity(entity);
             HttpResponse response = httpClient.execute(post);
             try {
@@ -245,7 +246,11 @@ public class SparqlEndpoint implements ModelConstructor {
         chunk.write(out, "N-TRIPLE");
         StringBuffer reqBuff = new StringBuffer();
         reqBuff.append("INSERT DATA { GRAPH <" + graphURI + "> { \n");
-        reqBuff.append(out);
+        try {
+            reqBuff.append(out.toString("UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
         reqBuff.append(" } } \n");
         String reqStr = reqBuff.toString();     
         long startTime = System.currentTimeMillis();
@@ -263,7 +268,11 @@ public class SparqlEndpoint implements ModelConstructor {
         chunk.write(out, "N-TRIPLE");
         StringBuffer reqBuff = new StringBuffer();
         reqBuff.append("DELETE DATA { GRAPH <" + graphURI + "> { \n");
-        reqBuff.append(out);
+        try {
+            reqBuff.append(out.toString("UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
         reqBuff.append(" } } \n");
         String reqStr = reqBuff.toString();     
         long startTime = System.currentTimeMillis();
