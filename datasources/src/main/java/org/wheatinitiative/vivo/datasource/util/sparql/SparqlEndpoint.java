@@ -33,6 +33,7 @@ import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.sparql.resultset.ResultSetException;
 
@@ -259,6 +260,7 @@ public class SparqlEndpoint implements ModelConstructor {
      * @param chunk
      */
     private void deleteChunk(Model chunk, String graphURI) {
+	chunk = removeBlankNodes(chunk);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         chunk.write(out, "N-TRIPLE");
         StringBuffer reqBuff = new StringBuffer();
@@ -270,6 +272,18 @@ public class SparqlEndpoint implements ModelConstructor {
         update(reqStr);
         log.debug("\t" + (System.currentTimeMillis() - startTime) / 1000 + 
                 " seconds to insert " + chunk.size() + " triples");
+    }
+
+    private Model removeBlankNodes(Model model) {
+        Model out = ModelFactory.createDefaultModel();
+	StmtIterator sit = model.listStatements();
+	while(sit.hasNext()) {
+          Statement stmt = sit.next();
+          if(!stmt.getSubject().isAnon() && !stmt.getObject().isAnon()) {
+              out.add(stmt);
+	  }
+        }
+	return out;
     }
     
     private String stringFromInputStream(InputStream is) {
