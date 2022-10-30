@@ -39,7 +39,9 @@ public class PostmergeDataSource extends ConnectorDataSource implements DataSour
                 "externalToWheatOrganizationsQuery.sparql",                
                 "externalToWheatJournalsQuery.sparql",
                 "externalToWheatConceptsQuery.sparql",
-                "externalToWheatInactivePersonsQuery.sparql"
+                "externalToWheatInactivePersonsQuery.sparql",
+                "projectType.rq",
+                "projectHide.rq"
                 );
         SparqlEndpoint endpoint = getSparqlEndpoint();
         String resultsGraphURI = this.getConfiguration().getResultsGraphURI();
