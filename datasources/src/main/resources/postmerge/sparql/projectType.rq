@@ -38,6 +38,11 @@ CONSTRUCT {
       ?x vivo:dateTimeInterval ?dti .
       ?dti vivo:end ?end
     }
+    FILTER NOT EXISTS {
+      ?someGrant vivo:fundingVehicleFor ?x .
+      ?someGrant vivo:dateTimeInterval ?grantDti .
+      ?grantDti vivo:end ?grantEnd
+    }
   } UNION {
     ?x a vivo:Project
     BIND(<https://wheatvivo.org/ontology/extensions/CurrentProject> AS ?projectType)
@@ -47,8 +52,32 @@ CONSTRUCT {
     FILTER(?endDateTime >= NOW())
   } UNION {
     ?x a vivo:Project
+    BIND(<https://wheatvivo.org/ontology/extensions/CurrentProject> AS ?projectType)
+    FILTER NOT EXISTS {
+      ?x vivo:dateTimeInterval ?projectDti .
+      ?projectDti vivo:end ?projectEnd
+    }
+    ?grant vivo:fundingVehicleFor ?x .
+    ?grant vivo:dateTimeInterval ?dti .
+    ?dti vivo:end ?end .
+    ?end vivo:dateTime ?endDateTime .
+    FILTER(?endDateTime >= NOW())
+  } UNION {
+    ?x a vivo:Project
     BIND(<https://wheatvivo.org/ontology/extensions/CompletedProject> AS ?projectType)
     ?x vivo:dateTimeInterval ?dti .
+    ?dti vivo:end ?end .
+    ?end vivo:dateTime ?endDateTime .
+    FILTER(?endDateTime < NOW())    
+  } UNION {
+    ?x a vivo:Project
+    BIND(<https://wheatvivo.org/ontology/extensions/CompletedProject> AS ?projectType)
+    FILTER NOT EXISTS {
+      ?x vivo:dateTimeInterval ?projectDti .
+      ?projectDti vivo:end ?projectEnd
+    }
+    ?grant vivo:fundingVehicleFor ?x .
+    ?grant vivo:dateTimeInterval ?dti .
     ?dti vivo:end ?end .
     ?end vivo:dateTime ?endDateTime .
     FILTER(?endDateTime < NOW())    
