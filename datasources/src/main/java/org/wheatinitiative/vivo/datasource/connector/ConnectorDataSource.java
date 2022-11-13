@@ -146,11 +146,11 @@ public abstract class ConnectorDataSource extends DataSourceBase {
                         buffer.add(model);                
                         if(count % getBatchSize() == 0 || !it.hasNext() 
                                 || count == this.getConfiguration().getLimit()) {
+                            log.debug("Adding " + buffer.size() + " triples to endpoint");
+                            addToEndpoint(buffer, graphURI + graphTimeSuffix);
                             if(buffer.size() > 0) {
                                 dataWrittenToEndpoint = true;
                             }
-                            log.debug("Adding " + buffer.size() + " triples to endpoint");
-                            addToEndpoint(buffer, graphURI + graphTimeSuffix);
                             buffer.removeAll();
                         }
                     } else {
@@ -172,13 +172,11 @@ public abstract class ConnectorDataSource extends DataSourceBase {
             if(activeEndpointForResults()) {
                 runNormalizers();
             }
-            boolean skipClearingOldData = false;
-            if(!dataWrittenToEndpoint) {
-                if(totalRecords == null) {
-                    skipClearingOldData = true;
-                } else if (this.getStatus().getErrorRecords() > (totalRecords / 5)) {
-                    skipClearingOldData = true;
-                }
+            boolean skipClearingOldData = !dataWrittenToEndpoint;
+            if(totalRecords == null) {
+                skipClearingOldData = true;
+            } else if (this.getStatus().getErrorRecords() > (totalRecords / 5)) {
+                skipClearingOldData = true;
             }
             if(activeEndpointForResults() && !skipClearingOldData) {
                 this.getStatus().setMessage("removing old data");
