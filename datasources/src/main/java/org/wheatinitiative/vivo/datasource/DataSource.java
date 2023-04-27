@@ -1,6 +1,6 @@
 package org.wheatinitiative.vivo.datasource;
 
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Model;
 
 public interface DataSource extends Runnable {
     

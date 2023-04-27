@@ -9,8 +9,8 @@ import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.connector.ConnectorDataSource;
 import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 
 public class ConceptDataSource extends ConnectorDataSource implements DataSource {
 

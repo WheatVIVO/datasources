@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,15 +27,16 @@ import org.apache.http.util.EntityUtils;
 import org.wheatinitiative.vivo.datasource.SparqlEndpointParams;
 import org.wheatinitiative.vivo.datasource.dao.ModelConstructor;
 
-import com.hp.hpl.jena.query.QueryParseException;
-import com.hp.hpl.jena.query.QuerySolution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.ResultSetFactory;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.hp.hpl.jena.sparql.resultset.ResultSetException;
+import org.apache.jena.query.QueryParseException;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFactory;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.sparql.resultset.ResultSetException;
 
 public class SparqlEndpoint implements ModelConstructor {
 
@@ -200,7 +202,7 @@ public class SparqlEndpoint implements ModelConstructor {
 
     public void update(String updateString) {
         HttpPost post = new HttpPost(endpointParams.getEndpointUpdateURI());
-        post.addHeader("Content-Type", "application/x-www-form-urlencoded");
+        post.addHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
         try {
             List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
             nameValuePairs.add(new BasicNameValuePair(
@@ -210,7 +212,7 @@ public class SparqlEndpoint implements ModelConstructor {
             nameValuePairs.add(new BasicNameValuePair(
                     "update", updateString));
             UrlEncodedFormEntity entity = new UrlEncodedFormEntity(
-                    nameValuePairs);
+                    nameValuePairs, "UTF-8");
             post.setEntity(entity);
             HttpResponse response = httpClient.execute(post);
             try {
@@ -245,7 +247,11 @@ public class SparqlEndpoint implements ModelConstructor {
         chunk.write(out, "N-TRIPLE");
         StringBuffer reqBuff = new StringBuffer();
         reqBuff.append("INSERT DATA { GRAPH <" + graphURI + "> { \n");
-        reqBuff.append(out);
+        try {
+            reqBuff.append(out.toString("UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
         reqBuff.append(" } } \n");
         String reqStr = reqBuff.toString();     
         long startTime = System.currentTimeMillis();
@@ -259,17 +265,34 @@ public class SparqlEndpoint implements ModelConstructor {
      * @param chunk
      */
     private void deleteChunk(Model chunk, String graphURI) {
+	chunk = removeBlankNodes(chunk);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         chunk.write(out, "N-TRIPLE");
         StringBuffer reqBuff = new StringBuffer();
         reqBuff.append("DELETE DATA { GRAPH <" + graphURI + "> { \n");
-        reqBuff.append(out);
+        try {
+            reqBuff.append(out.toString("UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
         reqBuff.append(" } } \n");
         String reqStr = reqBuff.toString();     
         long startTime = System.currentTimeMillis();
         update(reqStr);
         log.debug("\t" + (System.currentTimeMillis() - startTime) / 1000 + 
                 " seconds to insert " + chunk.size() + " triples");
+    }
+
+    private Model removeBlankNodes(Model model) {
+        Model out = ModelFactory.createDefaultModel();
+	StmtIterator sit = model.listStatements();
+	while(sit.hasNext()) {
+          Statement stmt = sit.next();
+          if(!stmt.getSubject().isAnon() && !stmt.getObject().isAnon()) {
+              out.add(stmt);
+	  }
+        }
+	return out;
     }
     
     private String stringFromInputStream(InputStream is) {

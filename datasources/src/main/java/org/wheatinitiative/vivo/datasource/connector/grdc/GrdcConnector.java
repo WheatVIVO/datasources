@@ -7,7 +7,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wheatinitiative.vivo.datasource.connector.wheatinitiative.WheatInitiative;
 
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Model;
 
 public class GrdcConnector extends WheatInitiative {
 

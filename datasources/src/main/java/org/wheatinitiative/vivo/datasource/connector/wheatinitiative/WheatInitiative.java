@@ -28,11 +28,11 @@ import org.wheatinitiative.vivo.datasource.DataSourceConfiguration;
 import org.wheatinitiative.vivo.datasource.connector.ConnectorDataSource;
 import org.wheatinitiative.vivo.datasource.util.IteratorWithSize;
 
-import com.hp.hpl.jena.rdf.model.Literal;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Literal;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 
 public class WheatInitiative extends ConnectorDataSource implements DataSource {
     

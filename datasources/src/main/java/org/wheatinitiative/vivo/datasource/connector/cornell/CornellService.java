@@ -1,10 +1,12 @@
 package org.wheatinitiative.vivo.datasource.connector.cornell;
 
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 
 import org.wheatinitiative.vivo.datasource.DataSource;
 import org.wheatinitiative.vivo.datasource.service.DataSourceService;
 
+@WebServlet(name = "CornellService", urlPatterns = {"/dataSource/cornell/*"} )
 public class CornellService extends DataSourceService {
 
     private static volatile DataSource dataSource = null;

@@ -28,7 +28,7 @@ import org.wheatinitiative.vivo.datasource.normalizer.LiteratureNameForSameAsNor
 import org.wheatinitiative.vivo.datasource.normalizer.OrganizationNameForSameAsNormalizer;
 import org.wheatinitiative.vivo.datasource.postmerge.PostmergeDataSource;
 
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Model;
 
 public class LaunchIngest {
 
