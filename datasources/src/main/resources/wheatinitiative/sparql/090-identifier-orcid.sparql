@@ -32,6 +32,6 @@ CONSTRUCT {
 } WHERE {
     ?x wi:OrcidID ?orcidId .
     FILTER(REGEX(STR(?orcidId), "^https"))
-    BIND(IRI(REPLACE(STR(?orcidId), "\\s+", "")) AS ?orcidIRI)
-    BIND(CONCAT("orcid-", SUBSTR(STR(?orcidId), 19)) AS ?identifier)
+    BIND(IRI(REPLACE(STR(?orcidId), "\\s+", "-")) AS ?orcidIRI)
+    BIND(CONCAT("orcid-", SUBSTR(REPLACE(STR(?orcidId), "\\s+", "-"), 19)) AS ?identifier)
 }
