@@ -542,11 +542,11 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             queryStr +=        
                     "    ?name <" + VCARD + "familyName> ?familyNameValue . \n" +
                             "    ?name <" + atom.getMergeDataPropertyURI() + "> ?value . \n" +
-                            "} ORDER BY ?familyNameValue ?value \n" ;
+                            "} ORDER BY STR(?familyNameValue) STR(?value) \n" ;
         } else {
             queryStr +=        
                     "    ?name <" + atom.getMergeDataPropertyURI() + "> ?value . \n" +
-                            "} ORDER BY ?familyNameValue ?value \n" ;
+                            "} ORDER BY STR(?familyNameValue) STR(?value) \n" ;
         }
         return queryStr;
     }
@@ -1169,7 +1169,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                     "    ?x a <" + rule.getMergeClassURI() + "> ." +
                     "    ?x <" + atom.getMergeDataPropertyURI() + "> ?val \n" +
                     "    BIND(LCASE(?val) AS ?value) \n" +
-                    "} ORDER BY ?value \n";
+                    "} ORDER BY STR(?value) \n";
         }
         return queryStr;
     }
