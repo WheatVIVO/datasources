@@ -329,6 +329,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     private Model getSameAs(MergeRule rule, Model fauxPropertyContextModel, 
             SparqlEndpoint sparqlEndpoint, int windowSize) {
         Model sameAsModel = null;
+        Model personNameMatchModel = executePersonNameMatch(sparqlEndpoint);
+        log.info("person name match model has " + personNameMatchModel.size());
         boolean firstAtom = true;
         for (MergeRuleAtom atom : rule.getAtoms()) {
             if(!firstAtom && sameAsModel.isEmpty()) {
@@ -340,7 +342,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                     + atom.getMatchDegree());
             if(AuthorNameForSameAsNormalizer.HAS_NORMALIZED_NAMES.equals(
                     atom.getMergeObjectPropertyURI())) {
-                sameAsModel = join(sameAsModel, executePersonNameMatch(sparqlEndpoint)); 
+                sameAsModel = join(sameAsModel, personNameMatchModel); 
             } else if(atom.getMatchDegree() < 100) {
                 sameAsModel = join(sameAsModel, getFuzzySameAs(
                         rule, atom, fauxPropertyContextModel, windowSize));
@@ -472,7 +474,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
 
     private Model executePersonNameMatchQuery(String queryFile, 
             SparqlEndpoint endpoint, int personsToMatch) {
-        int personsPerBatch = 2000;
+        int personsPerBatch = 500;
         Model results = ModelFactory.createDefaultModel();
         List<String> xNormP = Arrays.asList("C3", "RC3", "C2", "C1", "RC1", "B3", "B2", "B1", "RB1", "A3", "A2", "A1");
         List<String> yNormP = Arrays.asList("C3",  "C3", "C2", "C1",  "C1", "B3", "B2", "B1",  "B1", "A3", "A2", "A1");
