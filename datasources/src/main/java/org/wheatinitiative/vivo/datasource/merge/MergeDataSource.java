@@ -444,32 +444,54 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     
     private Model executePersonNameMatch( 
             SparqlEndpoint endpoint) {
-        return executePersonNameMatchQuery("personSameName.rq", endpoint);                               
+        int personsWithNormalizedNames = getNormalizedPersonCount(endpoint);
+        return executePersonNameMatchQuery("personSameName2.rq", endpoint, personsWithNormalizedNames);                               
+    }
+    
+    private int getNormalizedPersonCount(SparqlEndpoint endpoint) {
+        int count = 0;
+        String queryStr = this.loadQuery(SPARQL_RESOURCE_DIR + "normalizedPersonCount.rq");
+        ResultSet rs = endpoint.getResultSet(queryStr);
+        while(rs.hasNext()) {
+            QuerySolution qsoln = rs.next();
+            if(qsoln.contains("count") && qsoln.get("count").isLiteral()) {
+                count = qsoln.getLiteral("count").getInt();
+            }
+        }
+        log.info(count + " normalized persons");
+        return count;
     }
 
     private Model executePersonNameMatchQuery(String queryFile, 
-            SparqlEndpoint endpoint) {
+            SparqlEndpoint endpoint, int personsToMatch) {
+        int personsPerBatch = 2000;
         Model results = ModelFactory.createDefaultModel();
         List<String> xNormP = Arrays.asList("C3", "RC3", "C2", "C1", "RC1", "B3", "B2", "B1", "RB1", "A3", "A2", "A1");
         List<String> yNormP = Arrays.asList("C3",  "C3", "C2", "C1",  "C1", "B3", "B2", "B1",  "B1", "A3", "A2", "A1");
         List<String> guardP = Arrays.asList("XX",  "XX", "XX", "XX",  "XX", "C1", "C1", "C1",  "C1", "B1", "B1", "B1");
         List<String> guardPx = Arrays.asList("XX",  "XX", "C3", "C2",  "XX", "XX", "B3", "B2",  "XX", "XX", "A3", "A2");
         for(int i = 0; i < xNormP.size(); i++) {
-            Map<String, String> uriBindings = new HashMap<String, String>();
-            uriBindings.put("xNormP", NORM_PROP_BASE + xNormP.get(i));
-            uriBindings.put("yNormP", NORM_PROP_BASE + yNormP.get(i));
-            uriBindings.put("guardP", NORM_PROP_BASE + guardP.get(i));
-            uriBindings.put("guardPx", NORM_PROP_BASE + guardPx.get(i));
-            ParameterizedSparqlString queryStr = new ParameterizedSparqlString(
-                    this.loadQuery(SPARQL_RESOURCE_DIR + queryFile));
-            for(String key : uriBindings.keySet()) {
-                queryStr.setIri(key, uriBindings.get(key));
-            }
-            log.info(queryStr.toString());
-            Model m = endpoint.construct(queryStr.toString());
-            StmtIterator mit = m.listStatements();
-            while(mit.hasNext()) {
-                results.add(mit.next());
+            int offset = 0;
+            while(offset < personsToMatch) {
+                Map<String, String> uriBindings = new HashMap<String, String>();
+                uriBindings.put("xNormP", NORM_PROP_BASE + xNormP.get(i));
+                uriBindings.put("yNormP", NORM_PROP_BASE + yNormP.get(i));
+                uriBindings.put("guardP", NORM_PROP_BASE + guardP.get(i));
+                uriBindings.put("guardPx", NORM_PROP_BASE + guardPx.get(i));
+                ParameterizedSparqlString queryStr = new ParameterizedSparqlString(
+                        this.loadQuery(SPARQL_RESOURCE_DIR + queryFile));
+                queryStr.setLiteral("limit", personsPerBatch);
+                queryStr.setLiteral("offset", offset);
+                for(String key : uriBindings.keySet()) {
+                    queryStr.setIri(key, uriBindings.get(key));
+                }
+                log.info(queryStr.toString());
+                Model m = endpoint.construct(queryStr.toString());
+                StmtIterator mit = m.listStatements();
+                while(mit.hasNext()) {
+                    results.add(mit.next());
+                }
+                offset += personsPerBatch;
             }
         }
         return results;
