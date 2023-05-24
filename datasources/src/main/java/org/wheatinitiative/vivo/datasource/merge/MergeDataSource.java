@@ -226,22 +226,30 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
      * Materialize inferences of type sameAs(x,x) for query support
      */
     protected void addTransitiveSameAsAssertions(SparqlEndpoint endpoint) {
-        int maxIterations = 3;
+        int remainingIterations = 50;
+        int limitPerIteration = 50000;
         long inferenceCount = 1;
-        while(inferenceCount > 0 && maxIterations > 0) {
-            maxIterations--;
-            String queryStr = "CONSTRUCT { ?x <" + OWL.sameAs.getURI() + "> ?z } WHERE { \n" +
-                    "    { SELECT ?x ?y \n" + 
-                    "      WHERE { \n" +
-                    "        ?x <" + OWL.sameAs.getURI() + "> ?y . \n" +
-                    "        FILTER (?x != ?y) \n" +
-                    "      } \n" + 
-                    "    } \n" +
-                    "    ?y <" + OWL.sameAs.getURI() + "> ?z . \n" +
-                    "    FILTER (?y != ?z) \n" +
-                    "    FILTER (?x != ?z) \n" +
-                    "    FILTER NOT EXISTS { ?x <" + OWL.sameAs.getURI() + "> ?z } \n" +
-                    "} \n";
+        while(inferenceCount > 0 && remainingIterations >= 0) {
+            remainingIterations--;
+//            String queryStr = "CONSTRUCT { ?x <" + OWL.sameAs.getURI() + "> ?z } WHERE { \n" +
+//                    "    { SELECT ?x ?y \n" + 
+//                    "      WHERE { \n" +
+//                    "        ?x <" + OWL.sameAs.getURI() + "> ?y . \n" +
+//                    "        FILTER (?x != ?y) \n" +
+//                    "      } \n" + 
+//                    "    } \n" +
+//                    "    ?y <" + OWL.sameAs.getURI() + "> ?z . \n" +
+//                    "    FILTER (?y != ?z) \n" +
+//                    "    FILTER (?x != ?z) \n" +
+//                    "    FILTER NOT EXISTS { ?x <" + OWL.sameAs.getURI() + "> ?z } \n" +
+//                    "} \n";
+            String queryStr = "CONSTRUCT { \n"
+                    + "?x <" + OWL.sameAs.getURI() + "> ?z \n"
+                    + "} WHERE { \n"
+                    + "  ?x <" + OWL.sameAs.getURI() + "> ?y . \n"
+                    + "  ?y <" + OWL.sameAs.getURI() + "> ?z . \n"
+                    + "  FILTER NOT EXISTS { ?x <" + OWL.sameAs.getURI() + "> ?z } \n"
+                    + "} LIMIT " + limitPerIteration;
             Model m = endpoint.construct(queryStr);
             log.info("Writing " + m.size() + " triples to " + TRANSITIVE_SAMEAS_GRAPH);
             inferenceCount = m.size();
@@ -564,11 +572,11 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             queryStr +=        
                     "    ?name <" + VCARD + "familyName> ?familyNameValue . \n" +
                             "    ?name <" + atom.getMergeDataPropertyURI() + "> ?value . \n" +
-                            "} ORDER BY ?familyNameValue ?value \n" ;
+                            "} ORDER BY STR(?familyNameValue) STR(?value) \n" ;
         } else {
             queryStr +=        
                     "    ?name <" + atom.getMergeDataPropertyURI() + "> ?value . \n" +
-                            "} ORDER BY ?familyNameValue ?value \n" ;
+                            "} ORDER BY STR(?familyNameValue) STR(?value) \n" ;
         }
         return queryStr;
     }
@@ -1191,7 +1199,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                     "    ?x a <" + rule.getMergeClassURI() + "> ." +
                     "    ?x <" + atom.getMergeDataPropertyURI() + "> ?val \n" +
                     "    BIND(LCASE(?val) AS ?value) \n" +
-                    "} ORDER BY ?value \n";
+                    "} ORDER BY STR(?value) \n";
         }
         return queryStr;
     }
