@@ -75,6 +75,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     private static final String NORM_PROP_BASE = InsertOnlyConnectorDataSource.LABEL_FOR_SAMEAS;
 
     private Model result = ModelFactory.createDefaultModel();
+    private Model personNameMatchModel = ModelFactory.createDefaultModel(); 
     protected LevenshteinDistance ld = LevenshteinDistance.getDefaultInstance();
 
     @Override
@@ -126,7 +127,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             SparqlEndpoint endpoint = getSparqlEndpoint();
             clearTransitiveSameAsAssertions(endpoint);
             String resultsGraphURI = getConfiguration().getResultsGraphURI();
-            getSparqlEndpoint().clearGraph(resultsGraphURI); 
+            getSparqlEndpoint().clearGraph(resultsGraphURI);
+            personNameMatchModel = executePersonNameMatch(sparqlEndpoint);
             this.getStatus().setMessage("running merge rules");
             Collections.sort(mergeRules, new AffectedClassRuleComparator(getSparqlEndpoint()));        
             Map<String, Long> statistics = new HashMap<String, Long>();
@@ -329,8 +331,6 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     private Model getSameAs(MergeRule rule, Model fauxPropertyContextModel, 
             SparqlEndpoint sparqlEndpoint, int windowSize) {
         Model sameAsModel = null;
-        Model personNameMatchModel = executePersonNameMatch(sparqlEndpoint);
-        log.info("person name match model has " + personNameMatchModel.size());
         boolean firstAtom = true;
         for (MergeRuleAtom atom : rule.getAtoms()) {
             if(!firstAtom && sameAsModel.isEmpty()) {
@@ -501,6 +501,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 while(mit.hasNext()) {
                     results.add(mit.next());
                 }
+                log.info("person name match model has " + personNameMatchModel.size());
                 offset += personsPerBatch;
             }
         }
