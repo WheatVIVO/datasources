@@ -72,6 +72,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     private static final String BIBO_DOCUMENT = "http://purl.org/ontology/bibo/Document";
     private static final String BASIC_SAMEAS_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/basicSameAs";
     private static final String TRANSITIVE_SAMEAS_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/transitiveSameAs";
+    private static final String PERSON_SAMENAME_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/personSameName";
     private static final String NORM_PROP_BASE = InsertOnlyConnectorDataSource.LABEL_FOR_SAMEAS;
 
     private Model result = ModelFactory.createDefaultModel();
@@ -128,6 +129,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             clearTransitiveSameAsAssertions(endpoint);
             String resultsGraphURI = getConfiguration().getResultsGraphURI();
             getSparqlEndpoint().clearGraph(resultsGraphURI);
+            this.getStatus().setMessage("running person name matchess");
             personNameMatchModel = executePersonNameMatch(sparqlEndpoint);
             this.getStatus().setMessage("running merge rules");
             Collections.sort(mergeRules, new AffectedClassRuleComparator(getSparqlEndpoint()));        
@@ -158,7 +160,6 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 }
                 //addTransitiveSameAsAssertions(endpoint);
             }
-	    /*
             this.getStatus().setMessage("adding additional query results");
             Model tmp = getAdditionalQueryResults(endpoint);
             getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
@@ -182,7 +183,6 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
             tmp = getVcardPartsSameAs(endpoint);
             getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
-	    */
             //addTransitiveSameAsAssertions(endpoint);
             log.info("======== Final Results ========");
             for(String ruleURI : statistics.keySet()) {            
@@ -456,6 +456,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     
     private Model executePersonNameMatch( 
             SparqlEndpoint endpoint) {
+        endpoint.clearGraph(PERSON_SAMENAME_GRAPH);
         int personsWithNormalizedNames = getNormalizedPersonCount(endpoint);
         return executePersonNameMatchQuery("personSameName2.rq", endpoint, personsWithNormalizedNames);                               
     }
@@ -499,15 +500,16 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 }
                 log.info(queryStr.toString());
                 Model m = endpoint.construct(queryStr.toString());
-		Model filtered = ModelFactory.createDefaultModel();
+                Model filtered = ModelFactory.createDefaultModel();
                 StmtIterator mit = m.listStatements();
                 while(mit.hasNext()) {
                     Statement stmt = mit.next();
                     if(!results.contains(stmt.getSubject(), null, (RDFNode) null)) {
                         filtered.add(stmt);
-		    }
+                    }
                 }
-		results.add(filtered);
+                results.add(filtered);
+                endpoint.writeModel(filtered, PERSON_SAMENAME_GRAPH);
                 log.info("person name match model has " + results.size());
                 offset += personsPerBatch;
             }
