@@ -38,8 +38,7 @@ CONSTRUCT {
 } WHERE {
  {
    #SELECT ?x (?y AS ?yMin) WHERE {
-   SELECT ?x (IRI(SUBSTR((MIN(CONCAT(?sortPrefix, STR(?y))), 2) AS ?yMin))) WHERE {
-       { 
+    SELECT ?x (IRI(SUBSTR((MIN(CONCAT(?sortPrefix, STR(?y)))), 2)) AS ?yMin) WHERE {       { 
          SELECT ?x ?nn1 ?value WHERE {
            ?x <https://wheatvivo.org/ontology/local/hasNN> ?nn1 .
            ?nn1 ?xNormP ?value .
