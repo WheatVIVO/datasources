@@ -286,6 +286,7 @@ public class Publisher extends DataSourceBase implements DataSource {
                 "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
                 "} WHERE { \n" +
                 "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
+                "    FILTER ?ind2 != <" + individualURI + "> \n" +
                 "} \n";
         return endpoint.construct(sameAsQuery);
     }
