@@ -156,8 +156,9 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                     log.info("Rule results size: " + ruleResult.size());            
                     getSparqlEndpoint().writeModel(ruleResult, mergeRuleURI); 
                 }
-                addTransitiveSameAsAssertions(endpoint);
+                //addTransitiveSameAsAssertions(endpoint);
             }
+	    /*
             this.getStatus().setMessage("adding additional query results");
             Model tmp = getAdditionalQueryResults(endpoint);
             getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
@@ -181,7 +182,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
             tmp = getVcardPartsSameAs(endpoint);
             getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
-            addTransitiveSameAsAssertions(endpoint);
+	    */
+            //addTransitiveSameAsAssertions(endpoint);
             log.info("======== Final Results ========");
             for(String ruleURI : statistics.keySet()) {            
                 log.info("Rule " + ruleURI + " added " + statistics.get(ruleURI));
@@ -497,11 +499,16 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 }
                 log.info(queryStr.toString());
                 Model m = endpoint.construct(queryStr.toString());
+		Model filtered = ModelFactory.createDefaultModel();
                 StmtIterator mit = m.listStatements();
                 while(mit.hasNext()) {
-                    results.add(mit.next());
+                    Statement stmt = mit.next();
+                    if(!results.contains(stmt.getSubject(), null, (RDFNode) null)) {
+                        filtered.add(stmt);
+		    }
                 }
-                log.info("person name match model has " + personNameMatchModel.size());
+		results.add(filtered);
+                log.info("person name match model has " + results.size());
                 offset += personsPerBatch;
             }
         }

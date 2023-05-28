@@ -37,43 +37,24 @@ CONSTRUCT {
   ?x owl:sameAs ?yMin .
 } WHERE {
  {
-   SELECT ?x (MIN(?y) AS ?yMin) WHERE {
-     {
+    SELECT ?x (?y AS ?yMin) WHERE {
+   #SELECT ?x (MIN(?y) AS ?yMin) WHERE {
        { 
-         SELECT ?x ?value WHERE {
+         SELECT ?x ?nn1 ?value WHERE {
            ?x <https://wheatvivo.org/ontology/local/hasNN> ?nn1 .
            ?nn1 ?xNormP ?value .
          } LIMIT ?limit OFFSET ?offset
        }
-       GRAPH ?g {
-         ?nn2 ?yNormP ?value .
-         ?y <https://wheatvivo.org/ontology/local/hasNN> ?nn2 .
-       }
+       #OPTIONAL {
+        # GRAPH ?g {
+           ?nn2 ?yNormP ?value .
+           ?y <https://wheatvivo.org/ontology/local/hasNN> ?nn2 .
+        # }
+       #}
        FILTER(?x != ?y)
        FILTER NOT EXISTS { ?x owl:differentFrom ?y }
        FILTER( ( NOT EXISTS { ?nn1 ?guardP ?something } && NOT EXISTS { ?nn1 ?guardPx ?somethingPx} ) 
                && ( NOT EXISTS { ?nn2 ?guardP ?somethingElse } && NOT EXISTS { ?nn2 ?guardPx ?somethingElsePx } ) )
-    } UNION {
-      {
-        SELECT ?x ?value WHERE {
-          ?x <https://wheatvivo.org/ontology/local/hasNN> ?nn1 .
-          ?nn1 ?xNormP ?value .
-        } LIMIT ?limit OFFSET ?offset
-      }
-      GRAPH ?g {
-        ?nn2 ?yNormP ?value .
-        ?y <https://wheatvivo.org/ontology/local/hasNN> ?nn2 .
-      }
-      FILTER NOT EXISTS {
-        ?nn3 ?yNormP ?value .
-        ?z <https://wheatvivo.org/ontology/local/hasNN> ?nn3 .
-        FILTER(STR(?z) < STR(?y))
-      }
-      FILTER(?x != ?y)
-      FILTER NOT EXISTS { ?x owl:differentFrom ?y }
-      FILTER( ( NOT EXISTS { ?nn1 ?guardP ?something } && NOT EXISTS { ?nn1 ?guardPx ?somethingPx} ) )
-      #          || ( NOT EXISTS { ?nn2 ?guardP ?somethingElse } && NOT EXISTS { ?nn2 ?guardPx ?somethingElsePx } ) )
-    }
-   } GROUP BY ?x ?g
+   }# GROUP BY ?x ?g
  }
 }
