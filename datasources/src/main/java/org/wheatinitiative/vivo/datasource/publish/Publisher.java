@@ -131,9 +131,9 @@ public class Publisher extends DataSourceBase implements DataSource {
                         List<String> sameAsURIs = getSameAsURIList(individualURI, sourceEndpoint);
                         List<Quad> individualQuads = getIndividualQuads(individualURI, 
                                 sourceEndpoint);
-                       // for (String sameAsURI : sameAsURIs) {
-                       //     sameAsCache.put(sameAsURI, individualURI);
-                       // }
+//                        for (String sameAsURI : sameAsURIs) {
+//                            sameAsCache.put(sameAsURI, individualURI);
+//                        }
                         Map<String, Model> quadStore = new HashMap<String, Model>();   
                         log.debug("Adding " + individualURI + " to store");
                         addQuadsToStore(
@@ -318,11 +318,11 @@ public class Publisher extends DataSourceBase implements DataSource {
         }
         //if(System.currentTimeMillis() - start > 2) {
         sameAsCache.put(individualURI, uriToMapTo);
-        //for(String sameAsURI : sameAsURIs) {
-        //    if(!sameAsCache.containsKey(sameAsURI)) {
-        //      sameAsCache.put(sameAsURI, uriToMapTo);
-        //    }
-        //}
+//        for(String sameAsURI : sameAsURIs) {
+//            if(!sameAsCache.containsKey(sameAsURI)) {
+//              sameAsCache.put(sameAsURI, uriToMapTo);
+//            }
+//        }
         //}
         long duration = System.currentTimeMillis() - start;
         if(duration > 10000) {
