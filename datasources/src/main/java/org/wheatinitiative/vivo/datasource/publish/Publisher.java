@@ -131,9 +131,9 @@ public class Publisher extends DataSourceBase implements DataSource {
                         List<String> sameAsURIs = getSameAsURIList(individualURI, sourceEndpoint);
                         List<Quad> individualQuads = getIndividualQuads(individualURI, 
                                 sourceEndpoint);
-                        for (String sameAsURI : sameAsURIs) {
-                            sameAsCache.put(sameAsURI, individualURI);
-                        }
+                       // for (String sameAsURI : sameAsURIs) {
+                       //     sameAsCache.put(sameAsURI, individualURI);
+                       // }
                         Map<String, Model> quadStore = new HashMap<String, Model>();   
                         log.debug("Adding " + individualURI + " to store");
                         addQuadsToStore(
@@ -286,7 +286,7 @@ public class Publisher extends DataSourceBase implements DataSource {
                 "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
                 "} WHERE { \n" +
                 "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
-                "    FILTER ?ind2 != <" + individualURI + "> \n" +
+                "    FILTER (?ind2 != <" + individualURI + ">) \n" +
                 "} \n";
         return endpoint.construct(sameAsQuery);
     }
@@ -311,27 +311,25 @@ public class Publisher extends DataSourceBase implements DataSource {
             if(this.isHigherPriorityThan(candidateGraph, currentGraph, 
                     graphURIPreferenceList)) {
                 uriToMapTo = sameAsURI;
-            } else if(!this.isHigherPriorityThan(
-                    currentGraph, candidateGraph, graphURIPreferenceList) 
-                    && sameAsURI.compareTo(uriToMapTo) < 0) {
+            } else if((uriToMapTo == individualURI) || (sameAsURI.compareTo(uriToMapTo) < 0)) {
                 // pick alphabetically-lower URIs within equal-level graphs
                 uriToMapTo = sameAsURI;
             }
         }
         //if(System.currentTimeMillis() - start > 2) {
         sameAsCache.put(individualURI, uriToMapTo);
-        for(String sameAsURI : sameAsURIs) {
-            if(!sameAsCache.containsKey(sameAsURI)) {
-              sameAsCache.put(sameAsURI, uriToMapTo);
-            }
-        }
+        //for(String sameAsURI : sameAsURIs) {
+        //    if(!sameAsCache.containsKey(sameAsURI)) {
+        //      sameAsCache.put(sameAsURI, uriToMapTo);
+        //    }
+        //}
         //}
         long duration = System.currentTimeMillis() - start;
         if(duration > 10000) {
             log.info(duration + " to find sameAs for " + individualURI);    
         }        
         log.debug("sameAs:");
-        log.debug(individualURI + " ===> " + uriToMapTo);
+        log.info(individualURI + " ===> " + uriToMapTo);
         return uriToMapTo;
     }
 
