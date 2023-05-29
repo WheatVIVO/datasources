@@ -485,6 +485,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         List<String> guardPx = Arrays.asList("XX",  "XX", "C3", "C2",  "XX", "XX", "B3", "B2",  "XX", "XX", "A3", "A2");
         for(int i = 0; i < xNormP.size(); i++) {
             int offset = 0;
+            Model filtered = ModelFactory.createDefaultModel();
             while(offset < personsToMatch) {
                 Map<String, String> uriBindings = new HashMap<String, String>();
                 uriBindings.put("xNormP", NORM_PROP_BASE + xNormP.get(i));
@@ -500,7 +501,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 }
                 log.info(queryStr.toString());
                 Model m = endpoint.construct(queryStr.toString());
-                Model filtered = ModelFactory.createDefaultModel();
+                
                 StmtIterator mit = m.listStatements();
                 while(mit.hasNext()) {
                     Statement stmt = mit.next();
@@ -508,11 +509,11 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                         filtered.add(stmt);
                     }
                 }
-                results.add(filtered);
-                endpoint.writeModel(filtered, PERSON_SAMENAME_GRAPH);
-                log.info("person name match model has " + results.size());
                 offset += personsPerBatch;
             }
+            results.add(filtered);
+            endpoint.writeModel(filtered, PERSON_SAMENAME_GRAPH);
+            log.info("person name match model has " + results.size());
         }
         return results;
     }
