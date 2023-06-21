@@ -29,14 +29,14 @@ PREFIX vivo:     <http://vivoweb.org/ontology/core#>
 PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>
 PREFIX vann:     <http://purl.org/vocab/vann/>
 
-SELECT ?value ?g ?definitive ?alreadyMatched ?cienciaId (STR(?orcidUri) AS ?orcidId) ?researcherId ?scopusId ?x WHERE {
+SELECT (STR(?valueRaw) AS ?value) ?g ?definitive ?alreadyMatched ?cienciaId (STR(?orcidUri) AS ?orcidId) ?researcherId ?scopusId ?x WHERE {
   {
-    SELECT DISTINCT ?value WHERE {
-      ?x ?idp ?value
-    } ORDER BY ?value LIMIT ?limit OFFSET ?offset
+    SELECT DISTINCT ?valueRaw WHERE {
+      ?x ?idp ?valueRaw
+    } ORDER BY ?valueRaw LIMIT ?limit OFFSET ?offset
   }
-  GRAPH ?g { ?x ?idp ?value }
-  BIND(IF(REGEX(STR(?x), STR(?value)), "true", "false") AS ?definitive)
+  GRAPH ?g { ?x ?idp ?valueRaw }
+  BIND(IF(REGEX(STR(?x), STR(?valueRaw)), "true", "false") AS ?definitive)
   OPTIONAL {
     ?x owl:sameAs ?something.
     FILTER(?something != ?x)
