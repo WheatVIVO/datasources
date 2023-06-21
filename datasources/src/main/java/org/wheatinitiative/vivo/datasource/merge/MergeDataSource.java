@@ -75,6 +75,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     private static final String BASIC_SAMEAS_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/basicSameAs";
     private static final String TRANSITIVE_SAMEAS_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/transitiveSameAs";
     private static final String PERSON_SAMENAME_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/personSameName";
+    private static final String SAMEDOCTITLE_SAMEAUTHOR_DIRECT_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/sameDocTitleSameAuthorDirect";
     private static final String PERSON_SAMEID_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/personSameId";
     private static final String NORM_PROP_BASE = InsertOnlyConnectorDataSource.LABEL_FOR_SAMEAS;
 
@@ -132,6 +133,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             clearTransitiveSameAsAssertions(endpoint);
             String resultsGraphURI = getConfiguration().getResultsGraphURI();
             getSparqlEndpoint().clearGraph(resultsGraphURI);
+            getSparqlEndpoint().clearGraph(SAMEDOCTITLE_SAMEAUTHOR_DIRECT_GRAPH);
             this.getStatus().setMessage("running person ID matches");
             executePersonIdMatch(sparqlEndpoint);
             this.getStatus().setMessage("running person name matches");
@@ -166,6 +168,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 //addTransitiveSameAsAssertions(endpoint);
             }
             this.getStatus().setMessage("adding additional query results");
+	    getSparqlEndpoint().writeModel(getSameDocTitleSameAuthorDirect(endpoint),
+			    SAMEDOCTITLE_SAMEAUTHOR_DIRECT_GRAPH);
             Model tmp = getAdditionalQueryResults(endpoint);
             getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
             log.info("Merging relationships");
@@ -675,6 +679,67 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             endpoint.writeModel(filtered, PERSON_SAMENAME_GRAPH);
             log.info("person name match model has " + results.size());
         }
+        return results;
+    }
+
+    private Model getSameDocTitleSameAuthorDirect(SparqlEndpoint endpoint) {
+                String queryStr = "PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n"
+                + "PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>\n"
+                + "PREFIX xsd:      <http://www.w3.org/2001/XMLSchema#>\n"
+                + "PREFIX owl:      <http://www.w3.org/2002/07/owl#>\n"
+                + "PREFIX swrl:     <http://www.w3.org/2003/11/swrl#>\n"
+                + "PREFIX swrlb:    <http://www.w3.org/2003/11/swrlb#>\n"
+                + "PREFIX vitro:    <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>\n"
+                + "PREFIX bibo:     <http://purl.org/ontology/bibo/>\n"
+                + "PREFIX c4o:      <http://purl.org/spar/c4o/>\n"
+                + "PREFIX cito:     <http://purl.org/spar/cito/>\n"
+                + "PREFIX event:    <http://purl.org/NET/c4dm/event.owl#>\n"
+                + "PREFIX fabio:    <http://purl.org/spar/fabio/>\n"
+                + "PREFIX foaf:     <http://xmlns.com/foaf/0.1/>\n"
+                + "PREFIX geo:      <http://aims.fao.org/aos/geopolitical.owl#>\n"
+                + "PREFIX p1:       <http://purl.org/dc/terms/>\n"
+                + "PREFIX p2:       <http://purl.org/vocab/vann/>\n"
+                + "PREFIX p3:       <http://www.ebi.ac.uk/efo/swo/>\n"
+                + "PREFIX obo:      <http://purl.obolibrary.org/obo/>\n"
+                + "PREFIX ocrer:    <http://purl.org/net/OCRe/research.owl#>\n"
+                + "PREFIX ocresd:   <http://purl.org/net/OCRe/study_design.owl#>\n"
+                + "PREFIX p4:       <http://purl.obolibrary.org/obo/ro.owl#>\n"
+                + "PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>\n"
+                + "PREFIX p5:       <http://purl.org/net/OCRe/statistics.owl#>\n"
+                + "PREFIX p6:       <http://purl.org/net/OCRe/study_protocol.owl#>\n"
+                + "PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>\n"
+                + "PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>\n"
+                + "PREFIX vivo:     <http://vivoweb.org/ontology/core#>\n"
+                + "PREFIX vlocal:   <http://research-hub.urosario.edu.co/ontology/vlocal#>\n"
+                + "PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>\n"
+                + "PREFIX orcidwork:   <http://www.orcid.org/ns/work/>\n"
+                + "PREFIX orcidcommon: <http://www.orcid.org/ns/common/>\n"
+                + "PREFIX orcidrecord: <http://www.orcid.org/ns/record/>\n"
+                + "PREFIX orcidperson: <http://www.orcid.org/ns/person/>\n"
+                + "PREFIX generic: <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>"
+                + "CONSTRUCT {\n"
+                + "  ?x owl:sameAs ?y .\n"
+                + "  ?y owl:sameAs ?x .\n"
+                + "}\n"
+                + "WHERE {\n"
+                + "  ?x a bibo:Document .\n"
+                + "  ?x <https://wheatvivo.org/ontology/local/labelForSameAs> ?label .\n"
+                + "  ?y <https://wheatvivo.org/ontology/local/labelForSameAs> ?label .\n"
+                + "  FILTER (?y != ?x)\n"
+                + "  FILTER EXISTS {\n"
+                + "    ?x vivo:relatedBy ?authorship .\n"
+                + "    ?authorship a vivo:Authorship .\n"
+                + "    ?authorship vivo:relates ?author .\n"
+                + "    ?author a foaf:Person .\n"
+                + "    ?author owl:sameAs ?author2 .\n"
+                + "    ?author2 vivo:relatedBy ?authorship2 .\n"
+                + "    ?authorship2 a vivo:Authorship .\n"
+                + "    ?authorship2 vivo:relates ?y .\n"
+                + "  }\n"
+                + "  FILTER NOT EXISTS { ?x owl:differentFrom ?y }\n"
+                + "} \n";
+        Model results = endpoint.construct(queryStr);
+	log.info(result.size() + " direct same-doc-title, same-author results");
         return results;
     }
 
