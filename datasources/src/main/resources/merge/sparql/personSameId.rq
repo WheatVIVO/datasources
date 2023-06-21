@@ -36,7 +36,7 @@ SELECT ?value ?g ?definitive ?alreadyMatched ?cienciaId (STR(?orcidUri) AS ?orci
     } ORDER BY ?value LIMIT ?limit OFFSET ?offset
   }
   GRAPH ?g { ?x ?idp ?value }
-  BIND(IF(REGEX(STR(?x), ?value), "true", "false") AS ?definitive)
+  BIND(IF(REGEX(STR(?x), STR(?value)), "true", "false") AS ?definitive)
   OPTIONAL {
     ?x owl:sameAs ?something.
     FILTER(?something != ?x)
