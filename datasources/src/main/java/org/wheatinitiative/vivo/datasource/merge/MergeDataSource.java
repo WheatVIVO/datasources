@@ -479,7 +479,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             boolean hasResults = false;
             do {
                 ParameterizedSparqlString pss = new ParameterizedSparqlString(queryBaseStr);
-                pss.setIri("ido", idPropertyURI);
+                pss.setIri("idp", idPropertyURI);
                 pss.setLiteral("limit", limit);
                 pss.setLiteral("offset", offset);
                 String queryStr = pss.toString();
