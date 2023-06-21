@@ -470,7 +470,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 VivoVocabulary.VIVO + "researcherId",
                 VivoVocabulary.VIVO + "scopusId");
         for(String idPropertyURI : idPropertyURIs) {
-            int limit = 100;
+            int limit = 1000;
             int offset = 0;
             boolean hasResults = false;
             do {
@@ -538,7 +538,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         List<String> guardP = Arrays.asList("XX",  "XX", "XX", "XX",  "XX", "C1", "C1", "C1",  "C1", "B1", "B1", "B1");
         List<String> guardPx = Arrays.asList("XX",  "XX", "C3", "C2",  "XX", "XX", "B3", "B2",  "XX", "XX", "A3", "A2");
         for(int i = 0; i < xNormP.size(); i++) {
-            int limit = 100;
+            int limit = 1000;
             int offset = 0;
             boolean hasResults = false;
             do {
