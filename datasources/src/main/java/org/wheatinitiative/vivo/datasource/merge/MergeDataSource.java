@@ -570,11 +570,14 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                     if(currentValue == null) {
                         currentValue = value;
                     } else if(!currentValue.equals(value)) {
+                        currentValue = value;
+                        log.info("Processing " + value);
                         out.add(processPersonNameValue(solns, endpoint));                        
                         solns.clear();
                     }
                     solns.add(qsoln);
                     if(!rs.hasNext()) {
+                        log.info("Processing " + value);
                         out.add(processPersonNameValue(solns, endpoint));
                         solns.clear();
                     }
@@ -623,6 +626,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 }
             }
         }
+        log.info("safeOut has " + safeOut.size());
+        log.info("allOut has " + allOut.size());
         endpoint.writeModel(safeOut, PERSON_SAMENAME_GRAPH);
         return allOut;
     }
