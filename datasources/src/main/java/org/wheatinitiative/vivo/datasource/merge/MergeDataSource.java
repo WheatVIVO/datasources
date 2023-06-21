@@ -542,6 +542,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         List<String> guardP = Arrays.asList("XX",  "XX", "XX", "XX",  "XX", "C1", "C1", "C1",  "C1", "B1", "B1", "B1");
         List<String> guardPx = Arrays.asList("XX",  "XX", "C3", "C2",  "XX", "XX", "B3", "B2",  "XX", "XX", "A3", "A2");
         for(int i = 0; i < xNormP.size(); i++) {
+            Model safeBuffer = ModelFactory.createDefaultModel();
             int limit = 1000;
             int offset = 0;
             boolean hasResults = false;
@@ -572,22 +573,23 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                     } else if(!currentValue.equals(value)) {
                         currentValue = value;
                         log.info("Processing " + value);
-                        out.add(processPersonNameValue(solns, endpoint));                        
+                        out.add(processPersonNameValue(solns, safeBuffer, endpoint));                        
                         solns.clear();
                     }
                     solns.add(qsoln);
                     if(!rs.hasNext()) {
                         log.info("Processing " + value);
-                        out.add(processPersonNameValue(solns, endpoint));
+                        out.add(processPersonNameValue(solns, safeBuffer, endpoint));
                         solns.clear();
                     }
                 }
             } while (hasResults);
+            endpoint.writeModel(safeBuffer, PERSON_SAMENAME_GRAPH);
         }        
         return out;
     }
     
-    private Model processPersonNameValue(List<QuerySolution> solns, SparqlEndpoint endpoint) {
+    private Model processPersonNameValue(List<QuerySolution> solns, Model safeBuffer, SparqlEndpoint endpoint) {
         Model safeOut = ModelFactory.createDefaultModel();
         Model allOut = ModelFactory.createDefaultModel();
         List<Resource> sourceResources = new ArrayList<Resource>();
@@ -628,7 +630,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         }
         log.info("safeOut has " + safeOut.size());
         log.info("allOut has " + allOut.size());
-        endpoint.writeModel(safeOut, PERSON_SAMENAME_GRAPH);
+        safeBuffer.add(safeOut);
         return allOut;
     }
     
