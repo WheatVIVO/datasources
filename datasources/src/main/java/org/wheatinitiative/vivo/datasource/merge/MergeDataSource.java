@@ -5,20 +5,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.text.similarity.LevenshteinDistance;
-import org.wheatinitiative.vivo.datasource.DataSource;
-import org.wheatinitiative.vivo.datasource.DataSourceBase;
-import org.wheatinitiative.vivo.datasource.connector.InsertOnlyConnectorDataSource;
-import org.wheatinitiative.vivo.datasource.normalizer.AuthorNameForSameAsNormalizer;
-import org.wheatinitiative.vivo.datasource.util.indexinginference.IndexingInference;
-import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
-
 import org.apache.jena.query.ParameterizedSparqlString;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -36,6 +31,13 @@ import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
+import org.wheatinitiative.vivo.datasource.DataSource;
+import org.wheatinitiative.vivo.datasource.DataSourceBase;
+import org.wheatinitiative.vivo.datasource.VivoVocabulary;
+import org.wheatinitiative.vivo.datasource.connector.InsertOnlyConnectorDataSource;
+import org.wheatinitiative.vivo.datasource.normalizer.AuthorNameForSameAsNormalizer;
+import org.wheatinitiative.vivo.datasource.util.indexinginference.IndexingInference;
+import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
 
 public class MergeDataSource extends DataSourceBase implements DataSource {
 
@@ -74,6 +76,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     private static final String TRANSITIVE_SAMEAS_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/transitiveSameAs";
     private static final String PERSON_SAMENAME_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/personSameName";
     private static final String SAMEDOCTITLE_SAMEAUTHOR_DIRECT_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/sameDocTitleSameAuthorDirect";
+    private static final String PERSON_SAMEID_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/personSameId";
     private static final String NORM_PROP_BASE = InsertOnlyConnectorDataSource.LABEL_FOR_SAMEAS;
 
     private Model result = ModelFactory.createDefaultModel();
@@ -131,6 +134,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             String resultsGraphURI = getConfiguration().getResultsGraphURI();
             getSparqlEndpoint().clearGraph(resultsGraphURI);
             getSparqlEndpoint().clearGraph(SAMEDOCTITLE_SAMEAUTHOR_DIRECT_GRAPH);
+            this.getStatus().setMessage("running person ID matches");
+            executePersonIdMatch(sparqlEndpoint);
             this.getStatus().setMessage("running person name matches");
             personNameMatchModel = executePersonNameMatch(sparqlEndpoint);
             this.getStatus().setMessage("running merge rules");
@@ -458,11 +463,168 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         return model;
     }
     
+    private Model executePersonIdMatch( 
+            SparqlEndpoint endpoint) {
+        Model out = ModelFactory.createDefaultModel();
+        endpoint.clearGraph(PERSON_SAMEID_GRAPH);
+        String queryBaseStr = this.loadQuery(SPARQL_RESOURCE_DIR + "personSameId.rq");
+        List<String> idPropertyURIs = Arrays.asList(
+                "https://vivo.uminho.pt/ontology/cienciavitae/ciencia-id",
+                VivoVocabulary.VIVO + "orcidId",
+                VivoVocabulary.VIVO + "researcherId",
+                VivoVocabulary.VIVO + "scopusId");
+        for(String idPropertyURI : idPropertyURIs) {
+            int limit = 1000;
+            int offset = 0;
+            boolean hasResults = false;
+            do {
+                ParameterizedSparqlString pss = new ParameterizedSparqlString(queryBaseStr);
+                pss.setIri("ido", idPropertyURI);
+                pss.setLiteral("limit", limit);
+                pss.setLiteral("offset", offset);
+                String queryStr = pss.toString();
+                log.info(queryStr);
+                offset += limit;
+                ResultSet rs = endpoint.getResultSet(queryStr);
+                hasResults = rs.hasNext();
+                String currentValue = null;
+                List<QuerySolution> solns = new ArrayList<QuerySolution>();
+                while (rs.hasNext()){
+                    QuerySolution qsoln = rs.next(); 
+                    String value = qsoln.getLiteral("value").getLexicalForm();
+                    if(currentValue == null) {
+                        currentValue = value;
+                    } else if(!currentValue.equals(value)) {
+                        out.add(processPersonIdValue(solns, endpoint));                        
+                        solns.clear();
+                    }
+                    solns.add(qsoln);
+                    if(!rs.hasNext()) {
+                        out.add(processPersonIdValue(solns, endpoint));
+                        solns.clear();
+                    }
+                }
+            } while (hasResults);
+        }
+        endpoint.writeModel(out, PERSON_SAMEID_GRAPH);
+        return out;
+    }
+    
+    private Model processPersonIdValue(List<QuerySolution> solns, SparqlEndpoint endpoint) {
+        Model out = ModelFactory.createDefaultModel();
+        List<Resource> targetResources = new ArrayList<Resource>();
+        Resource currentGraph = null;
+        for(QuerySolution qsoln : solns) {
+            Resource g = qsoln.getResource("g");
+            if(!g.equals(currentGraph)) {
+                targetResources.add(qsoln.getResource("x"));
+                currentGraph = g;
+            }
+        }
+        for(QuerySolution qsoln : solns) {
+            Resource x = qsoln.getResource("x");
+            for(Resource y : targetResources) {
+                out.add(x, OWL.sameAs, y);
+            }
+        }
+        return out;
+    }
+    
     private Model executePersonNameMatch( 
             SparqlEndpoint endpoint) {
+        Model out = ModelFactory.createDefaultModel();
         endpoint.clearGraph(PERSON_SAMENAME_GRAPH);
-        int personsWithNormalizedNames = getNormalizedPersonCount(endpoint);
-        return executePersonNameMatchQuery("personSameName2.rq", endpoint, personsWithNormalizedNames);                               
+        //int personsWithNormalizedNames = getNormalizedPersonCount(endpoint);
+        //return executePersonNameMatchQuery("personSameName2.rq", endpoint, personsWithNormalizedNames);
+        String queryBaseStr = this.loadQuery(SPARQL_RESOURCE_DIR + "personSameName3.rq");
+        List<String> xNormP = Arrays.asList("C3", "RC3", "C2", "C1", "RC1", "B3", "B2", "B1", "RB1", "A3", "A2", "A1");
+        List<String> yNormP = Arrays.asList("C3",  "C3", "C2", "C1",  "C1", "B3", "B2", "B1",  "B1", "A3", "A2", "A1");
+        List<String> guardP = Arrays.asList("XX",  "XX", "XX", "XX",  "XX", "C1", "C1", "C1",  "C1", "B1", "B1", "B1");
+        List<String> guardPx = Arrays.asList("XX",  "XX", "C3", "C2",  "XX", "XX", "B3", "B2",  "XX", "XX", "A3", "A2");
+        for(int i = 0; i < xNormP.size(); i++) {
+            int limit = 1000;
+            int offset = 0;
+            boolean hasResults = false;
+            do {
+                ParameterizedSparqlString pss = new ParameterizedSparqlString(queryBaseStr);
+                Map<String, String> uriBindings = new HashMap<String, String>();
+                uriBindings.put("xNormP", NORM_PROP_BASE + xNormP.get(i));
+                uriBindings.put("yNormP", NORM_PROP_BASE + yNormP.get(i));
+                uriBindings.put("guardP", NORM_PROP_BASE + guardP.get(i));
+                uriBindings.put("guardPx", NORM_PROP_BASE + guardPx.get(i));
+                for(String key : uriBindings.keySet()) {
+                    pss.setIri(key, uriBindings.get(key));
+                }
+                pss.setLiteral("limit", limit);
+                pss.setLiteral("offset", offset);
+                String queryStr = pss.toString();
+                log.info(queryStr);
+                offset += limit;
+                ResultSet rs = endpoint.getResultSet(queryStr);
+                hasResults = rs.hasNext();
+                String currentValue = null;
+                List<QuerySolution> solns = new ArrayList<QuerySolution>();
+                while (rs.hasNext()){
+                    QuerySolution qsoln = rs.next(); 
+                    String value = qsoln.getLiteral("value").getLexicalForm();
+                    if(currentValue == null) {
+                        currentValue = value;
+                    } else if(!currentValue.equals(value)) {
+                        out.add(processPersonNameValue(solns, endpoint));                        
+                        solns.clear();
+                    }
+                    solns.add(qsoln);
+                    if(!rs.hasNext()) {
+                        out.add(processPersonNameValue(solns, endpoint));
+                        solns.clear();
+                    }
+                }
+            } while (hasResults);
+        }        
+        return out;
+    }
+    
+    private Model processPersonNameValue(List<QuerySolution> solns, SparqlEndpoint endpoint) {
+        Model safeOut = ModelFactory.createDefaultModel();
+        Model allOut = ModelFactory.createDefaultModel();
+        List<Resource> sourceResources = new ArrayList<Resource>();
+        Map<String, Resource> topResource = new HashMap<String, Resource>();
+        Map<String, Set<Resource>> existingResources = new HashMap<String, Set<Resource>>();
+        Resource currentGraph = null;
+        Set<Resource> currentExistingResources = null;
+        for(QuerySolution qsoln : solns) {
+            Resource g = qsoln.getResource("g");
+            if(!g.equals(currentGraph)) {
+                currentGraph = g;
+                currentExistingResources = new HashSet<Resource>();
+                existingResources.put(g.getURI(), currentExistingResources);
+                topResource.put(g.getURI(), qsoln.getResource("x"));                
+            } 
+            if(qsoln.getResource("existingTarget") != null) {
+                currentExistingResources.add(qsoln.getResource("existingTarget"));
+            }
+            if("assert".equals(qsoln.getLiteral("assert").getLexicalForm())) {
+                sourceResources.add(qsoln.getResource("x"));
+            }
+        }
+        for(Resource x : sourceResources) {
+            for(String graphURI : existingResources.keySet()) {
+                Set<Resource> existing = existingResources.get(graphURI);
+                if(!existing.isEmpty()) {
+                    for(Resource y : existing) {
+                        allOut.add(x, OWL.sameAs, y);
+                        if(existing.size() == 1) {
+                            safeOut.add(x, OWL.sameAs, y);
+                        }
+                    }                    
+                } else {
+                    allOut.add(x, OWL.sameAs, topResource.get(graphURI));
+                    safeOut.add(x, OWL.sameAs, topResource.get(graphURI));
+                }
+            }
+        }
+        endpoint.writeModel(safeOut, PERSON_SAMENAME_GRAPH);
+        return allOut;
     }
     
     private int getNormalizedPersonCount(SparqlEndpoint endpoint) {
@@ -500,9 +662,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                         this.loadQuery(SPARQL_RESOURCE_DIR + queryFile));
                 queryStr.setLiteral("limit", personsPerBatch);
                 queryStr.setLiteral("offset", offset);
-                for(String key : uriBindings.keySet()) {
-                    queryStr.setIri(key, uriBindings.get(key));
-                }
+
                 log.info(queryStr.toString());
                 Model m = endpoint.construct(queryStr.toString());
                 
