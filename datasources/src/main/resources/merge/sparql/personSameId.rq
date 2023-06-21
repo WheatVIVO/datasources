@@ -33,7 +33,7 @@ SELECT ?value ?g ?definitive ?alreadyMatched ?cienciaId (STR(?orcidUri) AS ?orci
   {
     SELECT DISTINCT ?value WHERE {
       ?x ?idp ?value
-    } ORDER BY ?value LIMIT ?limit OFFSET ?
+    } ORDER BY ?value LIMIT ?limit OFFSET ?offset
   }
   GRAPH ?g { ?x ?idp ?value }
   BIND(IF(REGEX(STR(?x), ?value), "true", "false") AS ?definitive)
