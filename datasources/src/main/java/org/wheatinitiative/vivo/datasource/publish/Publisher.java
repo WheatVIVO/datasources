@@ -285,7 +285,8 @@ public class Publisher extends DataSourceBase implements DataSource {
         String sameAsQuery = "CONSTRUCT { \n" +
                 "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
                 "} WHERE { \n" +
-                "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
+                "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?z . \n" +
+                "    ?ind2 <" + OWL.sameAs.getURI() + "> ?z \n" +
                 "    FILTER (?ind2 != <" + individualURI + ">) \n" +
                 "} \n";
         return endpoint.construct(sameAsQuery);
@@ -303,18 +304,28 @@ public class Publisher extends DataSourceBase implements DataSource {
         //long start = System.currentTimeMillis();
         String uriToMapTo = individualURI;
         List<String> sameAsURIs = getSameAsURIList(individualURI, endpoint);
-        for(String sameAsURI : sameAsURIs) {
-            String currentGraph = getHomeGraph(uriToMapTo, endpoint, graphURIPreferenceList);
+        String currentGraph = getHomeGraph(uriToMapTo, endpoint, graphURIPreferenceList);
+        for(String sameAsURI : sameAsURIs) {            
             String candidateGraph = getHomeGraph(sameAsURI, endpoint, graphURIPreferenceList);
-            log.debug(candidateGraph + (isHigherPriorityThan(candidateGraph, currentGraph, 
-                    graphURIPreferenceList) ? " IS higher than " : " IS NOT higher than ") + currentGraph);
-            if(this.isHigherPriorityThan(candidateGraph, currentGraph, 
+            boolean isHigherPriority = isHigherPriorityThan(candidateGraph, currentGraph, 
+                    graphURIPreferenceList);
+            if(log.isDebugEnabled()) {
+                log.debug(candidateGraph + (isHigherPriority ? " IS higher than " : " IS NOT higher than ") + currentGraph);
+            }
+            boolean currentHasId = uriToMapTo.contains("cv-") && !uriToMapTo.contains("cv-t-");
+            boolean candidateHasId = sameAsURI.contains("cv-") && !sameAsURI.contains("cv-t-");
+            if(isHigherPriorityThan(candidateGraph, currentGraph, 
                     graphURIPreferenceList)) {
                 uriToMapTo = sameAsURI;
-            } else if((uriToMapTo == individualURI) || (sameAsURI.compareTo(uriToMapTo) < 0)) {
-                // pick alphabetically-lower URIs within equal-level graphs
-                uriToMapTo = sameAsURI;
-            }
+                currentGraph = candidateGraph;
+            } else if (candidateGraph.equals(currentGraph)) {
+                if(!currentHasId && candidateHasId) {
+                    uriToMapTo = sameAsURI;
+                } else if(!currentHasId && (sameAsURI.compareTo(uriToMapTo) < 0)) {
+                    // pick alphabetically-lower URIs within equal-level graphs
+                    uriToMapTo = sameAsURI;
+                }
+            }                
         }
         //if(System.currentTimeMillis() - start > 2) {
         sameAsCache.put(individualURI, uriToMapTo);
