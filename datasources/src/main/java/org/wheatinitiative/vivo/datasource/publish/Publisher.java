@@ -318,7 +318,8 @@ public class Publisher extends DataSourceBase implements DataSource {
                     graphURIPreferenceList)) {
                 uriToMapTo = sameAsURI;
                 currentGraph = candidateGraph;
-            } else if (candidateGraph.equals(currentGraph)) {
+            } else if ( (candidateGraph == null && currentGraph == null)
+                    || (candidateGraph != null && candidateGraph.equals(currentGraph))) {
                 if(!currentHasId && candidateHasId) {
                     uriToMapTo = sameAsURI;
                 } else if(!currentHasId && (sameAsURI.compareTo(uriToMapTo) < 0)) {
