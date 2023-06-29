@@ -24,7 +24,7 @@ PREFIX bib: <http://zeitkunst.org/bibtex/0.1/bibtex.owl#>
 
 CONSTRUCT {
     ?x owl:sameAs ?y .
-    ?y owl:sameAs ?x .
+#    ?y owl:sameAs ?x .
 } WHERE {
     ?a owl:sameAs ?b .
     ?a obo:ARG_2000028 ?x .

@@ -26,7 +26,7 @@ PREFIX vivo: <http://vivoweb.org/ontology/core#>
 
 CONSTRUCT {
   ?x owl:sameAs ?y .
-  ?y owl:sameAs ?x 
+#  ?y owl:sameAs ?x 
 } WHERE {
 # (for now) Don't merge addresses
 #        ?vcard1 vcard:hasAddress ?x .
