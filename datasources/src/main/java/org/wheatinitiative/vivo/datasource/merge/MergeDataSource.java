@@ -548,7 +548,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         List<String> guardPx = Arrays.asList("XX",  "XX", "C3", "C2",  "XX", "XX", "B3", "B2",  "XX", "XX", "A3", "A2");
         for(int i = 0; i < xNormP.size(); i++) {
             Model safeBuffer = ModelFactory.createDefaultModel();
-            int limit = 1000;
+            int limit = 2500;
             int offset = 0;
             boolean hasResults = false;
             do {
