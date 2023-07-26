@@ -330,11 +330,11 @@ public class Publisher extends DataSourceBase implements DataSource {
         }
         //if(System.currentTimeMillis() - start > 2) {
         sameAsCache.put(individualURI, uriToMapTo);
-//        for(String sameAsURI : sameAsURIs) {
-//            if(!sameAsCache.containsKey(sameAsURI)) {
-//              sameAsCache.put(sameAsURI, uriToMapTo);
-//            }
-//        }
+        for(String sameAsURI : sameAsURIs) {
+            if(!sameAsCache.containsKey(sameAsURI)) {
+              sameAsCache.put(sameAsURI, uriToMapTo);
+            }
+        }
         //}
         long duration = System.currentTimeMillis() - start;
         if(duration > 10000) {

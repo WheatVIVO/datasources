@@ -42,6 +42,7 @@ CONSTRUCT {
          SELECT ?x ?nn1 ?value WHERE {
            ?x <https://wheatvivo.org/ontology/local/hasNN> ?nn1 .
            ?nn1 ?xNormP ?value .
+           FILTER(!REGEX(STR(?x), "individual/researcher"))
            FILTER NOT EXISTS {
              GRAPH <http://vitro.mannlib.cornell.edu/a/graph/personSameName> {
                ?x owl:sameAs ?something
