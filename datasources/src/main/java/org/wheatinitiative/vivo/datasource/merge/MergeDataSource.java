@@ -602,6 +602,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         Map<String, Set<Resource>> existingResources = new HashMap<String, Set<Resource>>();
         Resource currentGraph = null;
         Set<Resource> currentExistingResources = null;
+        Set<Resource> knownExternalResources =  new HashSet<Resource>();
         for(QuerySolution qsoln : solns) {
             Resource g = qsoln.getResource("g");
             if(!g.equals(currentGraph)) {
@@ -616,23 +617,35 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             if("assert".equals(qsoln.getLiteral("assert").getLexicalForm())) {
                 sourceResources.add(qsoln.getResource("x"));
             }
+            if("false".equals(qsoln.getLiteral("definitive").getLexicalForm())
+                    && g.getURI().startsWith("https://vivo.ipb.it/graph/repository")) {
+                knownExternalResources.add(qsoln.getResource("x"));
+            }
         }
+        int invalidMatches = 0;
+        log.info(knownExternalResources.size() + " known external resources.");
         for(Resource x : sourceResources) {
             for(String graphURI : existingResources.keySet()) {
-                Set<Resource> existing = existingResources.get(graphURI);
-                if(!existing.isEmpty()) {
-                    for(Resource y : existing) {
-                        allOut.add(x, OWL.sameAs, y);
-                        if(existing.size() == 1) {
-                            safeOut.add(x, OWL.sameAs, y);
-                        }
-                    }                    
+                if(knownExternalResources.contains(x) && graphURI.startsWith(
+                        "https://vivo.ipb.it/graph/ipbapi")) {
+                    invalidMatches++;
                 } else {
-                    allOut.add(x, OWL.sameAs, topResource.get(graphURI));
-                    safeOut.add(x, OWL.sameAs, topResource.get(graphURI));
+                    Set<Resource> existing = existingResources.get(graphURI);
+                    if(!existing.isEmpty()) {
+                        for(Resource y : existing) {
+                            allOut.add(x, OWL.sameAs, y);
+                            if(existing.size() == 1) {
+                                safeOut.add(x, OWL.sameAs, y);
+                            }
+                        }                    
+                    } else {
+                        allOut.add(x, OWL.sameAs, topResource.get(graphURI));
+                        safeOut.add(x, OWL.sameAs, topResource.get(graphURI));
+                    }
                 }
             }
         }
+        log.info("Skipped " + invalidMatches + " invalid matches");
         log.info("safeOut has " + safeOut.size());
         log.info("allOut has " + allOut.size());
         safeBuffer.add(safeOut);
