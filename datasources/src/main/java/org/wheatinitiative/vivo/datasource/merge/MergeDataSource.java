@@ -125,8 +125,13 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             log.info("Clearing previous merge state");
             this.getStatus().setMessage("clearing previous merge results");
             List<MergeRule> mergeRules = new ArrayList<MergeRule>();
+            boolean filterDisabled = true;
+            for(String mergeRuleURI : getMergeRuleURIs(dataSourceURI, !filterDisabled)) {
+                // clear graphs for disabled as well an enabled rules
+                getSparqlEndpoint().clearGraph(mergeRuleURI);                 
+            }
             for(String mergeRuleURI : getMergeRuleURIs(dataSourceURI)) {
-                getSparqlEndpoint().clearGraph(mergeRuleURI); 
+                // run only enabled rules
                 mergeRules.add(getMergeRule(mergeRuleURI, rulesModel));
             }
             SparqlEndpoint endpoint = getSparqlEndpoint();
@@ -1097,7 +1102,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 "SELECT ?atom WHERE { \n" +
                         "  ?rule <" + HASATOM + "> ?atom . \n" +
                         "  OPTIONAL { ?atom <" + PRIORITY +"> ?priority } \n" +
-                        "  FILTER(!BOUND(?rank) || (?rank >= 0)) \n" +
+                        "  BIND(COALESCE(?priority, 1000) AS ?rank) \n" +
+                        "  #FILTER(!BOUND(?rank) || (?rank >= 0)) \n" +                        
                         "  FILTER NOT EXISTS { ?atom <" + DISABLED + "> true } \n" +
                 "} ORDER BY ?rank");
         atomQuery.setIri("rule", ruleURI);
@@ -1272,11 +1278,17 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     }
 
     private List<String> getMergeRuleURIs(String dataSourceURI) {
+        return getMergeRuleURIs(dataSourceURI, true);
+    }
+    
+    private List<String> getMergeRuleURIs(String dataSourceURI, boolean filterDisabled) {
         List<String> mergeRuleURIs = new ArrayList<String>();
         String queryStr = "SELECT ?x WHERE { \n" +
-                "    <" + dataSourceURI + "> <" + HASMERGERULE + "> ?x \n" +
-                "    FILTER NOT EXISTS { ?x <" + DISABLED + "> true } \n" + 
-                "} \n";
+                "    <" + dataSourceURI + "> <" + HASMERGERULE + "> ?x \n";
+            if(filterDisabled) {
+                queryStr += "    FILTER NOT EXISTS { ?x <" + DISABLED + "> true } \n";
+            }
+            queryStr += "} \n";
         ResultSet rs = getSparqlEndpoint().getResultSet(queryStr);
         while(rs.hasNext()) {
             QuerySolution qsoln = rs.next();
