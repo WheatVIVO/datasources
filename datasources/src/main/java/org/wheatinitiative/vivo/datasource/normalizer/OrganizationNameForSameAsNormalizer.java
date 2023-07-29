@@ -55,8 +55,8 @@ public class OrganizationNameForSameAsNormalizer
             if(graphURI != null) {
                 queryStr +=   "  GRAPH <" + graphURI + "> { \n";
             }
-            queryStr +=       "    ?org a <" + VivoVocabulary.FOAF + "Organization> . \n" +
-                    "    FILTER NOT EXISTS { ?org <" + VivoVocabulary.OBO + "BFO_0000050> ?parent } \n" +
+            queryStr +=       "    FILTER EXISTS { GRAPH ?someGraph { ?org a <" + VivoVocabulary.FOAF + "Organization> } } \n" +
+                    //"    FILTER NOT EXISTS { ?org <" + VivoVocabulary.OBO + "BFO_0000050> ?parent } \n" +
                     "    ?org <" + RDFS.label.getURI() + "> ?lbl . \n";
             if(graphURI != null) {
                 queryStr +=   "  } \n";    
