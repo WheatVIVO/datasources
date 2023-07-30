@@ -138,7 +138,6 @@ public class Publisher extends DataSourceBase implements DataSource {
                             continue;
                         }
                         List<String> sameAsURIs = getSameAsURIList(individualURI, sourceEndpoint);
-                        cacheHomeGraphs(sameAsURIs, sourceEndpoint, graphURIPreferenceList);
                         List<Quad> individualQuads = getIndividualQuads(individualURI, 
                                 sourceEndpoint);
 //                        for (String sameAsURI : sameAsURIs) {
@@ -319,8 +318,9 @@ public class Publisher extends DataSourceBase implements DataSource {
         long start = System.currentTimeMillis();
         //long start = System.currentTimeMillis();
         String uriToMapTo = individualURI;
-        List<String> sameAsURIs = getSameAsURIList(individualURI, endpoint);
         String currentGraph = getHomeGraph(uriToMapTo, endpoint, graphURIPreferenceList);
+        List<String> sameAsURIs = getSameAsURIList(individualURI, endpoint);
+        cacheHomeGraphs(sameAsURIs, endpoint, graphURIPreferenceList);
         for(String sameAsURI : sameAsURIs) {            
             String candidateGraph = getHomeGraph(sameAsURI, endpoint, graphURIPreferenceList);
             boolean isHigherPriority = isHigherPriorityThan(candidateGraph, currentGraph, 
