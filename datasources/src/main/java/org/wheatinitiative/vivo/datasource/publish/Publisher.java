@@ -69,7 +69,7 @@ public class Publisher extends DataSourceBase implements DataSource {
     private static final String DATETIMEINTERVAL = "http://vivoweb.org/ontology/core#dateTimeInterval";
     private static final String HASCONTACTINFO = "http://purl.obolibrary.org/obo/ARG_2000028";
     private static final String POSTMERGE_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/postmerge";
-    Model sameAsTriples = ModelFactory.createDefaultModel();
+    //Model sameAsTriples = ModelFactory.createDefaultModel();
     Map<String, String> homeGraphCache = new HashMap<String, String>();
     
 
@@ -108,12 +108,12 @@ public class Publisher extends DataSourceBase implements DataSource {
             List<String> graphURIPreferenceList = getGraphURIPreferenceList(
                     sourceEndpoint);
             log.info("Graph URI preference list: " + graphURIPreferenceList);
-            //log.info("Caching sameAs triples");
-            //sameAsTriples = getSameAsTriples(sourceEndpoint);
-            //log.info(sameAsTriples.size() + " cached sameAs triples");
-            log.info("Caching home graphs");
-            homeGraphCache = getHomeGraphMap(sourceEndpoint, graphURIPreferenceList);
-            log.info(homeGraphCache.size() + " cached home graphs");
+//            log.info("Caching sameAs triples");
+//            sameAsTriples = getSameAsTriples(sourceEndpoint);
+//            log.info(sameAsTriples.size() + " cached sameAs triples");
+//            log.info("Caching home graphs");
+//            homeGraphCache = getHomeGraphMap(sourceEndpoint, graphURIPreferenceList);
+//            log.info(homeGraphCache.size() + " cached home graphs");
             log.info("Starting to publish");
             this.getStatus().setMessage("publishing individuals");
             // iterate through data source graphs in order of priority
@@ -138,6 +138,7 @@ public class Publisher extends DataSourceBase implements DataSource {
                             continue;
                         }
                         List<String> sameAsURIs = getSameAsURIList(individualURI, sourceEndpoint);
+                        cacheHomeGraphs(sameAsURIs, sourceEndpoint, graphURIPreferenceList);
                         List<Quad> individualQuads = getIndividualQuads(individualURI, 
                                 sourceEndpoint);
 //                        for (String sameAsURI : sameAsURIs) {
@@ -261,7 +262,7 @@ public class Publisher extends DataSourceBase implements DataSource {
 
     /**
      * 
-     * @return list via reasoned transitive closure of owl:sameAs statements
+     * @return list of owl:sameAs statements
      * from endpoint
      */
     private List<String> getSameAsURIList(String individualURI, SparqlEndpoint endpoint) {
@@ -362,33 +363,37 @@ public class Publisher extends DataSourceBase implements DataSource {
 
     private String getHomeGraph(String individualURI, SparqlEndpoint endpoint,
             List<String> graphURIPreferenceList) {
-//        String graphURI = null;
-//        String homeGraphQuery = "SELECT DISTINCT ?graph WHERE { \n" +
-//                //                "    { <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?something } \n" +
-//                //                "    UNION \n" +
-//                //                "    { ?something2 <" + OWL.sameAs.getURI() + "> <" + individualURI + "> } \n" +
-//                "    GRAPH ?graph { <" + individualURI + "> a ?typeDeclaration } \n" +
-//                "} \n";
-//        ResultSet homeGraphRs = endpoint.getResultSet(homeGraphQuery);
-//        while(homeGraphRs.hasNext()) {
-//            QuerySolution qsoln = homeGraphRs.next();
-//            RDFNode g = qsoln.get("graph");
-//            if(!g.isURIResource()) {
-//                continue;
-//            }
-//            String graph = g.asResource().getURI();
-//            if(graphURI == null) {
-//                graphURI = graph;
-//            } else {
-//                if(isHigherPriorityThan(graph, graphURI, 
-//                        graphURIPreferenceList)) {
-//                    graphURI = graph;
-//                }
-//            }
-//        }
         String graphURI = homeGraphCache.get(individualURI);
-        log.debug("Home graph for " + individualURI + " is " + graphURI);
-        return graphURI;
+        if(graphURI != null) {
+            return graphURI;
+        } else {
+            String homeGraphQuery = "SELECT DISTINCT ?graph WHERE { \n" +
+                    //                "    { <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?something } \n" +
+                    //                "    UNION \n" +
+                    //                "    { ?something2 <" + OWL.sameAs.getURI() + "> <" + individualURI + "> } \n" +
+                    "    GRAPH ?graph { <" + individualURI + "> a ?typeDeclaration } \n" +
+                    "    FILTER(?graph != <http://vitro.mannlib.cornell.edu/default/vitro-kb-inf>) \n" +
+                    "} \n";
+            ResultSet homeGraphRs = endpoint.getResultSet(homeGraphQuery);
+            while(homeGraphRs.hasNext()) {
+                QuerySolution qsoln = homeGraphRs.next();
+                RDFNode g = qsoln.get("graph");
+                if(!g.isURIResource()) {
+                    continue;
+                }
+                String graph = g.asResource().getURI();
+                if(graphURI == null) {
+                    graphURI = graph;
+                } else {
+                    if(isHigherPriorityThan(graph, graphURI, 
+                            graphURIPreferenceList)) {
+                        graphURI = graph;
+                    }
+                }
+            }
+            log.debug("Home graph for " + individualURI + " is " + graphURI);
+            return graphURI;
+        }
     }  
 
     /**
@@ -805,26 +810,30 @@ public class Publisher extends DataSourceBase implements DataSource {
         return funcPropSet;
     }
     
-    private Model getSameAsTriples(SparqlEndpoint sourceEndpoint) {
-        String queryStr = "PREFIX owl:      <http://www.w3.org/2002/07/owl#>\n"
-                + "CONSTRUCT {\n"
-                + "  ?x owl:sameAs ?y\n"
-                + "} WHERE {\n"
-                + "  ?x owl:sameAs ?y\n"
-                + "  FILTER(?x != ?y)\n"
-                + "}";
-        return sourceEndpoint.construct(queryStr);
-    }
+//    private Model getSameAsTriples(SparqlEndpoint sourceEndpoint) {
+//        String queryStr = "PREFIX owl:      <http://www.w3.org/2002/07/owl#>\n"
+//                + "CONSTRUCT {\n"
+//                + "  ?x owl:sameAs ?y\n"
+//                + "} WHERE {\n"
+//                + "  ?x owl:sameAs ?y\n"
+//                + "  FILTER(?x != ?y)\n"
+//                + "}";
+//        return sourceEndpoint.construct(queryStr);
+//    }
     
-    /**
-     * @param endpoint
-     * @return map of individual URI to URI of the highest-priority graph in 
-     * which it has a type declaration
-     */ 
-    private Map<String, String> getHomeGraphMap(SparqlEndpoint endpoint, 
-            List<String> graphURIPreferenceList) {
-        Map<String, String> individualToGraphMap = new HashMap<String, String>();
+    private void cacheHomeGraphs(List<String> individualURIs,
+            SparqlEndpoint endpoint, List<String> graphURIPreferenceList) {
+        if(individualURIs == null || individualURIs.isEmpty()) {
+            return;
+        }
+        Map<String, String> individualToGraphMap = homeGraphCache;
+        homeGraphCache.clear();
         String homeGraphQuery = "SELECT ?ind ?graph WHERE { \n" +
+                "    VALUES (?ind) { \n";
+                for(String individualURI : individualURIs) {
+                    homeGraphQuery += "    <"  + individualURI + "> \n";
+                }
+                homeGraphQuery += "} \n" +
                 "    GRAPH ?graph { ?ind a ?typeDeclaration } \n" +
                 "    FILTER(?graph != <http://vitro.mannlib.cornell.edu/default/vitro-kb-inf>) \n" +
                 "} \n";
@@ -852,7 +861,6 @@ public class Publisher extends DataSourceBase implements DataSource {
             }
 
         }
-        return individualToGraphMap;
     }
 
     //    private List<String> getSameAsURIs(String individualURI, 
