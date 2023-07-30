@@ -108,9 +108,9 @@ public class Publisher extends DataSourceBase implements DataSource {
             List<String> graphURIPreferenceList = getGraphURIPreferenceList(
                     sourceEndpoint);
             log.info("Graph URI preference list: " + graphURIPreferenceList);
-            log.info("Caching sameAs triples");
-            sameAsTriples = getSameAsTriples(sourceEndpoint);
-            log.info(sameAsTriples.size() + " cached sameAs triples");
+            //log.info("Caching sameAs triples");
+            //sameAsTriples = getSameAsTriples(sourceEndpoint);
+            //log.info(sameAsTriples.size() + " cached sameAs triples");
             log.info("Caching home graphs");
             homeGraphCache = getHomeGraphMap(sourceEndpoint, graphURIPreferenceList);
             log.info(homeGraphCache.size() + " cached home graphs");
@@ -298,13 +298,13 @@ public class Publisher extends DataSourceBase implements DataSource {
                 "    ?ind2 <" + OWL.sameAs.getURI() + "> ?z \n" +
                 "    FILTER (?ind2 != <" + individualURI + ">) \n" +
                 "} \n";
-        //return endpoint.construct(sameAsQuery);
-        QueryExecution qe = QueryExecutionFactory.create(sameAsQuery, sameAsTriples);
-        try {
-            return qe.execConstruct();
-        } finally {
-            qe.close();
-        }
+        return endpoint.construct(sameAsQuery);
+//        QueryExecution qe = QueryExecutionFactory.create(sameAsQuery, sameAsTriples);
+//        try {
+//            return qe.execConstruct();
+//        } finally {
+//            qe.close();
+//        }
     }
 
     private static Map<String, String> sameAsCache = new HashMap<String, String>();
