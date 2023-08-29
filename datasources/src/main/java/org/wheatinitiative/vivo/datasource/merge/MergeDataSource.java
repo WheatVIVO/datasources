@@ -554,7 +554,11 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             do {
                 ParameterizedSparqlString pss = new ParameterizedSparqlString(queryBaseStr);
                 Map<String, String> uriBindings = new HashMap<String, String>();
-                uriBindings.put("xNormP", NORM_PROP_BASE + xNormP.get(i));
+                String mainProp = xNormP.get(i);
+                // Don't assert sameAs statements for these weak matches;
+                // keep only in model of possible matches for other rules.
+                boolean assertSafe = !("A1".equals(mainProp) || "A2".equals(mainProp) || "A3".equals(mainProp));
+                uriBindings.put("xNormP", NORM_PROP_BASE + mainProp);
                 uriBindings.put("yNormP", NORM_PROP_BASE + yNormP.get(i));
                 uriBindings.put("guardP", NORM_PROP_BASE + guardP.get(i));
                 uriBindings.put("guardPx", NORM_PROP_BASE + guardPx.get(i));
@@ -569,6 +573,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 ResultSet rs = endpoint.getResultSet(queryStr);
                 hasResults = rs.hasNext();
                 String currentValue = null;
+                
                 List<QuerySolution> solns = new ArrayList<QuerySolution>();
                 while (rs.hasNext()){
                     QuerySolution qsoln = rs.next(); 
@@ -578,13 +583,13 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                     } else if(!currentValue.equals(value)) {
                         currentValue = value;
                         log.info("Processing " + value);
-                        out.add(processPersonNameValue(solns, safeBuffer, endpoint));                        
+                        out.add(processPersonNameValue(solns, assertSafe, safeBuffer, endpoint));                        
                         solns.clear();
                     }
                     solns.add(qsoln);
                     if(!rs.hasNext()) {
                         log.info("Processing " + value);
-                        out.add(processPersonNameValue(solns, safeBuffer, endpoint));
+                        out.add(processPersonNameValue(solns, assertSafe, safeBuffer, endpoint));
                         solns.clear();
                     }
                 }
@@ -594,7 +599,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         return out;
     }
     
-    private Model processPersonNameValue(List<QuerySolution> solns, Model safeBuffer, SparqlEndpoint endpoint) {
+    private Model processPersonNameValue(List<QuerySolution> solns,
+            boolean assertSafe, Model safeBuffer, SparqlEndpoint endpoint) {
         Model safeOut = ModelFactory.createDefaultModel();
         Model allOut = ModelFactory.createDefaultModel();
         List<Resource> sourceResources = new ArrayList<Resource>();
@@ -634,13 +640,15 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                     if(!existing.isEmpty()) {
                         for(Resource y : existing) {
                             allOut.add(x, OWL.sameAs, y);
-                            if(existing.size() == 1) {
+                            if(assertSafe && existing.size() == 1) {
                                 safeOut.add(x, OWL.sameAs, y);
                             }
                         }                    
                     } else {
                         allOut.add(x, OWL.sameAs, topResource.get(graphURI));
-                        safeOut.add(x, OWL.sameAs, topResource.get(graphURI));
+                        if(assertSafe) {
+                            safeOut.add(x, OWL.sameAs, topResource.get(graphURI));
+                        }
                     }
                 }
             }
