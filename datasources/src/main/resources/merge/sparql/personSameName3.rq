@@ -44,9 +44,9 @@ SELECT ?value ?g ?definitive ?assert ?existingTarget ?x WHERE {
     OPTIONAL {
       GRAPH <http://vitro.mannlib.cornell.edu/a/graph/personSameName> {
         ?x owl:sameAs ?existingTarget
-        FILTER EXISTS {
+       # FILTER EXISTS {
           GRAPH ?g { ?existingTarget rdfs:label ?someLabel } 
-        }
+       # }
       }
     }
     BIND(IF(NOT EXISTS { ?nn1 ?guardP ?something } && NOT    
