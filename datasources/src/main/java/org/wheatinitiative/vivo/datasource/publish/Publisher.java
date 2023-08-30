@@ -205,13 +205,13 @@ public class Publisher extends DataSourceBase implements DataSource {
                 do {
                     Thread.sleep(10000);
                 } while (inf.isReasonerIsRecomputing());
-                if(!errorOccurred) {
-                    this.getStatus().setMessage("augmenting data via additional construct queries");
-                    PostmergeDataSource postmerge = new PostmergeDataSource();
-                    postmerge.setConfiguration(this.getConfiguration());
-                    postmerge.getConfiguration().setResultsGraphURI(POSTMERGE_GRAPH);
-                    postmerge.runIngest();
-                }
+                //if(!errorOccurred) {
+                    //this.getStatus().setMessage("augmenting data via additional construct queries");
+                    //PostmergeDataSource postmerge = new PostmergeDataSource();
+                    //postmerge.setConfiguration(this.getConfiguration());
+                    //postmerge.getConfiguration().setResultsGraphURI(POSTMERGE_GRAPH);
+                    //postmerge.runIngest();
+                //}
             } else {
                 log.warn("IndexingInferenceService not available on destination endpoint");
             }
@@ -829,7 +829,7 @@ public class Publisher extends DataSourceBase implements DataSource {
         Map<String, String> individualToGraphMap = homeGraphCache;
         homeGraphCache.clear();
         String homeGraphQuery = "SELECT ?ind ?graph WHERE { \n" +
-                "    VALUES (?ind) { \n";
+                "    VALUES ?ind { \n";
                 for(String individualURI : individualURIs) {
                     homeGraphQuery += "    <"  + individualURI + "> \n";
                 }
