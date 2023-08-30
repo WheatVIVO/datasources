@@ -248,7 +248,9 @@ public class SparqlEndpoint implements ModelConstructor {
         StringBuffer reqBuff = new StringBuffer();
         reqBuff.append("INSERT DATA { GRAPH <" + graphURI + "> { \n");
         try {
-            reqBuff.append(out.toString("UTF-8"));
+            String outStr = out.toString("UTF-8");
+	    outStr = outStr.replaceAll("\\^\\^<http://www.w3.org/1999/02/22-rdf-syntax-ns#langString>", "");
+            reqBuff.append(outStr);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
@@ -271,7 +273,9 @@ public class SparqlEndpoint implements ModelConstructor {
         StringBuffer reqBuff = new StringBuffer();
         reqBuff.append("DELETE DATA { GRAPH <" + graphURI + "> { \n");
         try {
-            reqBuff.append(out.toString("UTF-8"));
+            String outStr = out.toString("UTF-8");
+	    outStr = outStr.replaceAll("\\^\\^<http://www.w3.org/1999/02/22-rdf-syntax-ns#langString>", "");
+            reqBuff.append(outStr);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
