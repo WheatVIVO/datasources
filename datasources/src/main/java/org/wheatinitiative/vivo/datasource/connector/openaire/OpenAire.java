@@ -357,7 +357,7 @@ public class OpenAire extends ConnectorDataSource implements DataSource {
 											 ,"215-publication-year.sparql"
 											 ,"220-publication-keywords.sparql"
 											 ,"230-publication-authorship.sparql"
-											 //,"235-publication-author_vcard_name.sparql"
+											 ,"235-publication-author_vcard_name.sparql"
 											 ,"300-project-publication-connection.sparql"
 											 ,"400-journal.sparql"
 											 ,"410-journal-publisher.sparql"

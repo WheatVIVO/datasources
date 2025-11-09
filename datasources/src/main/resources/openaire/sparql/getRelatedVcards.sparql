@@ -1,16 +1,16 @@
-PREFIX obo:		<http://purl.obolibrary.org/obo/>
-
-
+PREFIX obo:	<http://purl.obolibrary.org/obo/>
+PREFIX foaf:    <http://xmlns.com/foaf/0.1/>
+PREFIX vivo:    <http://vivoweb.org/ontology/core#>
 
 CONSTRUCT {
-
-	?vcard ?vcardP ?vcardO .
-	?vcardO ?vcardPP ?vcardOO .
-
+  ?person obo:ARG_2000028 ?vcard .
+  ?vcard ?vcardP ?vcardO .
+  ?vcardO ?vcardPP ?vcardOO .
 } WHERE {
-
-    ?entity obo:ARG_2000028 ?vcard .
-    
-	?vcard ?vcardP ?vcardO .
-	?vcardO ?vcardPP ?vcardOO .
+  ?authorship vivo:relates ?entity .
+  ?authorship a vivo:Authorship .
+  ?authorship vivo:relates ?person .
+  ?person obo:ARG_2000028 ?vcard .
+  ?vcard ?vcardP ?vcardO .
+  ?vcardO ?vcardPP ?vcardOO .
 }

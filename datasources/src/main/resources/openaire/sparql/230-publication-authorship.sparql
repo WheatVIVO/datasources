@@ -23,8 +23,8 @@ CONSTRUCT {
     ?vcard a vcard:Individual .
     ?vcard vcard:hasName ?name .
     ?name a vcard:Name .
-    ?name vcard:familyName ?lastName .
-    ?name vcard:givenName ?firstName .
+    ?name vcard:familyName ?familyName .
+    ?name vcard:givenName ?givenName .
     ?author vivo:orcidId ?orcidId .
     ?orcidId a owl:Thing
 } WHERE {
