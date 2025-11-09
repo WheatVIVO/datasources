@@ -821,7 +821,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         ParameterizedSparqlString atomQuery = new ParameterizedSparqlString(
                 "SELECT ?atom WHERE { \n" +
                         "  ?rule <" + HASATOM + "> ?atom . \n" +
-                        "  OPTIONAL { ?atom <" + PRIORITY +"> ?priority } \n" +
+                        "  OPTIONAL { ?atom <" + PRIORITY +"> ?rank } \n" +
                         "  FILTER(!BOUND(?rank) || (?rank >= 0)) \n" +
                         "  FILTER NOT EXISTS { ?atom <" + DISABLED + "> true } \n" +
                 "} ORDER BY ?rank");
