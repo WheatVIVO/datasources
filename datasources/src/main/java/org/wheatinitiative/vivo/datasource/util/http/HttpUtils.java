@@ -86,32 +86,32 @@ public class HttpUtils {
             get.setHeader("Accept", contentType);
         }
         HttpResponse response = null;
-        try {
-            response = execute(get, httpClient);
-        } catch (Exception e) {
-            log.error("Error fetching " + url + ". Retrying in 2 seconds " + e);
+	int remainingTries = 8;
+	int waitSecs = 2;
+	do {
             try {
-                Thread.sleep(2000);
                 response = execute(get, httpClient);
-            } catch (InterruptedException e1) {
-                throw new RuntimeException(e1);
-            } catch (Exception e2) {
-                log.error("Error fetching " + url + ". Retrying in 4 seconds " + e);
-                int tries = 10;
-                int i = 0;
-                do {
-                    i++;
-                    try {
-                        Thread.sleep(4000);
-                        response = execute(get, httpClient);
-                    } catch (InterruptedException e3) {
-                        throw new RuntimeException(e3);
-                    } catch (Exception e3) {
-                        log.error("Error fetching " + url + ". Retrying in 4 seconds " + e);
-                    }
-                } while(response == null && i < tries);
+                if(response.getStatusLine().getStatusCode() == 429) { // too many requests
+            	    EntityUtils.consume(response.getEntity());
+		    response = null;
+		    throw new RuntimeException("Too many requests");
+		}
+            } catch (Exception e) {
+		if(remainingTries == 1) {
+                    log.error("Error fetching " + url + ". No more retries available." + e);
+                    throw new RuntimeException(e); 
+		}
+                log.error("Error fetching " + url + ". Retrying in " + waitSecs + " seconds " + e);
+		try {
+                    Thread.sleep(waitSecs * 1000);
+                } catch (InterruptedException ie) {
+                    throw new RuntimeException(ie);
+                }
+            } finally {
+                remainingTries--;
+		waitSecs = waitSecs * 2;
             }
-        }
+	} while(response == null &&  remainingTries > 0); 
         try {
             if(response.getStatusLine().getStatusCode() >= 400) {
                 throw new RuntimeException(response.getStatusLine().getStatusCode()
@@ -134,6 +134,7 @@ public class HttpUtils {
             this.lastRequestMillis = System.currentTimeMillis();
             HttpResponse response = httpClient.execute(request);
             if(response.getStatusLine().getStatusCode() == 503) {
+                EntityUtils.consume(response.getEntity());
                 throw new RuntimeException("503 Unavailable");
             } else {
                 return response;

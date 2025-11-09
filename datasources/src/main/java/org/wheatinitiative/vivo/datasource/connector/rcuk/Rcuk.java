@@ -54,7 +54,8 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
     private static final String SPARQL_RESOURCE_DIR = "/rcuk/sparql/";
     private static final int MAX_PAGE_SIZE = 25; // number of search results that can
                                              // be retrieved in a single request
-    private HttpUtils httpUtils = new HttpUtils();
+    private static final int SLEEP_BETWEEN_REQUESTS = 250; //ms
+    private HttpUtils httpUtils = new HttpUtils("wheatvivo.org", 350L);
     private XmlToRdf xmlToRdf = new XmlToRdf();
         
     private Model updateResults(Model model, Set<String> retrievedURIs) 
@@ -140,8 +141,10 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
         String url = builder.build().toString();
         try {
             log.info(url); 
-            return httpUtils.getHttpResponse(url);
-        } catch (IOException e) {
+            String responseStr = httpUtils.getHttpResponse(url);
+	    Thread.sleep(SLEEP_BETWEEN_REQUESTS);
+	    return responseStr;
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -178,6 +181,8 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
                 "415-publication-Book.sparql",
                 "418-publication-Database.sparql",
                 "430-publication-properties.sparql",
+		"435-publication-date.sparql",
+		"437-publication-journal.sparql",
                 "440-publication-supportedInformationResource.sparql",
                 "456-position.sparql");
         for(String query : queries) {
@@ -253,9 +258,16 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
                 String doc = httpUtils.getHttpResponse(uri);
                 m.add(transformToRdf(doc));
             } catch (Exception e) {
-                log.error("Error fetching " + uri, e);
-                this.getStatus().setErrorRecords(this.getStatus().getErrorRecords() + 1);
-            }
+                if(e.getMessage().startsWith("404")) {
+                    log.error("404 not found " + uri);
+                } else {
+                    log.error("Error fetching " + uri);
+                    log.error(e, e);
+                    this.getStatus().setErrorRecords(this.getStatus().getErrorRecords() + 1);
+		}
+            } finally {
+		Thread.sleep(SLEEP_BETWEEN_REQUESTS);
+	    }
         }
         return m;
     }
@@ -363,6 +375,7 @@ public class Rcuk extends ConnectorDataSource implements DataSource {
         
         public RcukIterator() {
             try {
+                org.apache.jena.query.ARQ.init();
                 if(getConfiguration().getServiceURI() != null) {
                     apiUrl = getConfiguration().getServiceURI();
                 }
