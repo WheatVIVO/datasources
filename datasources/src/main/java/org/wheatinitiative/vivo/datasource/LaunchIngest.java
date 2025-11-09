@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wheatinitiative.vivo.datasource.connector.GraphClearer;
 import org.wheatinitiative.vivo.datasource.connector.arc.ArcConnector;
 import org.wheatinitiative.vivo.datasource.connector.cordis.Cordis;
 import org.wheatinitiative.vivo.datasource.connector.cornell.Cornell;
@@ -35,6 +36,7 @@ public class LaunchIngest {
     private static final Log log = LogFactory.getLog(LaunchIngest.class);
     
     public static void main(String[] args) {
+	org.apache.jena.query.ARQ.init();
         if(args.length < 3) {
             System.out.println("Usage: LaunchIngest" 
                     + " openaire|cordis|rcuk|msracad|prodinra|wheatinitiative|florida|arc|grdc|"
@@ -136,6 +138,8 @@ public class LaunchIngest {
             connector = new OrganizationNameForSameAsNormalizer();
         } else if ("postmerge".equals(connectorName)) {
             connector = new PostmergeDataSource();
+        } else if ("clearGraph".equals(connectorName)) {
+            connector = new GraphClearer();
         } else {
             throw new RuntimeException("Connector not found: " 
                     + connectorName);
