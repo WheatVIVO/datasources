@@ -36,6 +36,7 @@ public class PostmergeDataSource extends ConnectorDataSource implements DataSour
                 "externalToWheatPeopleQuery2.sparql",
                 "externalToWheatPeopleQuery3.sparql",
                 "externalToWheatPeopleQuery4.sparql",
+                "externalToWheatPeopleQuery5.sparql",
                 "externalToWheatOrganizationsQuery.sparql",                
                 "externalToWheatJournalsQuery.sparql",
                 "externalToWheatConceptsQuery.sparql",
