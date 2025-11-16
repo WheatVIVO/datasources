@@ -5,20 +5,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.text.similarity.LevenshteinDistance;
-import org.wheatinitiative.vivo.datasource.DataSource;
-import org.wheatinitiative.vivo.datasource.DataSourceBase;
-import org.wheatinitiative.vivo.datasource.connector.InsertOnlyConnectorDataSource;
-import org.wheatinitiative.vivo.datasource.normalizer.AuthorNameForSameAsNormalizer;
-import org.wheatinitiative.vivo.datasource.util.indexinginference.IndexingInference;
-import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
-
 import org.apache.jena.query.ParameterizedSparqlString;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -36,6 +31,13 @@ import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
+import org.wheatinitiative.vivo.datasource.DataSource;
+import org.wheatinitiative.vivo.datasource.DataSourceBase;
+import org.wheatinitiative.vivo.datasource.VivoVocabulary;
+import org.wheatinitiative.vivo.datasource.connector.InsertOnlyConnectorDataSource;
+import org.wheatinitiative.vivo.datasource.normalizer.AuthorNameForSameAsNormalizer;
+import org.wheatinitiative.vivo.datasource.util.indexinginference.IndexingInference;
+import org.wheatinitiative.vivo.datasource.util.sparql.SparqlEndpoint;
 
 public class MergeDataSource extends DataSourceBase implements DataSource {
 
@@ -72,9 +74,13 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     private static final String BIBO_DOCUMENT = "http://purl.org/ontology/bibo/Document";
     private static final String BASIC_SAMEAS_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/basicSameAs";
     private static final String TRANSITIVE_SAMEAS_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/transitiveSameAs";
+    private static final String PERSON_SAMENAME_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/personSameName";
+    private static final String SAMEDOCTITLE_SAMEAUTHOR_DIRECT_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/sameDocTitleSameAuthorDirect";
+    private static final String PERSON_SAMEID_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/personSameId";
     private static final String NORM_PROP_BASE = InsertOnlyConnectorDataSource.LABEL_FOR_SAMEAS;
 
     private Model result = ModelFactory.createDefaultModel();
+    private Model personNameMatchModel = ModelFactory.createDefaultModel(); 
     protected LevenshteinDistance ld = LevenshteinDistance.getDefaultInstance();
 
     @Override
@@ -126,7 +132,13 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             SparqlEndpoint endpoint = getSparqlEndpoint();
             clearTransitiveSameAsAssertions(endpoint);
             String resultsGraphURI = getConfiguration().getResultsGraphURI();
-            getSparqlEndpoint().clearGraph(resultsGraphURI); 
+            getSparqlEndpoint().clearGraph(resultsGraphURI);
+            getSparqlEndpoint().clearGraph(resultsGraphURI);
+            getSparqlEndpoint().clearGraph(SAMEDOCTITLE_SAMEAUTHOR_DIRECT_GRAPH);
+            this.getStatus().setMessage("running person ID matches");
+            executePersonIdMatch(sparqlEndpoint);
+            this.getStatus().setMessage("running person name matches");
+            personNameMatchModel = executePersonNameMatch(sparqlEndpoint);
             this.getStatus().setMessage("running merge rules");
             Collections.sort(mergeRules, new AffectedClassRuleComparator(getSparqlEndpoint()));        
             Map<String, Long> statistics = new HashMap<String, Long>();
@@ -157,6 +169,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 addTransitiveSameAsAssertions(endpoint);
             }
             this.getStatus().setMessage("adding additional query results");
+            getSparqlEndpoint().writeModel(getSameDocTitleSameAuthorDirect(endpoint),
+                    SAMEDOCTITLE_SAMEAUTHOR_DIRECT_GRAPH);
             Model tmp = getAdditionalQueryResults(endpoint);
             getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
             log.info("Merging relationships");
@@ -196,7 +210,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             }
         }
     }
-    
+
     /**
      * Materialize inferences of type sameAs(x,x) for query support
      */
@@ -332,7 +346,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                     + atom.getMatchDegree());
             if(AuthorNameForSameAsNormalizer.HAS_NORMALIZED_NAMES.equals(
                     atom.getMergeObjectPropertyURI())) {
-                sameAsModel = join(sameAsModel, executePersonNameMatch(sparqlEndpoint)); 
+                sameAsModel = join(sameAsModel, personNameMatchModel); 
             } else if(atom.getMatchDegree() < 100) {
                 sameAsModel = join(sameAsModel, getFuzzySameAs(
                         rule, atom, fauxPropertyContextModel, windowSize));
@@ -441,37 +455,278 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         }
         return model;
     }
-    
-    private Model executePersonNameMatch( 
+
+    private Model executePersonIdMatch( 
             SparqlEndpoint endpoint) {
-        return executePersonNameMatchQuery("personSameName.rq", endpoint);                               
+        Model out = ModelFactory.createDefaultModel();
+        endpoint.clearGraph(PERSON_SAMEID_GRAPH);
+        String queryBaseStr = this.loadQuery(SPARQL_RESOURCE_DIR + "personSameId.rq");
+        List<String> idPropertyURIs = Arrays.asList(
+                VivoVocabulary.VIVO + "orcidId",
+                VivoVocabulary.VIVO + "researcherId",
+                VivoVocabulary.VIVO + "scopusId");
+        for(String idPropertyURI : idPropertyURIs) {
+            int limit = 1000;
+            int offset = 0;
+            boolean hasResults = false;
+            do {
+                ParameterizedSparqlString pss = new ParameterizedSparqlString(queryBaseStr);
+                pss.setIri("idp", idPropertyURI);
+                pss.setLiteral("limit", limit);
+                pss.setLiteral("offset", offset);
+                String queryStr = pss.toString();
+                log.info(queryStr);
+                offset += limit;
+                ResultSet rs = endpoint.getResultSet(queryStr);
+                hasResults = rs.hasNext();
+                String currentValue = null;
+                List<QuerySolution> solns = new ArrayList<QuerySolution>();
+                while (rs.hasNext()){
+                    QuerySolution qsoln = rs.next(); 
+                    String value = qsoln.getLiteral("value").getLexicalForm();
+                    if(currentValue == null) {
+                        currentValue = value;
+                    } else if(!currentValue.equals(value)) {
+                        out.add(processPersonIdValue(solns, endpoint));                        
+                        solns.clear();
+                    }
+                    solns.add(qsoln);
+                    if(!rs.hasNext()) {
+                        out.add(processPersonIdValue(solns, endpoint));
+                        solns.clear();
+                    }
+                }
+            } while (hasResults);
+        }
+        endpoint.writeModel(out, PERSON_SAMEID_GRAPH);
+        return out;
     }
 
-    private Model executePersonNameMatchQuery(String queryFile, 
+    private Model processPersonIdValue(List<QuerySolution> solns, SparqlEndpoint endpoint) {
+        Model out = ModelFactory.createDefaultModel();
+        List<Resource> targetResources = new ArrayList<Resource>();
+        Resource currentGraph = null;
+        for(QuerySolution qsoln : solns) {
+            Resource g = qsoln.getResource("g");
+            if(!g.equals(currentGraph)) {
+                targetResources.add(qsoln.getResource("x"));
+                currentGraph = g;
+            }
+        }
+        for(QuerySolution qsoln : solns) {
+            Resource x = qsoln.getResource("x");
+            for(Resource y : targetResources) {
+                out.add(x, OWL.sameAs, y);
+            }
+        }
+        return out;
+    }
+
+    private Model executePersonNameMatch( 
             SparqlEndpoint endpoint) {
-        Model results = ModelFactory.createDefaultModel();
+        Model out = ModelFactory.createDefaultModel();
+        endpoint.clearGraph(PERSON_SAMENAME_GRAPH);
+        //int personsWithNormalizedNames = getNormalizedPersonCount(endpoint);
+        //return executePersonNameMatchQuery("personSameName2.rq", endpoint, personsWithNormalizedNames);
+        String queryBaseStr = this.loadQuery(SPARQL_RESOURCE_DIR + "personSameName3.rq");
         List<String> xNormP = Arrays.asList("C3", "RC3", "C2", "C1", "RC1", "B3", "B2", "B1", "RB1", "A3", "A2", "A1");
         List<String> yNormP = Arrays.asList("C3",  "C3", "C2", "C1",  "C1", "B3", "B2", "B1",  "B1", "A3", "A2", "A1");
         List<String> guardP = Arrays.asList("XX",  "XX", "XX", "XX",  "XX", "C1", "C1", "C1",  "C1", "B1", "B1", "B1");
         List<String> guardPx = Arrays.asList("XX",  "XX", "C3", "C2",  "XX", "XX", "B3", "B2",  "XX", "XX", "A3", "A2");
         for(int i = 0; i < xNormP.size(); i++) {
-            Map<String, String> uriBindings = new HashMap<String, String>();
-            uriBindings.put("xNormP", NORM_PROP_BASE + xNormP.get(i));
-            uriBindings.put("yNormP", NORM_PROP_BASE + yNormP.get(i));
-            uriBindings.put("guardP", NORM_PROP_BASE + guardP.get(i));
-            uriBindings.put("guardPx", NORM_PROP_BASE + guardPx.get(i));
-            ParameterizedSparqlString queryStr = new ParameterizedSparqlString(
-                    this.loadQuery(SPARQL_RESOURCE_DIR + queryFile));
-            for(String key : uriBindings.keySet()) {
-                queryStr.setIri(key, uriBindings.get(key));
+            Model safeBuffer = ModelFactory.createDefaultModel();
+            int limit = 2500;
+            int offset = 0;
+            boolean hasResults = false;
+            do {
+                ParameterizedSparqlString pss = new ParameterizedSparqlString(queryBaseStr);
+                Map<String, String> uriBindings = new HashMap<String, String>();
+                String mainProp = xNormP.get(i);
+                // Don't assert sameAs statements for these weak matches;
+                // keep only in model of possible matches for other rules.
+                boolean assertSafe = !("A1".equals(mainProp) || "A2".equals(mainProp) || "A3".equals(mainProp));
+                uriBindings.put("xNormP", NORM_PROP_BASE + mainProp);
+                uriBindings.put("yNormP", NORM_PROP_BASE + yNormP.get(i));
+                uriBindings.put("guardP", NORM_PROP_BASE + guardP.get(i));
+                uriBindings.put("guardPx", NORM_PROP_BASE + guardPx.get(i));
+                for(String key : uriBindings.keySet()) {
+                    pss.setIri(key, uriBindings.get(key));
+                }
+                pss.setLiteral("limit", limit);
+                pss.setLiteral("offset", offset);
+                String queryStr = pss.toString();
+                log.info(queryStr);
+                offset += limit;
+                ResultSet rs = endpoint.getResultSet(queryStr);
+                hasResults = rs.hasNext();
+                String currentValue = null;
+
+                List<QuerySolution> solns = new ArrayList<QuerySolution>();
+                while (rs.hasNext()){
+                    QuerySolution qsoln = rs.next(); 
+                    String value = qsoln.getLiteral("value").getLexicalForm();
+                    if(currentValue == null) {
+                        currentValue = value;
+                    } else if(!currentValue.equals(value)) {
+                        currentValue = value;
+                        log.info("Processing " + value);
+                        out.add(processPersonNameValue(solns, assertSafe, safeBuffer, endpoint));                        
+                        solns.clear();
+                    }
+                    solns.add(qsoln);
+                    if(!rs.hasNext()) {
+                        log.info("Processing " + value);
+                        out.add(processPersonNameValue(solns, assertSafe, safeBuffer, endpoint));
+                        solns.clear();
+                    }
+                }
+            } while (hasResults);
+            endpoint.writeModel(safeBuffer, PERSON_SAMENAME_GRAPH);
+        }        
+        return out;
+    }
+
+    private Model processPersonNameValue(List<QuerySolution> solns,
+            boolean assertSafe, Model safeBuffer, SparqlEndpoint endpoint) {
+        Model safeOut = ModelFactory.createDefaultModel();
+        Model allOut = ModelFactory.createDefaultModel();
+        List<Resource> sourceResources = new ArrayList<Resource>();
+        Map<String, Resource> topResource = new HashMap<String, Resource>();
+        Map<String, Set<Resource>> existingResources = new HashMap<String, Set<Resource>>();
+        Resource currentGraph = null;
+        Set<Resource> currentExistingResources = null;
+        Set<Resource> knownExternalResources =  new HashSet<Resource>();
+        for(QuerySolution qsoln : solns) {
+            Resource g = qsoln.getResource("g");
+            if(!g.equals(currentGraph)) {
+                currentGraph = g;
+                currentExistingResources = new HashSet<Resource>();
+                existingResources.put(g.getURI(), currentExistingResources);
+                topResource.put(g.getURI(), qsoln.getResource("x"));                
+            } 
+            if(qsoln.getResource("existingTarget") != null) {
+                currentExistingResources.add(qsoln.getResource("existingTarget"));
             }
-            log.info(queryStr.toString());
-            Model m = endpoint.construct(queryStr.toString());
-            StmtIterator mit = m.listStatements();
-            while(mit.hasNext()) {
-                results.add(mit.next());
+            if("assert".equals(qsoln.getLiteral("assert").getLexicalForm())) {
+                sourceResources.add(qsoln.getResource("x"));
+            }
+            if("false".equals(qsoln.getLiteral("definitive").getLexicalForm())
+                    && g.getURI().startsWith("https://vivo.ipb.it/graph/repository")) {
+                knownExternalResources.add(qsoln.getResource("x"));
             }
         }
+        int invalidMatches = 0;
+        log.info(knownExternalResources.size() + " known external resources.");
+        for(Resource x : sourceResources) {
+            for(String graphURI : existingResources.keySet()) {
+                if(knownExternalResources.contains(x) && graphURI.startsWith(
+                        "https://vivo.ipb.it/graph/ipbapi")) {
+                    invalidMatches++;
+                } else {
+                    Set<Resource> existing = existingResources.get(graphURI);
+                    if(!existing.isEmpty()) {
+                        for(Resource y : existing) {
+                            allOut.add(x, OWL.sameAs, y);
+                            if(assertSafe && existing.size() == 1) {
+                                safeOut.add(x, OWL.sameAs, y);
+                            }
+                        }                    
+                    } else {
+                        allOut.add(x, OWL.sameAs, topResource.get(graphURI));
+                        if(assertSafe) {
+                            safeOut.add(x, OWL.sameAs, topResource.get(graphURI));
+                        }
+                    }
+                }
+            }
+        }
+        log.info("Skipped " + invalidMatches + " invalid matches");
+        log.info("safeOut has " + safeOut.size());
+        log.info("allOut has " + allOut.size());
+        safeBuffer.add(safeOut);
+        return allOut;
+    }
+
+    private Model getSameDocTitleSameAuthorDirect(SparqlEndpoint endpoint) {
+        String queryStr = "PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n"
+                + "PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>\n"
+                + "PREFIX xsd:      <http://www.w3.org/2001/XMLSchema#>\n"
+                + "PREFIX owl:      <http://www.w3.org/2002/07/owl#>\n"
+                + "PREFIX swrl:     <http://www.w3.org/2003/11/swrl#>\n"
+                + "PREFIX swrlb:    <http://www.w3.org/2003/11/swrlb#>\n"
+                + "PREFIX vitro:    <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>\n"
+                + "PREFIX bibo:     <http://purl.org/ontology/bibo/>\n"
+                + "PREFIX c4o:      <http://purl.org/spar/c4o/>\n"
+                + "PREFIX cito:     <http://purl.org/spar/cito/>\n"
+                + "PREFIX event:    <http://purl.org/NET/c4dm/event.owl#>\n"
+                + "PREFIX fabio:    <http://purl.org/spar/fabio/>\n"
+                + "PREFIX foaf:     <http://xmlns.com/foaf/0.1/>\n"
+                + "PREFIX geo:      <http://aims.fao.org/aos/geopolitical.owl#>\n"
+                + "PREFIX p1:       <http://purl.org/dc/terms/>\n"
+                + "PREFIX p2:       <http://purl.org/vocab/vann/>\n"
+                + "PREFIX p3:       <http://www.ebi.ac.uk/efo/swo/>\n"
+                + "PREFIX obo:      <http://purl.obolibrary.org/obo/>\n"
+                + "PREFIX ocrer:    <http://purl.org/net/OCRe/research.owl#>\n"
+                + "PREFIX ocresd:   <http://purl.org/net/OCRe/study_design.owl#>\n"
+                + "PREFIX p4:       <http://purl.obolibrary.org/obo/ro.owl#>\n"
+                + "PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>\n"
+                + "PREFIX p5:       <http://purl.org/net/OCRe/statistics.owl#>\n"
+                + "PREFIX p6:       <http://purl.org/net/OCRe/study_protocol.owl#>\n"
+                + "PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>\n"
+                + "PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>\n"
+                + "PREFIX vivo:     <http://vivoweb.org/ontology/core#>\n"
+                + "PREFIX vlocal:   <http://research-hub.urosario.edu.co/ontology/vlocal#>\n"
+                + "PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>\n"
+                + "PREFIX orcidwork:   <http://www.orcid.org/ns/work/>\n"
+                + "PREFIX orcidcommon: <http://www.orcid.org/ns/common/>\n"
+                + "PREFIX orcidrecord: <http://www.orcid.org/ns/record/>\n"
+                + "PREFIX orcidperson: <http://www.orcid.org/ns/person/>\n"
+                + "PREFIX generic: <http://ingest.mannlib.cornell.edu/generalizedXMLtoRDF/0.1/>"
+                + "CONSTRUCT {\n"
+                + "  ?x owl:sameAs ?y .\n"
+                + "  ?y owl:sameAs ?x .\n"
+                + "}\n"
+                + "WHERE {\n"
+                + "  ?x a bibo:Document .\n"
+                + "  ?x <http://vivo.cgiar.org/ontology/local/labelForSameAs> ?label .\n"
+                + "  ?y <http://vivo.cgiar.org/ontology/local/labelForSameAs> ?label .\n"
+                + "  ?x vivo:dateTimeValue ?xDtv . \n"
+                + "  ?xDtv vivo:dateTime ?xDateTime . \n"
+                + "  BIND(STRBEFORE(STR(?xDateTime), \"-\") AS ?xYear) \n"
+                + "  ?y vivo:dateTimeValue ?yDtv . \n"
+                + "  ?yDtv vivo:dateTime ?yDateTime . \n"
+                + "  BIND(STRBEFORE(STR(?yDateTime), \"-\") AS ?yYear) \n"
+                + "  FILTER(?xYear = ?yYear) \n"
+                + "  FILTER (?y != ?x)\n"
+                + "  FILTER EXISTS { \n"
+                + "    ?x vitro:mostSpecificType ?mst . \n"
+                + "    ?y vitro:mostSpecificType ?mst . \n"
+                + "  } \n"
+                + "  FILTER( EXISTS {\n"
+                + "    ?x vivo:relatedBy ?authorship .\n"
+                + "    ?authorship a vivo:Authorship .\n"
+                + "    ?authorship vivo:relates ?author .\n"
+                + "    ?author a foaf:Person .\n"
+                + "    ?author owl:sameAs ?author2 .\n"
+                + "    ?author2 vivo:relatedBy ?authorship2 .\n"
+                + "    ?authorship2 a vivo:Authorship .\n"
+                + "    ?authorship2 vivo:relates ?y .\n"
+                + "  }\n"
+                + "  || EXISTS {\n"
+                + "    ?x vivo:relatedBy ?authorship .\n"
+                + "    ?authorship a vivo:Authorship .\n"
+                + "    ?authorship vivo:relates ?author .\n"
+                + "    ?author a foaf:Person .\n"
+                + "    ?author owl:sameAs ?authorz .\n"
+                + "    ?author2 owl:sameAs ?authorz .\n"
+                + "    ?author2 vivo:relatedBy ?authorship2 .\n"
+                + "    ?authorship2 a vivo:Authorship .\n"
+                + "    ?authorship2 vivo:relates ?y .\n"
+                + "  })\n"
+                + "  FILTER NOT EXISTS { ?x owl:differentFrom ?y }\n"
+                + "} \n";
+        Model results = endpoint.construct(queryStr);
+        log.info(result.size() + " direct same-doc-title, same-author results");
         return results;
     }
 
