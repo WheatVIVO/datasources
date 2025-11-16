@@ -75,7 +75,9 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
     private static final String BASIC_SAMEAS_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/basicSameAs";
     private static final String TRANSITIVE_SAMEAS_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/transitiveSameAs";
     private static final String PERSON_SAMENAME_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/personSameName";
+    private static final String SAMEAUTHOR_SAMEDOCTITLE_DIRECT_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/sameAuthorSameDocTitleDirect";
     private static final String SAMEDOCTITLE_SAMEAUTHOR_DIRECT_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/sameDocTitleSameAuthorDirect";
+    private static final String SAMEORG_SAMEJOURNAL_DIRECT_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/sameOrgSameJournalDirect";
     private static final String PERSON_SAMEID_GRAPH = "http://vitro.mannlib.cornell.edu/a/graph/personSameId";
     private static final String NORM_PROP_BASE = InsertOnlyConnectorDataSource.LABEL_FOR_SAMEAS;
 
@@ -134,7 +136,9 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
             String resultsGraphURI = getConfiguration().getResultsGraphURI();
             getSparqlEndpoint().clearGraph(resultsGraphURI);
             getSparqlEndpoint().clearGraph(resultsGraphURI);
+            getSparqlEndpoint().clearGraph(SAMEAUTHOR_SAMEDOCTITLE_DIRECT_GRAPH);
             getSparqlEndpoint().clearGraph(SAMEDOCTITLE_SAMEAUTHOR_DIRECT_GRAPH);
+            getSparqlEndpoint().clearGraph(SAMEORG_SAMEJOURNAL_DIRECT_GRAPH);
             this.getStatus().setMessage("running person ID matches");
             executePersonIdMatch(sparqlEndpoint);
             this.getStatus().setMessage("running person name matches");
@@ -169,8 +173,12 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 addTransitiveSameAsAssertions(endpoint);
             }
             this.getStatus().setMessage("adding additional query results");
+            getSparqlEndpoint().writeModel(getSameAuthorSameDocTitleDirect(endpoint),
+                    SAMEAUTHOR_SAMEDOCTITLE_DIRECT_GRAPH);
             getSparqlEndpoint().writeModel(getSameDocTitleSameAuthorDirect(endpoint),
                     SAMEDOCTITLE_SAMEAUTHOR_DIRECT_GRAPH);
+            getSparqlEndpoint().writeModel(getSameOrgSameJournalDirect(endpoint),
+                    SAMEORG_SAMEJOURNAL_DIRECT_GRAPH);
             Model tmp = getAdditionalQueryResults(endpoint);
             getSparqlEndpoint().writeModel(tmp, resultsGraphURI);
             log.info("Merging relationships");
@@ -240,7 +248,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
      * Materialize inferences of type sameAs(x,x) for query support
      */
     protected void addTransitiveSameAsAssertions(SparqlEndpoint endpoint) {
-        int maxIterations = 3;
+        int maxIterations = 2;
         long inferenceCount = 1;
         while(inferenceCount > 0 && maxIterations > 0) {
             maxIterations--;
@@ -544,7 +552,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 String mainProp = xNormP.get(i);
                 // Don't assert sameAs statements for these weak matches;
                 // keep only in model of possible matches for other rules.
-                boolean assertSafe = !("A1".equals(mainProp) || "A2".equals(mainProp) || "A3".equals(mainProp));
+                boolean assertSafe = !("A1".equals(mainProp));
                 uriBindings.put("xNormP", NORM_PROP_BASE + mainProp);
                 uriBindings.put("yNormP", NORM_PROP_BASE + yNormP.get(i));
                 uriBindings.put("guardP", NORM_PROP_BASE + guardP.get(i));
@@ -646,6 +654,66 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
         safeBuffer.add(safeOut);
         return allOut;
     }
+    
+    private Model getSameAuthorSameDocTitleDirect(SparqlEndpoint endpoint) {
+        String queryStr = "PREFIX bib: <http://zeitkunst.org/bibtex/0.1/bibtex.owl#>\n"
+                + "PREFIX bio: <http://purl.org/vocab/bio/0.1/>\n"
+                + "PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n"
+                + "PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>\n"
+                + "PREFIX xsd:      <http://www.w3.org/2001/XMLSchema#>\n"
+                + "PREFIX owl:      <http://www.w3.org/2002/07/owl#>\n"
+                + "PREFIX swrl:     <http://www.w3.org/2003/11/swrl#>\n"
+                + "PREFIX swrlb:    <http://www.w3.org/2003/11/swrlb#>\n"
+                + "PREFIX vitro:    <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>\n"
+                + "PREFIX p1:       <http://vivo.wheatinitiative.org/ontology/adminapp/>\n"
+                + "PREFIX bibo:     <http://purl.org/ontology/bibo/>\n"
+                + "PREFIX c4o:      <http://purl.org/spar/c4o/>\n"
+                + "PREFIX cito:     <http://purl.org/spar/cito/>\n"
+                + "PREFIX dcterms:  <http://purl.org/dc/terms/>\n"
+                + "PREFIX event:    <http://purl.org/NET/c4dm/event.owl#>\n"
+                + "PREFIX fabio:    <http://purl.org/spar/fabio/>\n"
+                + "PREFIX foaf:     <http://xmlns.com/foaf/0.1/>\n"
+                + "PREFIX geo:      <http://aims.fao.org/aos/geopolitical.owl#>\n"
+                + "PREFIX obo:      <http://purl.obolibrary.org/obo/>\n"
+                + "PREFIX ocrer:    <http://purl.org/net/OCRe/research.owl#>\n"
+                + "PREFIX ocresst:  <http://purl.org/net/OCRe/statistics.owl#>\n"
+                + "PREFIX ocresd:   <http://purl.org/net/OCRe/study_design.owl#>\n"
+                + "PREFIX ocresp:   <http://purl.org/net/OCRe/study_protocol.owl#>\n"
+                + "PREFIX ro:       <http://purl.obolibrary.org/obo/ro.owl#>\n"
+                + "PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>\n"
+                + "PREFIX swo:      <http://www.ebi.ac.uk/efo/swo/>\n"
+                + "PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>\n"
+                + "PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>\n"
+                + "PREFIX vivo:     <http://vivoweb.org/ontology/core#>\n"
+                + "PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>\n"
+                + "PREFIX vann:     <http://purl.org/vocab/vann/>\n"
+                + "\n"
+                + "CONSTRUCT {\n"
+                + "  ?authorx owl:sameAs ?authory .\n"
+                + "  ?authory owl:sameAs ?authorx.\n"
+                + "}\n"
+                + "WHERE {\n"
+                + "  ?x a bibo:Document .\n"
+                + "  ?x <https://wheatvivo.org/ontology/local/labelForSameAs> ?title .\n"
+                + "  ?y <https://wheatvivo.org/ontology/local/labelForSameAs> ?title .\n"
+                + "  FILTER(?x != ?y)\n"
+                + "  ?y a bibo:Document .\n"
+                + "  ?x vivo:relatedBy ?xauthorship .\n"
+                + "  ?xauthorship a vivo:Authorship .\n"
+                + "  ?xauthorship vivo:relates ?authorx .\n"
+                + "  ?authorx <https://wheatvivo.org/ontology/local/hasNN> ?nnx .\n"
+                + "  ?nnx <https://wheatvivo.org/ontology/local/labelForSameAsA1> ?a1 .\n"
+                + "  ?nny <https://wheatvivo.org/ontology/local/labelForSameAsA1> ?a1 .\n"
+                + "  ?authory <https://wheatvivo.org/ontology/local/hasNN> ?nny .\n"
+                + "  ?yauthorship vivo:relates ?authory .\n"
+                + "  ?yauthorship a vivo:Authorship .\n"
+                + "  ?y vivo:relatedBy ?yauthorship .\n"
+                + "  FILTER(?authorx != ?authory)\n"
+                + "}";
+        Model results = endpoint.construct(queryStr);
+        log.info(result.size() + " direct same-author, same-doc-title results");
+        return results;
+    }
 
     private Model getSameDocTitleSameAuthorDirect(SparqlEndpoint endpoint) {
         String queryStr = "PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n"
@@ -688,8 +756,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 + "}\n"
                 + "WHERE {\n"
                 + "  ?x a bibo:Document .\n"
-                + "  ?x <http://vivo.cgiar.org/ontology/local/labelForSameAs> ?label .\n"
-                + "  ?y <http://vivo.cgiar.org/ontology/local/labelForSameAs> ?label .\n"
+                + "  ?x <https://wheatvivo.org/ontology/local/labelForSameAs> ?label .\n"
+                + "  ?y <https://wheatvivo.org/ontology/local/labelForSameAs> ?label .\n"
                 + "  ?x vivo:dateTimeValue ?xDtv . \n"
                 + "  ?xDtv vivo:dateTime ?xDateTime . \n"
                 + "  BIND(STRBEFORE(STR(?xDateTime), \"-\") AS ?xYear) \n"
@@ -727,6 +795,61 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 + "} \n";
         Model results = endpoint.construct(queryStr);
         log.info(result.size() + " direct same-doc-title, same-author results");
+        return results;
+    }
+    
+    private Model getSameOrgSameJournalDirect(SparqlEndpoint endpoint) {
+        String queryStr = "PREFIX bib: <http://zeitkunst.org/bibtex/0.1/bibtex.owl#>\n"
+                + "PREFIX bio: <http://purl.org/vocab/bio/0.1/>\n"
+                + "PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n"
+                + "PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>\n"
+                + "PREFIX xsd:      <http://www.w3.org/2001/XMLSchema#>\n"
+                + "PREFIX owl:      <http://www.w3.org/2002/07/owl#>\n"
+                + "PREFIX swrl:     <http://www.w3.org/2003/11/swrl#>\n"
+                + "PREFIX swrlb:    <http://www.w3.org/2003/11/swrlb#>\n"
+                + "PREFIX vitro:    <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>\n"
+                + "PREFIX p1:       <http://vivo.wheatinitiative.org/ontology/adminapp/>\n"
+                + "PREFIX bibo:     <http://purl.org/ontology/bibo/>\n"
+                + "PREFIX c4o:      <http://purl.org/spar/c4o/>\n"
+                + "PREFIX cito:     <http://purl.org/spar/cito/>\n"
+                + "PREFIX dcterms:  <http://purl.org/dc/terms/>\n"
+                + "PREFIX event:    <http://purl.org/NET/c4dm/event.owl#>\n"
+                + "PREFIX fabio:    <http://purl.org/spar/fabio/>\n"
+                + "PREFIX foaf:     <http://xmlns.com/foaf/0.1/>\n"
+                + "PREFIX geo:      <http://aims.fao.org/aos/geopolitical.owl#>\n"
+                + "PREFIX obo:      <http://purl.obolibrary.org/obo/>\n"
+                + "PREFIX ocrer:    <http://purl.org/net/OCRe/research.owl#>\n"
+                + "PREFIX ocresst:  <http://purl.org/net/OCRe/statistics.owl#>\n"
+                + "PREFIX ocresd:   <http://purl.org/net/OCRe/study_design.owl#>\n"
+                + "PREFIX ocresp:   <http://purl.org/net/OCRe/study_protocol.owl#>\n"
+                + "PREFIX ro:       <http://purl.obolibrary.org/obo/ro.owl#>\n"
+                + "PREFIX skos:     <http://www.w3.org/2004/02/skos/core#>\n"
+                + "PREFIX swo:      <http://www.ebi.ac.uk/efo/swo/>\n"
+                + "PREFIX vcard:    <http://www.w3.org/2006/vcard/ns#>\n"
+                + "PREFIX vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#>\n"
+                + "PREFIX vivo:     <http://vivoweb.org/ontology/core#>\n"
+                + "PREFIX scires:   <http://vivoweb.org/ontology/scientific-research#>\n"
+                + "PREFIX vann:     <http://purl.org/vocab/vann/>\n"
+                + "\n"
+                + "CONSTRUCT {\n"
+                + "  ?x owl:sameAs ?y .\n"
+                + "  ?y owl:sameAs ?x .\n"
+                + "} WHERE {\n"
+                + "  {\n"
+                + "    ?x a foaf:Organization .\n"
+                + "    ?x <https://wheatvivo.org/ontology/local/labelForSameAs> ?label .\n"
+                + "    ?y <https://wheatvivo.org/ontology/local/labelForSameAs> ?label .\n"
+                + "    ?y a foaf:Organization .\n"
+                + "  } UNION {\n"
+                + "    ?x a bibo:Journal .\n"
+                + "    ?x <https://wheatvivo.org/ontology/local/labelForSameAs> ?label .\n"
+                + "    ?y <https://wheatvivo.org/ontology/local/labelForSameAs> ?label .\n"
+                + "    ?y a bibo:Journal .\n"
+                + "  }\n"
+                + "  FILTER(?x != ?y)\n"
+                + "}";
+        Model results = endpoint.construct(queryStr);
+        log.info(result.size() + " direct same-org or same-journal results");
         return results;
     }
 
