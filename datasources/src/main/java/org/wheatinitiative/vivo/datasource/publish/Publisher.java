@@ -285,7 +285,12 @@ public class Publisher extends DataSourceBase implements DataSource {
         String sameAsQuery = "CONSTRUCT { \n" +
                 "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
                 "} WHERE { \n" +
-                "    <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 \n" +
+                "    { <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind2 } \n" +
+                "    UNION { ?ind2 <" + OWL.sameAs.getURI() + "> <" + individualURI + "> } \n" +
+                "    UNION { \n" +
+                "      <" + individualURI + "> <" + OWL.sameAs.getURI() + "> ?ind3 . \n" +
+                "      ?ind2 <" + OWL.sameAs.getURI() + "> ?ind3 . \n" +
+                "    } \n" +
                 "} \n";
         return endpoint.construct(sameAsQuery);
     }
@@ -431,7 +436,8 @@ public class Publisher extends DataSourceBase implements DataSource {
                     while(sit.hasNext()) {
                         duplicates.add(sit.next());
                     }
-                    Collections.sort(duplicates, new StatementSorter());
+                    // Take highest-sorting value
+                    Collections.sort(duplicates, (new StatementSorter()).reversed());
                     // drop the first from the duplicate list since we want
                     // to retain it in the model
                     duplicates.poll();

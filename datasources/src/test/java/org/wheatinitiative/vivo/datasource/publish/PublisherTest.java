@@ -157,11 +157,11 @@ public class PublisherTest extends ConnectorTestCase {
     public void testDuplicateLabelSameGraph() {
         Map<String, Model> quadStore = new HashMap<String, Model>();
         Model model1 = ModelFactory.createDefaultModel();
-        model1.add(resource1, RDFS.label, "Cheese, Chuck");
+        model1.add(resource1, RDFS.label, "Cheese, Charles E.");
         model1.add(resource1, RDFS.label, "Cheese, Charles");
         quadStore.put(graph1, model1);
         Model correct = ModelFactory.createDefaultModel();
-        correct.add(resource1, RDFS.label, "Cheese, Charles");
+        correct.add(resource1, RDFS.label, "Cheese, Charles E.");
         TestablePublisher publisher = new TestablePublisher();
         publisher.dedupFunctionalProperties(quadStore, functionalPropertyURIs, 
                 graphURIPreferenceList);
@@ -191,13 +191,13 @@ public class PublisherTest extends ConnectorTestCase {
         Map<String, Model> quadStore = new HashMap<String, Model>();
         Model model1 = ModelFactory.createDefaultModel();
         Model model2 = ModelFactory.createDefaultModel();
-        model1.add(resource1, RDFS.label, "Cheese, Chuck");
+        model1.add(resource1, RDFS.label, "Cheese, Charles E.");
         model1.add(resource1, RDFS.label, "Cheese, Charles");
         model2.add(resource1, RDFS.label, "Cheese, Charles");
         quadStore.put(graph1, model1);
         quadStore.put(graph2, model2);
         Model correctModel1 = ModelFactory.createDefaultModel();
-        correctModel1.add(resource1, RDFS.label, "Cheese, Charles");
+        correctModel1.add(resource1, RDFS.label, "Cheese, Charles E.");
         TestablePublisher publisher = new TestablePublisher();
         publisher.dedupFunctionalProperties(quadStore, functionalPropertyURIs, 
                 graphURIPreferenceList);
@@ -214,13 +214,13 @@ public class PublisherTest extends ConnectorTestCase {
         Model model2 = ModelFactory.createDefaultModel();
         model1.add(resource1, RDF.type, OWL.Thing);
         model2.add(resource1, RDFS.label, "Cheese, Charles");
-        model2.add(resource1, RDFS.label, "Cheese, Chuck");
+        model2.add(resource1, RDFS.label, "Cheese, Charles E.");
         quadStore.put(graph1, model1);
         quadStore.put(graph2, model2);
         Model correctModel1 = ModelFactory.createDefaultModel();
         correctModel1.add(resource1, RDF.type, OWL.Thing);
         Model correctModel2 = ModelFactory.createDefaultModel();
-        correctModel2.add(resource1, RDFS.label, "Cheese, Charles");
+        correctModel2.add(resource1, RDFS.label, "Cheese, Charles E.");
         TestablePublisher publisher = new TestablePublisher();
         publisher.dedupFunctionalProperties(quadStore, functionalPropertyURIs, 
                 graphURIPreferenceList);
