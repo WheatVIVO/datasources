@@ -502,6 +502,7 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                     } else if(!currentValue.equals(value)) {
                         out.add(processPersonIdValue(solns, endpoint));                        
                         solns.clear();
+			currentValue = value;
                     }
                     solns.add(qsoln);
                     if(!rs.hasNext()) {
@@ -766,10 +767,14 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                 + "  BIND(STRBEFORE(STR(?yDateTime), \"-\") AS ?yYear) \n"
                 + "  FILTER(?xYear = ?yYear) \n"
                 + "  FILTER (?y != ?x)\n"
-                + "  FILTER EXISTS { \n"
-                + "    ?x vitro:mostSpecificType ?mst . \n"
-                + "    ?y vitro:mostSpecificType ?mst . \n"
-                + "  } \n"
+                + "  FILTER( \n"
+		+ "    EXISTS { \n"
+                + "      ?x vitro:mostSpecificType ?mst . \n"
+                + "      ?y vitro:mostSpecificType ?mst . \n"
+                + "    } \n"
+		+ "    || EXISTS { ?x vitro:mostSpecificType bibo:Document } \n"
+		+ "    || EXISTS { ?y vitro:mostSpecificType bibo:Document } \n"
+		+ "  ) \n"
                 + "  FILTER( EXISTS {\n"
                 + "    ?x vivo:relatedBy ?authorship .\n"
                 + "    ?authorship a vivo:Authorship .\n"
@@ -1566,7 +1571,18 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                         "    <" + x + "> <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#mostSpecificType> ?mst . \n" +
                         " FILTER NOT EXISTS { <" + x + "> <" + VIVO + "dateTimeInterval> ?dti } \n" +
                         " FILTER NOT EXISTS { <" + x + "> <" + RDFS.label + "> ?label } \n" +
+			" FILTER (!(EXISTS { ?a a <" + FOAF_PERSON + "> } && EXISTS { ?b a <" + FOAF_PERSON + "> })) \n" +
                         " FILTER (?a != ?b) \n" +
+			" FILTER NOT EXISTS { \n" +
+                        "   ?a <" + OWL.sameAs.getURI() + "> ?b . \n" +
+			" } \n" +
+			" FILTER NOT EXISTS { \n" +
+                        "   ?b <" + OWL.sameAs.getURI() + "> ?a . \n" +
+			" } \n" +
+			" FILTER NOT EXISTS { \n" +
+                        "   ?a <" + OWL.sameAs.getURI() + "> ?same . \n" +
+                        "   ?b <" + OWL.sameAs.getURI() + "> ?same . \n" +
+			" } \n"+
                         "    ?a <" + OWL.sameAs.getURI() + "> ?a1 . \n" +
                         "    ?b <" + OWL.sameAs.getURI() + "> ?b1 . \n" +
                         "    ?y <" + VIVO +"relates> ?b1 . \n" +
@@ -1574,8 +1590,8 @@ public class MergeDataSource extends DataSourceBase implements DataSource {
                         "    ?y a <" + VIVO + "Relationship> . \n" +
                         "    ?y <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#mostSpecificType> ?mst . \n" +
                         " FILTER NOT EXISTS { ?y <" + VIVO + "dateTimeInterval> ?dti } \n" +
-                        " FILTER NOT EXISTS { ?y <" + RDFS.label + "> ?label } \n" +  
-                        " FILTER (<" + x + "> != ?y) \n" +  
+                        " FILTER NOT EXISTS { ?y <" + RDFS.label + "> ?label } \n" +
+                        " FILTER (<" + x + "> != ?y) \n" +
                         " <" + x + "> <" + OWL.sameAs.getURI() + "> ?x1 . \n" +
                         " ?y <" + OWL.sameAs.getURI() + "> ?y1 . \n" +
                         "} \n";
