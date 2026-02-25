@@ -85,6 +85,9 @@ public class Publisher extends DataSourceBase implements DataSource {
 
     @Override
     protected void runIngest() throws InterruptedException {
+        uriSetCache.clear();
+        homeGraphCache.clear();
+        sameAsCache.clear();
         Date currentDateTime = Calendar.getInstance().getTime();
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
         this.timestamp = "--" + df.format(currentDateTime);
